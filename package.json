@@ -1,0 +1,58 @@
+{
+  "name": "aero-browser",
+  "productName": "Aero Browser",
+  "version": "0.3.0",
+  "description": "A glossy Frutiger Aero web browser you can change any time.",
+  "author": "Aarshabh",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --publish never"
+  },
+  "dependencies": {
+    "electron-updater": "6.3.9"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.aero.browser",
+    "productName": "Aero Browser",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "tab-preload.js",
+      "ui/**",
+      "pages/**",
+      "themes-builtin/**",
+      "icons/**",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "aarshabhpeeyush",
+        "repo": "aero-browser"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Aero Browser",
+      "artifactName": "Aero-Browser-Setup-${version}.exe"
+    }
+  }
+}

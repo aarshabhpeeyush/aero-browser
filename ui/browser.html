@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data: aero:; style-src 'self' 'unsafe-inline' aero:; font-src 'self' data: aero:">
+  <title>Aero Browser</title>
+  <link rel="stylesheet" href="browser.css">
+  <!-- Your Customize choices, then your custom theme on top (so a theme can change anything) -->
+  <style id="prefVars"></style>
+  <link id="userTheme" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <div id="titlebar">
+      <div class="app-orb" title="Aero Browser"></div>
+      <div id="tabs"></div>
+      <button id="newTab" class="orb small" title="New tab (Ctrl+T)">+</button>
+      <div class="drag-space"></div>
+      <div class="winbtns">
+        <button id="winMin" title="Minimise">&#x2013;</button>
+        <button id="winMax" title="Maximise">&#x25A1;</button>
+        <button id="winClose" class="close" title="Close">&#x2715;</button>
+      </div>
+    </div>
+
+    <div id="toolbar">
+      <div class="navpair">
+        <button id="back" class="orb" title="Back (Alt+Left)">&#x2190;</button>
+        <button id="forward" class="orb small" title="Forward (Alt+Right)">&#x2192;</button>
+      </div>
+      <button id="reload" class="orb small" title="Reload (F5)">&#x21BB;</button>
+      <button id="home" class="orb small" title="Home">&#x2302;</button>
+      <form id="address">
+        <span id="siteIcon">&#x1F50D;</span>
+        <input id="url" type="text" spellcheck="false" placeholder="Search or type a web address">
+        <button id="star" type="button" title="Bookmark this page">&#x2606;</button>
+      </form>
+      <button id="updateBtn" class="update-pill" hidden title="A new version is ready">&#x2B06; Restart to update</button>
+      <button id="profileBtn" class="avatar" title="Profiles & Google accounts"></button>
+      <button id="customizeBtn" class="orb green" title="Customize your browser">&#x2728;</button>
+    </div>
+
+    <div id="bookmarks"></div>
+    <div id="progress"><div></div></div>
+
+    <div id="main">
+      <div id="viewport"></div>
+
+      <aside id="profiles" class="panel" hidden>
+        <header>
+          <h2>Profiles</h2>
+          <button class="orb small close-panel" title="Close">&#x2715;</button>
+        </header>
+        <div id="profilesBody"></div>
+      </aside>
+
+      <aside id="customize" class="panel" hidden>
+        <header>
+          <h2>Customize</h2>
+          <button class="orb small close-panel" title="Close">&#x2715;</button>
+        </header>
+
+        <section>
+          <h3>Theme</h3>
+          <div id="themes"></div>
+          <label class="row">Accent colour <input id="accent" type="color"> <button id="accentReset" class="gel tiny">Theme colour</button></label>
+          <label class="row">Shine <input id="gloss" type="range" min="0" max="100"></label>
+        </section>
+
+        <section>
+          <h3>Custom themes</h3>
+          <div id="customThemes"></div>
+          <div class="row">
+            <button id="themeAdd" class="gel tiny">Add a theme…</button>
+            <button id="themeFolder" class="gel tiny">Open themes folder</button>
+          </div>
+          <p class="hint">Make your own: copy a theme folder, edit its <b>theme.css</b>, and the browser changes as soon as you save. THEME-GUIDE.md in the themes folder explains everything.</p>
+        </section>
+
+        <section>
+          <h3>Layout</h3>
+          <div class="choice" data-pref="bars">
+            <span>Tabs</span>
+            <button data-value="top">Top</button><button data-value="bottom">Bottom</button><button data-value="left">Left</button><button data-value="right">Right</button>
+          </div>
+          <div class="choice" data-pref="tabShape">
+            <span>Tab shape</span>
+            <button data-value="rounded">Rounded</button><button data-value="pill">Bubble</button><button data-value="square">Square</button>
+          </div>
+          <div class="choice" data-pref="winButtons">
+            <span>Window buttons</span>
+            <button data-value="simple">Simple</button><button data-value="glossy">Glossy</button>
+          </div>
+          <div class="choice" data-pref="size">
+            <span>Size</span>
+            <button data-value="comfy">Comfy</button><button data-value="compact">Compact</button>
+          </div>
+          <label class="toggle"><input type="checkbox" data-pref="bookmarksBar"> Bookmarks bar</label>
+        </section>
+
+        <section>
+          <h3>Browsing</h3>
+          <label class="row">Search with
+            <select id="search">
+              <option value="google">Google</option>
+              <option value="bing">Bing</option>
+              <option value="duckduckgo">DuckDuckGo</option>
+              <option value="ecosia">Ecosia</option>
+              <option value="yahoo">Yahoo</option>
+            </select>
+          </label>
+          <label class="toggle"><input type="checkbox" data-pref="restyle"> Aero style on websites</label>
+          <label class="toggle"><input type="checkbox" data-pref="sounds"> Bubbly sounds</label>
+        </section>
+
+        <section>
+          <h3>About</h3>
+          <p class="about"><b>Aero Browser</b> <span id="version"></span><br><span id="updateText"></span></p>
+          <div class="row">
+            <button id="checkUpdates" class="gel tiny">Check for updates</button>
+            <button id="whatsNew" class="gel tiny">What's new</button>
+          </div>
+        </section>
+
+        <section>
+          <button id="resetAll" class="gel red">Reset everything</button>
+          <p class="hint">Shortcuts: Ctrl+T new tab · Ctrl+W close · Ctrl+Tab switch · Ctrl+L address bar · F5 reload · Ctrl +/− zoom · F11 full screen</p>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script src="browser.js"></script>
+</body>
+</html>

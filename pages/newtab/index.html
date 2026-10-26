@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>New Tab</title>
+  <link rel="stylesheet" href="newtab.css">
+  <!-- The switched-on custom theme's New Tab styles (empty when there isn't one) -->
+  <link id="aeroTheme" rel="stylesheet" href="aero://themes/_active/newtab.css">
+</head>
+<body>
+  <div id="scene"></div>
+  <canvas id="bubbles"></canvas>
+
+  <!-- Top-right toolbar: wallpaper switcher + settings -->
+  <div id="toolbar" class="glass">
+    <button class="orb small" id="wpPrev" title="Previous wallpaper">◀</button>
+    <div id="wpDots"></div>
+    <button class="orb small" id="wpNext" title="Next wallpaper">▶</button>
+    <button class="orb small" id="openSettings" title="Settings">⚙</button>
+  </div>
+
+  <!-- Widgets get placed in here by newtab.js -->
+  <div id="desk"></div>
+
+  <!-- ===== Widget templates ===== -->
+  <template id="tpl-clock">
+    <div class="widget clock" data-id="clock">
+      <div class="time">--:--</div>
+      <div class="date"></div>
+      <div class="greeting"></div>
+    </div>
+  </template>
+
+  <template id="tpl-search">
+    <form class="widget search pill" data-id="search">
+      <input type="text" placeholder="Search the web…" autocomplete="off" autofocus>
+      <button type="submit" class="orb" aria-label="Search">
+        <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="10" cy="10" r="6.5" fill="none" stroke="#fff" stroke-width="2.6"/><path d="M15 15 L21 21" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+      </button>
+    </form>
+  </template>
+
+  <template id="tpl-dock">
+    <div class="widget dock pill" data-id="dock"></div>
+  </template>
+
+  <template id="tpl-tasks">
+    <div class="widget panel tasks" data-id="tasks">
+      <header><span class="ico">✔</span> Tasks <span class="badge count">0/0</span></header>
+      <ul class="list"></ul>
+      <form class="add-row">
+        <input type="text" placeholder="Add a new task…">
+        <button class="orb small" type="submit">+</button>
+      </form>
+    </div>
+  </template>
+
+  <template id="tpl-notes">
+    <div class="widget panel notes" data-id="notes">
+      <header><span class="ico">✎</span> Quick Notes <span class="badge count">0</span></header>
+      <textarea placeholder="Write anything…"></textarea>
+    </div>
+  </template>
+
+  <template id="tpl-music">
+    <div class="widget panel music" data-id="music">
+      <header><span class="ico">♫</span> Music <span class="badge">YouTube</span></header>
+      <div class="music-body">
+        <div class="now">
+          <div class="art"></div>
+          <div class="track"><div class="title">Nothing playing</div><div class="artist">Paste a YouTube link below</div></div>
+        </div>
+        <div class="progress no-drag"><div></div></div>
+        <div class="times"><span class="cur">0:00</span><span class="dur">0:00</span></div>
+        <div class="controls">
+          <button class="orb small prev" title="Previous">⏮</button>
+          <button class="orb big green play" title="Play / pause">▶</button>
+          <button class="orb small next" title="Next">⏭</button>
+          <input class="volume" type="range" min="0" max="100" title="Volume">
+        </div>
+        <form class="row add">
+          <input type="text" placeholder="Paste a YouTube link…">
+          <button class="orb small" type="submit" title="Add to queue">+</button>
+        </form>
+        <ul class="queue"></ul>
+        <div class="player-box"></div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-weather">
+    <div class="widget panel weather" data-id="weather">
+      <header><span class="ico">☀</span> Weather <span class="badge place"></span></header>
+      <div class="weather-body"></div>
+    </div>
+  </template>
+
+  <template id="tpl-aquarium">
+    <div class="widget panel aquarium" data-id="aquarium">
+      <header><span class="ico">🐟</span> Aquarium <span class="badge">click to feed</span></header>
+      <canvas width="300" height="170"></canvas>
+    </div>
+  </template>
+
+  <template id="tpl-calendar">
+    <div class="widget panel calendar" data-id="calendar">
+      <header>
+        <button class="orb small prev" title="Previous month">‹</button>
+        <span class="month"></span>
+        <button class="orb small next" title="Next month">›</button>
+      </header>
+      <div class="grid"></div>
+    </div>
+  </template>
+
+  <template id="tpl-timer">
+    <div class="widget panel timer" data-id="timer">
+      <header><span class="ico">⏱</span> Focus Timer</header>
+      <div class="timer-body">
+        <svg class="ring" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" class="track"/>
+          <circle cx="60" cy="60" r="52" class="fill"/>
+          <text x="60" y="68" class="left">25:00</text>
+        </svg>
+        <div class="side">
+          <div class="presets">
+            <button class="gel tiny" data-min="5">5</button>
+            <button class="gel tiny" data-min="15">15</button>
+            <button class="gel tiny" data-min="25">25</button>
+          </div>
+          <div class="row">
+            <button class="orb green start" title="Start / pause">▶</button>
+            <button class="orb reset" title="Reset">↺</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-bubblewrap">
+    <div class="widget panel bubblewrap" data-id="bubblewrap">
+      <header><span class="ico">○</span> Bubble Wrap <span class="badge count">0</span></header>
+      <div class="sheet no-drag"></div>
+      <div class="center"><button class="linkbtn fresh">New sheet</button></div>
+    </div>
+  </template>
+
+  <!-- ===== Settings panel ===== -->
+  <aside id="settings" class="glass" hidden>
+    <header>
+      <h2>Settings</h2>
+      <button class="orb small" id="closeSettings" title="Close">✕</button>
+    </header>
+
+    <section>
+      <h3>You</h3>
+      <label class="field">Your name <input id="setName" type="text" placeholder="for the greeting"></label>
+      <label class="toggle"><input id="setSounds" type="checkbox"> Bubbly sounds</label>
+    </section>
+
+    <section>
+      <h3>Widgets</h3>
+      <div id="widgetToggles"></div>
+      <button class="gel" id="resetLayout">Put widgets back in place</button>
+    </section>
+
+    <section>
+      <h3>Wallpaper</h3>
+      <div id="wpChoices"></div>
+      <label class="gel file">Use my own picture… <input id="wpUpload" type="file" accept="image/*" hidden></label>
+      <label class="field">Bubbles <input id="setBubbles" type="range" min="0" max="80"></label>
+    </section>
+
+    <section>
+      <h3>Weather</h3>
+      <form id="cityForm" class="field">Your city
+        <input id="setCity" type="text" placeholder="e.g. London">
+      </form>
+      <label class="toggle"><input id="setFahrenheit" type="checkbox"> Show °F instead of °C</label>
+    </section>
+
+    <section>
+      <h3>Music</h3>
+      <p class="hint">Paste YouTube video or playlist links into the Music widget and it plays their sound. Music keeps playing while that tab stays open.</p>
+    </section>
+  </aside>
+
+  <script src="shared.js"></script>
+  <script src="newtab.js"></script>
+</body>
+</html>

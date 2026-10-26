@@ -1,0 +1,50 @@
+/* ===== Luna XP — an example Aero Browser theme ===== */
+
+:root {
+  --frame-a: #0a55d8;
+  --frame-b: #3d8df5;
+  --accent: #2b71e0;
+  --text: #fff;
+  --text-shadow: 1px 1px 1px rgba(0, 0, 60, 0.6);
+  --tab-radius: 7px;
+}
+
+body, button, input { font-family: Tahoma, "Segoe UI", sans-serif; }
+
+/* Classic XP blue title bar with a bright line along the top */
+#titlebar {
+  background:
+    linear-gradient(180deg, #3b8cf7 0%, #0a55d8 12%, #0846c4 55%, #0b5bdb 90%, #0a46b8 100%);
+  border-top: 1px solid #8cc0ff;
+}
+
+/* Cream toolbar and bookmarks bar */
+#toolbar {
+  background: linear-gradient(180deg, #fbfaf6, #ece9d8);
+  border-top-color: #fff;
+  border-bottom-color: #aca899;
+}
+#bookmarks { background: #ece9d8; border-bottom-color: #aca899; }
+#bookmarks button { color: #000; }
+
+/* Tabs look like XP window buttons */
+.tab { color: #fff; }
+.tab.active {
+  color: #000;
+  text-shadow: none;
+  background: linear-gradient(180deg, #fff, #ece9d8);
+}
+
+/* The ✨ button becomes the green Start button */
+#customizeBtn {
+  border-color: #1d6b1d;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 51%),
+    radial-gradient(circle at 30% 110%, #7be27b, #34a634 60%, #1d6b1d);
+}
+
+/* Square-ish address bar with a blue border */
+#address { border-radius: 3px; border-color: #7f9db9; background: #fff; box-shadow: none; }
+
+/* Side panels in XP cream */
+.panel { background: #ece9d8; border-left-color: #aca899; }
