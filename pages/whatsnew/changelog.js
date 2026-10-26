@@ -1,6 +1,16 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "0.3.1",
+    date: "October 2026",
+    title: "Opening fix",
+    items: [
+      { icon: "🛠️", title: "Opens properly again", text: "Fixed a bug where a fresh install of 0.3.0 got stuck while setting up the example themes and never opened its window." },
+      { icon: "🎨", title: "Themes repair themselves", text: "If any example theme files go missing, they're put back automatically." },
+      { icon: "📋", title: "Error log", text: "If something goes wrong while starting, it's written to error.log in the browser's data folder so it can be fixed quickly." }
+    ]
+  },
+  {
     version: "0.3.0",
     date: "October 2026",
     title: "Your browser, your style",

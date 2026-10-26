@@ -116,15 +116,24 @@ function saveState() {
 const themesDir = () => path.join(app.getPath("userData"), "themes");
 let themeVersion = Date.now(); // changes whenever a theme file changes, so pages reload it
 
+// Copies a file or folder one file at a time. (fs.cpSync can't read from inside the
+// installed app's app.asar archive, which once stopped the browser from opening.)
+function copyInto(from, to) {
+  if (fs.statSync(from).isDirectory()) {
+    fs.mkdirSync(to, { recursive: true });
+    for (const name of fs.readdirSync(from)) copyInto(path.join(from, name), path.join(to, name));
+  } else if (!fs.existsSync(to)) {
+    fs.writeFileSync(to, fs.readFileSync(from));
+  }
+}
+
 function ensureThemesFolder() {
   const dir = themesDir();
-  const builtIn = path.join(__dirname, "themes-builtin");
   fs.mkdirSync(dir, { recursive: true });
-  // Example themes and the guide are copied in once, so people have something to learn from.
-  for (const name of fs.readdirSync(builtIn)) {
-    const target = path.join(dir, name);
-    if (!fs.existsSync(target)) fs.cpSync(path.join(builtIn, name), target, { recursive: true });
-  }
+  // Example themes and the guide are copied in (and any missing files filled back in),
+  // so people always have something to learn from.
+  const builtIn = path.join(__dirname, "themes-builtin");
+  for (const name of fs.readdirSync(builtIn)) copyInto(path.join(builtIn, name), path.join(dir, name));
 }
 
 function listThemes() {
@@ -598,13 +607,29 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   chromeUserAgent = app.userAgentFallback.replace(/ (Electron|AeroBrowser|aero-browser)\/\S+/gi, "");
   app.userAgentFallback = chromeUserAgent;
-  loadProfiles();
-  loadState();
-  ensureThemesFolder();
-  watchThemes();
+  // Extras must never stop the window from opening: if one fails, note it and carry on.
+  const safely = (name, fn) => {
+    try { fn(); } catch (err) { logError(name, err); }
+  };
+  safely("profiles", loadProfiles);
+  safely("state", loadState);
+  safely("themes", ensureThemesFolder);
+  safely("theme watcher", watchThemes);
   sessionFor("default"); // the browser UI uses this session too, and needs aero://themes/ ready
   createWindow();
-  setupAutoUpdates();
+  safely("updates", setupAutoUpdates);
 });
+
+// Problems get written to error.log in the browser's data folder, so they can be tracked down.
+function logError(where, err) {
+  try {
+    fs.appendFileSync(
+      path.join(app.getPath("userData"), "error.log"),
+      `[${new Date().toISOString()}] v${app.getVersion()} ${where}: ${err?.stack || err}\n`
+    );
+  } catch {}
+}
+process.on("uncaughtException", err => logError("crash", err));
+process.on("unhandledRejection", err => logError("crash", err));
 
 app.on("window-all-closed", () => app.quit());
