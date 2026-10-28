@@ -1,7 +1,7 @@
 {
   "name": "aero-browser",
   "productName": "Aero Browser",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "A glossy Frutiger Aero web browser you can change any time.",
   "author": "Aarshabh",
   "main": "main.js",

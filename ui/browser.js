@@ -564,6 +564,7 @@ function sendBounds() {
   api.send("view:bounds", { x: r.left, y: r.top, width: r.width, height: r.height });
 }
 new ResizeObserver(sendBounds).observe($("#viewport"));
+api.on("ui:resend-bounds", sendBounds);
 addEventListener("resize", sendBounds);
 
 // ================= Start =================

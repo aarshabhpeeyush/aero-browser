@@ -1,6 +1,16 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "0.4.3",
+    date: "October 2026",
+    title: "Blank page fix",
+    items: [
+      { icon: "🖼️", title: "Stronger fix for blank pages", text: "When a tab is shown, the browser re-measures the page area and makes sure the page really gets drawn." },
+      { icon: "👆", title: "Click to redraw", text: "If a page ever looks blank, click its tab again to redraw it." },
+      { icon: "📋", title: "Debug log", text: "The browser notes what it does with the page area in debug.log, so any leftover blank-page problems can be found and fixed." }
+    ]
+  },
+  {
     version: "0.4.2",
     date: "October 2026",
     title: "Tabs show up properly",

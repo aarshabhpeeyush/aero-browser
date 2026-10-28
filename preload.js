@@ -12,7 +12,7 @@ const TO_ENGINE = [
   "perf:settings", "tab:sleep", "signin:set-mode"
 ];
 const FROM_ENGINE = [
-  "tab:created", "tab:update", "tab:activated", "tab:closed", "ui:focus-address", "win:state",
+  "tab:created", "tab:update", "tab:activated", "tab:closed", "ui:focus-address", "ui:resend-bounds", "win:state",
   "profiles", "themes", "app:info", "update:status",
   "pw:list", "pw:status", "pw:offer", "pw:fillable", "pw:revealed", "perf:stats"
 ];

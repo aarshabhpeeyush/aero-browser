@@ -410,22 +410,37 @@ function detachView(t) {
   t.attached = false;
 }
 
-// On Windows a page view that's switched back on isn't always drawn until its size changes
-// (which is why opening Customize used to make tabs appear). Nudging the size forces a redraw.
-function showView(view) {
+// On Windows a page view that's switched back on isn't always drawn until its size really changes
+// (which is why opening Customize made tabs appear). So: ask the UI to re-measure the page area,
+// then shrink the page a little and grow it back after a few frames, so Chromium can't skip it.
+function showView(view, reason = "show") {
   if (!view.webContents || view.webContents.isDestroyed()) return;
   const t = [...tabs.values()].find(x => x.view === view);
   if (t && !t.attached) {
     win.contentView.addChildView(view);
     t.attached = true;
   }
+  send("ui:resend-bounds");
   const { x, y, width, height } = viewBounds;
-  view.setBounds({ x, y, width, height: Math.max(0, height - 1) });
+  view.setBounds({ x, y, width: Math.max(0, width - 2), height: Math.max(0, height - 2) });
+  debugLog(`${reason}: tab ${t ? [...tabs.keys()].find(k => tabs.get(k) === t) : "?"} attached, bounds ${JSON.stringify(viewBounds)}`);
   setTimeout(() => {
     if (view.webContents.isDestroyed()) return;
     view.setBounds(viewBounds);
     view.webContents.invalidate();
-  }, 30);
+  }, 120);
+}
+
+// A small "flight recorder" for the page area, so blank-page bugs can be tracked down.
+// Written to debug.log in the browser's data folder; trimmed so it never gets big.
+function debugLog(text) {
+  try {
+    const file = path.join(app.getPath("userData"), "debug.log");
+    if (fs.existsSync(file) && fs.statSync(file).size > 200 * 1024) {
+      fs.writeFileSync(file, fs.readFileSync(file, "utf8").slice(-100 * 1024));
+    }
+    fs.appendFileSync(file, `[${new Date().toISOString()}] v${app.getVersion()} ${text}\n`);
+  } catch {}
 }
 
 function removeTab(id) {
@@ -582,7 +597,8 @@ ipcMain.on("ui:ready", () => {
 });
 ipcMain.on("tab:new", (e, url) => createTab(url ? toUrl(url) : HOME));
 ipcMain.on("tab:close", (e, id) => closeTab(id));
-ipcMain.on("tab:activate", (e, id) => activate(id));
+// Clicking the tab you're already on redraws its page (a handy fix if it ever looks blank).
+ipcMain.on("tab:activate", (e, id) => (id === activeId && activeTab() ? showView(activeTab().view, "tab clicked again") : activate(id)));
 ipcMain.on("nav:go", (e, text) => {
   const wc = activeTab()?.view.webContents;
   if (!wc) return;
@@ -599,7 +615,9 @@ ipcMain.on("view:bounds", (e, b) => {
     x: Math.round(b.x), y: Math.round(b.y),
     width: Math.max(0, Math.round(b.width)), height: Math.max(0, Math.round(b.height))
   };
-  activeTab()?.view.setBounds(viewBounds);
+  const t = activeTab();
+  debugLog(`page area from UI ${JSON.stringify(viewBounds)}; active tab ${activeId} ${t?.attached ? "on window" : "NOT on window"}`);
+  t?.view.setBounds(viewBounds);
 });
 ipcMain.on("set:restyle", (e, on) => {
   restyleSites = on;
@@ -668,7 +686,7 @@ function createWindow() {
     minWidth: 600,
     minHeight: 400,
     frame: false,
-    show: !process.env.AERO_SNAPSHOT, // test runs stay invisible
+    show: !process.env.AERO_SNAPSHOT || !!process.env.AERO_SNAPSHOT_VISIBLE, // test runs stay invisible unless asked
     backgroundColor: "#3aa6f0",
     title: "Aero Browser",
     icon: path.join(__dirname, "icons", "icon.png"),
@@ -679,15 +697,23 @@ function createWindow() {
   win.on("maximize", () => send("win:state", "max"));
   win.on("unmaximize", () => send("win:state", "normal"));
   // Coming back to the browser (from minimised, or from another app or game): redraw the page.
-  for (const event of ["show", "restore", "focus"]) win.on(event, () => activeTab() && showView(activeTab().view));
+  for (const event of ["show", "restore", "focus"]) win.on(event, () => activeTab() && showView(activeTab().view, "window " + event));
+  for (const event of ["minimize", "maximize", "unmaximize", "resize", "enter-full-screen", "leave-full-screen"]) {
+    win.on(event, () => debugLog(`window ${event} ${JSON.stringify(win.getContentBounds())}`));
+  }
 
   // Debug helper: AERO_SNAPSHOT=<folder> saves pictures of the UI and the current tab, then quits.
   if (process.env.AERO_SNAPSHOT) {
     const log = text => fs.appendFileSync(path.join(process.env.AERO_SNAPSHOT, "log.txt"), text + "\n");
     win.webContents.on("console-message", (e, level, message, line, source) => log(`[ui] ${message} ${source}:${line}`));
     // Pictures need a "shown" window, so show it far off-screen without taking focus from what you're doing.
-    win.setPosition(-10000, -10000);
-    win.showInactive();
+    // AERO_SNAPSHOT_VISIBLE=1 tests in a real on-screen window with the graphics card, like normal use.
+    if (!process.env.AERO_SNAPSHOT_VISIBLE) {
+      win.setPosition(-10000, -10000);
+      win.showInactive();
+    } else {
+      win.setAlwaysOnTop(true); // so a screen photo of this window shows only Aero Browser
+    }
     win.webContents.on("render-process-gone", (e, details) => log("[ui gone] " + JSON.stringify(details)));
     win.webContents.on("unresponsive", () => log("[ui unresponsive]"));
     win.webContents.on("did-finish-load", () => log("[ui loaded]"));
@@ -729,6 +755,12 @@ function createWindow() {
         else log("[tab capture] no picture (window not on screen)");
       }
       fs.writeFileSync(path.join(dir, "bounds.json"), JSON.stringify(viewBounds));
+      if (process.env.AERO_SNAPSHOT_VISIBLE) {
+        // Tell the test script where the window is, and hold still while it takes a screen photo.
+        const scale = require("electron").screen.getDisplayMatching(win.getBounds()).scaleFactor;
+        log("[screen-now] " + JSON.stringify({ ...win.getContentBounds(), scale }));
+        await new Promise(r => setTimeout(r, 4000));
+      }
       app.exit(0);
     }, +process.env.AERO_SNAPSHOT_DELAY || 6000);
   }
@@ -745,7 +777,7 @@ if (process.env.AERO_USER_DATA) app.setPath("userData", process.env.AERO_USER_DA
 app.commandLine.appendSwitch("disable-features", "CalculateNativeWinOcclusion");
 
 // Test runs don't use the graphics card, so they never fight with games or other apps for it.
-if (process.env.AERO_SNAPSHOT) app.disableHardwareAcceleration();
+if (process.env.AERO_SNAPSHOT && !process.env.AERO_SNAPSHOT_VISIBLE) app.disableHardwareAcceleration();
 
 // Only one Aero Browser at a time: opening it again just brings the open window to the front.
 if (!app.requestSingleInstanceLock()) {
