@@ -1,0 +1,23 @@
+/* Dark Mode for YouTube.
+   YouTube has its own dark colours, so instead of flipping everything we switch those on. */
+
+html, html img, html video, html canvas, html iframe, html picture,
+html [style*="background-image"] { filter: none !important; }
+
+html:not([dark]) {
+  --yt-spec-base-background: #0f0f0f !important;
+  --yt-spec-raised-background: #212121 !important;
+  --yt-spec-menu-background: #282828 !important;
+  --yt-spec-general-background-a: #181818 !important;
+  --yt-spec-general-background-b: #0f0f0f !important;
+  --yt-spec-text-primary: #f1f1f1 !important;
+  --yt-spec-text-secondary: #aaaaaa !important;
+  --yt-spec-icon-active-other: #f1f1f1 !important;
+  --yt-spec-icon-inactive: #f1f1f1 !important;
+  --yt-spec-10-percent-layer: rgba(255, 255, 255, 0.1) !important;
+  --yt-spec-badge-chip-background: rgba(255, 255, 255, 0.1) !important;
+  --yt-spec-button-chip-background-hover: rgba(255, 255, 255, 0.2) !important;
+  --yt-spec-outline: rgba(255, 255, 255, 0.2) !important;
+  background: #0f0f0f !important;
+}
+html:not([dark]) ytd-app, html:not([dark]) #masthead-container #background { background: #0f0f0f !important; }

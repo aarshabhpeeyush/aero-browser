@@ -1,0 +1,31 @@
+/* Retro 2000 on EVERY website: Windows 98 scrollbars, classic blue links, old-school highlight. */
+
+::selection { background: #000080 !important; color: #fff !important; }
+
+/* Chunky grey 3D scrollbars */
+::-webkit-scrollbar { width: 17px; height: 17px; }
+::-webkit-scrollbar-track { background: repeating-conic-gradient(#c0c0c0 0 25%, #fff 0 50%) 0 0 / 2px 2px; }
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf;
+}
+::-webkit-scrollbar-button:single-button {
+  display: block;
+  height: 17px;
+  width: 17px;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+}
+::-webkit-scrollbar-corner { background: #c0c0c0; }
+
+/* Classic links: blue, underlined, purple once visited */
+a:link { text-decoration: underline !important; }
+a:visited { color: #551a8b !important; }
+
+/* Text boxes get the sunken 3D look */
+input[type=text]:focus, input[type=search]:focus, input[type=email]:focus, textarea:focus {
+  outline: 1px dotted #000 !important;
+}

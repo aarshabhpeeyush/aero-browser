@@ -1,7 +1,7 @@
 {
   "name": "aero-browser",
   "productName": "Aero Browser",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "A glossy Frutiger Aero web browser you can change any time.",
   "author": "Aarshabh",
   "main": "main.js",
@@ -27,6 +27,8 @@
       "main.js",
       "preload.js",
       "tab-preload.js",
+      "passwords.js",
+      "power.js",
       "ui/**",
       "pages/**",
       "themes-builtin/**",

@@ -1,0 +1,8 @@
+/* Neon Gamer for Google: glowing logo and search box */
+
+img[alt="Google"], svg[aria-label="Google"] { filter: drop-shadow(0 0 10px rgba(255, 31, 90, 0.9)); }
+form[role="search"] > div:first-child, .RNNXgb {
+  box-shadow: 0 0 0 2px #ff1f5a, 0 0 18px rgba(255, 31, 90, 0.6) !important;
+}
+#search a h3, #rso a h3 { transition: text-shadow 0.2s; }
+#search a:hover h3, #rso a:hover h3 { text-shadow: 0 0 10px rgba(255, 31, 90, 0.7); }

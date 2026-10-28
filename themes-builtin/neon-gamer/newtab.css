@@ -1,0 +1,13 @@
+/* Neon Gamer New Tab: dark scene, neon glass */
+#scene { filter: brightness(0.35) saturate(1.6) hue-rotate(130deg); }
+.glass, .panel, .pill, .clock {
+  background: rgba(12, 8, 16, 0.78) !important;
+  border-color: #ff1f5a !important;
+  box-shadow: 0 0 18px rgba(255, 31, 90, 0.45) !important;
+}
+.clock .time { text-shadow: 0 0 14px #ff1f5a; }
+.orb {
+  border-color: #ff1f5a !important;
+  background: radial-gradient(circle at 50% 110%, #ff7aa0 0%, #ff1f5a 55%, #7a0a2a 100%) !important;
+}
+.search input { color: #fff !important; }

@@ -1,10 +1,14 @@
 // Aero Browser — the "engine room".
 // The window shows our own glossy UI (ui/browser.html); every tab is a Chromium web view placed on top of it.
 
-const { app, BrowserWindow, WebContentsView, ipcMain, protocol, net, session, Menu, dialog, shell } = require("electron");
-const path = require("path");
+const { app, BrowserWindow, WebContentsView, ipcMain, protocol, net, session, Menu, dialog, shell } = require("electron");const path = require("path");
 const fs = require("fs");
 const { pathToFileURL } = require("url");
+const { setupPasswords } = require("./passwords");
+const { setupPower } = require("./power");
+
+let passwords = null; // the password manager, started once the app is ready
+let power = null; // the CPU/RAM manager
 
 const PAGES = path.join(__dirname, "pages");
 const HOME = "aero://newtab/";
@@ -49,7 +53,7 @@ function saveProfiles() {
 }
 
 function sendProfiles() {
-  send("profiles", { profiles, current: currentProfile, accounts });
+  send("profiles", { profiles, current: currentProfile, accounts, signInMode: signInMode() });
 }
 
 function sessionFor(profileId) {
@@ -82,17 +86,19 @@ function setupSession(ses) {
     if (details.url.includes("youtube.com/embed/")) {
       // YouTube players refuse to start without a "Referer", which our built-in pages don't send.
       if (!headers.Referer) headers.Referer = "https://aero-browser.app/";
-    } else {
-      // Google blocks sign-in from browsers it doesn't recognise as Chrome, but happily allows
-      // Firefox, so the sign-in page sees us as Firefox (and none of Chromium's tell-tale hints).
+    } else if (signInMode() === "firefox") {
+      // "Firefox" sign-in mode: Google's sign-in page sees us as Firefox (with no Chromium hints).
       headers["User-Agent"] = FIREFOX_UA;
       for (const name of Object.keys(headers)) if (/^sec-ch-ua/i.test(name)) delete headers[name];
     }
+    // Otherwise ("chromium" mode) we're simply a Chromium browser, like Brave or Edge.
     done({ requestHeaders: headers });
   });
 }
 
 const FIREFOX_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0";
+// How we introduce ourselves to Google's sign-in page: "chromium" (normal) or "firefox". Changeable in Profiles.
+const signInMode = () => (state.signInMode === "firefox" ? "firefox" : "chromium");
 const isGoogleSignIn = url => /^https:\/\/accounts\.google\.com\//.test(url);
 
 // ================= Saved state (theme, last version seen) =================
@@ -134,6 +140,8 @@ function ensureThemesFolder() {
   // so people always have something to learn from.
   const builtIn = path.join(__dirname, "themes-builtin");
   for (const name of fs.readdirSync(builtIn)) copyInto(path.join(builtIn, name), path.join(dir, name));
+  // The guide isn't something people edit, so keep it up to date with each version.
+  fs.writeFileSync(path.join(dir, "THEME-GUIDE.md"), fs.readFileSync(path.join(builtIn, "THEME-GUIDE.md")));
 }
 
 function listThemes() {
@@ -141,7 +149,8 @@ function listThemes() {
   for (const entry of fs.readdirSync(themesDir(), { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const folder = path.join(themesDir(), entry.name);
-    if (!fs.existsSync(path.join(folder, "theme.css")) && !fs.existsSync(path.join(folder, "newtab.css"))) continue;
+    const has = file => fs.existsSync(path.join(folder, file));
+    if (!["theme.css", "newtab.css", "websites.css", "sites"].some(has)) continue;
     let info = {};
     try { info = JSON.parse(fs.readFileSync(path.join(folder, "theme.json"), "utf8")); } catch {}
     list.push({
@@ -149,7 +158,8 @@ function listThemes() {
       name: info.name || entry.name,
       author: info.author || "",
       description: info.description || "",
-      newtab: fs.existsSync(path.join(folder, "newtab.css"))
+      newtab: has("newtab.css"),
+      websites: has("websites.css") || has("sites")
     });
   }
   return list;
@@ -178,11 +188,13 @@ function serveThemeFile(pathname) {
 function refreshThemes() {
   themeVersion = Date.now();
   sendThemes();
-  for (const t of tabs.values()) {
+  for (const [id, t] of tabs) {
     if (t.view.webContents.getURL().startsWith("aero://")) {
       t.view.webContents.executeJavaScript(
         `document.getElementById("aeroTheme")?.setAttribute("href", "aero://themes/_active/newtab.css?v=${themeVersion}")`
       ).catch(() => {});
+    } else {
+      applySiteStyle(id); // websites.css and sites/*.css
     }
   }
 }
@@ -298,13 +310,14 @@ const activeTab = () => tabs.get(activeId);
 function tabInfo(id) {
   const t = tabs.get(id);
   const wc = t.view.webContents;
-  const url = wc.getURL();
+  const url = t.sleeping ? t.sleeping.url : wc.getURL();
   return {
     id,
     profileId: t.profileId,
     url: url.startsWith(HOME) ? "" : url,
-    title: wc.getTitle() || "New Tab",
-    loading: wc.isLoading(),
+    title: (t.sleeping ? t.sleeping.title : wc.getTitle()) || "New Tab",
+    sleeping: !!t.sleeping,
+    loading: !t.sleeping && wc.isLoading(),
     canBack: wc.navigationHistory.canGoBack(),
     canForward: wc.navigationHistory.canGoForward(),
     favicon: t.favicon || null
@@ -328,16 +341,23 @@ function createTab(url = HOME, background = false, profileId = currentProfile) {
   wc.on("did-start-loading", () => update(id));
   wc.on("did-stop-loading", () => update(id));
   wc.on("did-navigate", (e, navUrl) => {
-    tabs.get(id).favicon = null;
+    const t = tabs.get(id);
+    if (!navUrl.startsWith(SLEEP_PAGE)) {
+      t.favicon = null;
+      t.sleeping = null; // woken up (e.g. by clicking the sleeping page)
+    }
+    t.hasLoginForm = false;
+    passwords?.offerFill(id);
     update(id);
     // Signing in or out happens on Google pages, so check the account list after visiting one.
     if (/^https:\/\/([a-z]+\.)*google\.com\//.test(navUrl)) refreshAccountsSoon(profileId);
   });
   wc.on("did-navigate-in-page", () => update(id));
-  // Match what the page's own code sees (navigator.userAgent) to the Firefox disguise on Google sign-in.
+  // In Firefox sign-in mode, match what the page's own code sees (navigator.userAgent) too.
   wc.on("did-start-navigation", (details, navUrl, inPlace, isMainFrame) => {
     const url = details.url ?? navUrl;
-    if (details.isMainFrame ?? isMainFrame) wc.setUserAgent(isGoogleSignIn(url) ? FIREFOX_UA : chromeUserAgent);
+    const firefox = isGoogleSignIn(url) && signInMode() === "firefox";
+    if (details.isMainFrame ?? isMainFrame) wc.setUserAgent(firefox ? FIREFOX_UA : chromeUserAgent);
   });
   wc.on("page-favicon-updated", (e, icons) => { tabs.get(id).favicon = icons[0] || null; update(id); });
   wc.on("dom-ready", () => applySiteStyle(id));
@@ -360,6 +380,8 @@ function activate(id) {
   if (!tab || tab.profileId !== currentProfile) return;
   activeId = id;
   activeByProfile[currentProfile] = id;
+  if (tab.sleeping) wakeTab(id);
+  power?.touch(id);
   for (const [tid, t] of tabs) {
     t.view.setVisible(tid === id);
     if (tid === id) t.view.setBounds(viewBounds);
@@ -380,7 +402,44 @@ function removeTab(id) {
   win.contentView.removeChildView(t.view);
   t.view.webContents.close();
   tabs.delete(id);
+  passwords?.forgetTab(id);
+  power?.forget(id);
   send("tab:closed", id);
+}
+
+const tabIdFor = webContents => {
+  for (const [id, t] of tabs) if (t.view.webContents === webContents) return id;
+  return null;
+};
+
+// ----- Sleeping tabs (to save memory) -----
+// A sleeping tab swaps its page for a tiny "💤" page and remembers where it was.
+// Switching to it (or clicking the 💤 page) wakes it up again.
+
+const SLEEP_PAGE = "aero://sleeping/";
+
+function sleepTab(id) {
+  const t = tabs.get(id);
+  if (!t || t.sleeping || id === activeId) return;
+  const wc = t.view.webContents;
+  const url = wc.getURL();
+  if (!/^https?:/.test(url)) return;
+  t.sleeping = { url, title: wc.getTitle() };
+  wc.loadURL(SLEEP_PAGE + "?" + new URLSearchParams({ url, title: t.sleeping.title }));
+  update(id);
+}
+
+function wakeTab(id) {
+  const t = tabs.get(id);
+  const { url } = t.sleeping;
+  t.sleeping = null;
+  const wc = t.view.webContents;
+  const history = wc.navigationHistory;
+  // Going "back" from the 💤 page restores the page and keeps the back/forward history tidy.
+  const index = history.getActiveIndex?.();
+  if (history.canGoBack() && history.getEntryAtIndex?.(index - 1)?.url === url) history.goBack();
+  else wc.loadURL(url);
+  update(id);
 }
 
 function closeTab(id) {
@@ -416,13 +475,30 @@ async function applySiteStyle(id) {
   const t = tabs.get(id);
   if (!t) return;
   const wc = t.view.webContents;
-  if (t.cssKey) {
-    await wc.removeInsertedCSS(t.cssKey).catch(() => {});
-    t.cssKey = null;
+  for (const key of [t.cssKey, t.themeCssKey]) if (key) await wc.removeInsertedCSS(key).catch(() => {});
+  t.cssKey = t.themeCssKey = null;
+  const url = wc.getURL();
+  if (!/^https?:/.test(url)) return;
+  if (restyleSites) t.cssKey = await wc.insertCSS(SITE_CSS).catch(() => null);
+  const themeCss = themeCssForSite(new URL(url).hostname);
+  if (themeCss) t.themeCssKey = await wc.insertCSS(themeCss).catch(() => null);
+}
+
+// A theme can restyle websites too:
+//   websites.css            → every website
+//   sites/youtube.com.css   → youtube.com and its subdomains (www.youtube.com, music.youtube.com…)
+function themeCssForSite(hostname) {
+  if (!state.activeTheme) return "";
+  const folder = path.join(themesDir(), state.activeTheme);
+  const read = file => { try { return fs.readFileSync(file, "utf8"); } catch { return ""; } };
+  let css = read(path.join(folder, "websites.css"));
+  let siteFiles = [];
+  try { siteFiles = fs.readdirSync(path.join(folder, "sites")).filter(f => f.endsWith(".css")); } catch {}
+  for (const file of siteFiles) {
+    const domain = file.slice(0, -4).toLowerCase();
+    if (hostname === domain || hostname.endsWith("." + domain)) css += "\n" + read(path.join(folder, "sites", file));
   }
-  if (restyleSites && !wc.getURL().startsWith("aero:")) {
-    t.cssKey = await wc.insertCSS(SITE_CSS).catch(() => null);
-  }
+  return css;
 }
 
 // ================= Keyboard shortcuts =================
@@ -504,6 +580,12 @@ ipcMain.on("profile:add", (e, data) => addProfile(data || {}));
 ipcMain.on("profile:update", (e, data) => updateProfile(data || {}));
 ipcMain.on("profile:delete", (e, id) => deleteProfile(id));
 ipcMain.on("profile:refresh", () => refreshAccounts(currentProfile));
+ipcMain.on("signin:mode", e => (e.returnValue = signInMode())); // asked by tab-preload.js
+ipcMain.on("signin:set-mode", (e, mode) => {
+  state.signInMode = mode === "firefox" ? "firefox" : "chromium";
+  saveState();
+  sendProfiles();
+});
 ipcMain.on("theme:set", (e, id) => {
   state.activeTheme = id || null;
   saveState();
@@ -555,6 +637,7 @@ function createWindow() {
     minWidth: 600,
     minHeight: 400,
     frame: false,
+    show: !process.env.AERO_SNAPSHOT, // test runs stay invisible
     backgroundColor: "#3aa6f0",
     title: "Aero Browser",
     icon: path.join(__dirname, "icons", "icon.png"),
@@ -569,14 +652,28 @@ function createWindow() {
   if (process.env.AERO_SNAPSHOT) {
     const log = text => fs.appendFileSync(path.join(process.env.AERO_SNAPSHOT, "log.txt"), text + "\n");
     win.webContents.on("console-message", (e, level, message, line, source) => log(`[ui] ${message} ${source}:${line}`));
+    // Pictures need a "shown" window, so show it far off-screen without taking focus from what you're doing.
+    win.setPosition(-10000, -10000);
+    win.showInactive();
+    win.webContents.on("render-process-gone", (e, details) => log("[ui gone] " + JSON.stringify(details)));
+    win.webContents.on("unresponsive", () => log("[ui unresponsive]"));
+    win.webContents.on("did-finish-load", () => log("[ui loaded]"));
     process.on("uncaughtException", err => log("[main] " + err.stack));
     // AERO_SNAPSHOT_OPEN=url1,url2 opens extra tabs; AERO_SNAPSHOT_JS runs in the UI before the picture.
     setTimeout(() => (process.env.AERO_SNAPSHOT_OPEN || "").split(",").filter(Boolean).forEach(u => createTab(u)), 2500);
     setTimeout(async () => {
       const dir = process.env.AERO_SNAPSHOT;
+      // AERO_SNAPSHOT_TABJS runs in the active tab (e.g. to try a test login page).
+      if (process.env.AERO_SNAPSHOT_TABJS && activeTab()) {
+        log("[tabjs] " + await activeTab().view.webContents.executeJavaScript(process.env.AERO_SNAPSHOT_TABJS).catch(e => "error " + e.message));
+        await new Promise(r => setTimeout(r, 1500));
+      }
       if (process.env.AERO_SNAPSHOT_JS) {
         await win.webContents.executeJavaScript(process.env.AERO_SNAPSHOT_JS).catch(e => log("[js] " + e.message));
         await new Promise(r => setTimeout(r, 1500));
+      }
+      if (process.env.AERO_SNAPSHOT_TABJS_AFTER && activeTab()) {
+        log("[tabjs after] " + await activeTab().view.webContents.executeJavaScript(process.env.AERO_SNAPSHOT_TABJS_AFTER).catch(e => "error " + e.message));
       }
       log("[ui state] " + await win.webContents.executeJavaScript(
         "JSON.stringify({aero: typeof window.aero, tabs: document.querySelectorAll('.tab').length, marks: document.querySelectorAll('#bookmarks button').length, themeHref: document.querySelector('#userTheme').href, sheet: (() => { try { return document.querySelector('#userTheme').sheet?.cssRules.length } catch (e) { return 'err ' + e.message } })(), accent: getComputedStyle(document.documentElement).getPropertyValue('--accent'), script: typeof applyPrefs, panelOpen: !document.querySelector('#profiles').hidden, panelW: document.querySelector('#profiles').offsetWidth, bodyKids: document.querySelector('#profilesBody').children.length, bg: getComputedStyle(document.querySelector('#profiles')).backgroundImage.slice(0,80)})"
@@ -590,9 +687,19 @@ function createWindow() {
       }
       fs.writeFileSync(path.join(dir, "ui.png"), (await win.webContents.capturePage()).toPNG());
       const tab = activeTab();
-      if (tab) fs.writeFileSync(path.join(dir, "tab.png"), (await tab.view.webContents.capturePage()).toPNG());
+      if (tab) {
+        // Ask Chromium to draw the page itself (works even when the window isn't on screen).
+        const wc = tab.view.webContents;
+        try {
+          if (!wc.debugger.isAttached()) wc.debugger.attach("1.3");
+          const shot = await wc.debugger.sendCommand("Page.captureScreenshot", { format: "png" });
+          fs.writeFileSync(path.join(dir, "tab.png"), Buffer.from(shot.data, "base64"));
+        } catch (err) {
+          log("[tab capture] " + err.message);
+        }
+      }
       fs.writeFileSync(path.join(dir, "bounds.json"), JSON.stringify(viewBounds));
-      app.quit();
+      app.exit(0);
     }, +process.env.AERO_SNAPSHOT_DELAY || 6000);
   }
 }
@@ -602,6 +709,8 @@ app.setAppUserModelId("com.aero.browser");
 
 // Debug helper: AERO_USER_DATA=<folder> keeps a test run's profiles and logins away from your real ones.
 if (process.env.AERO_USER_DATA) app.setPath("userData", process.env.AERO_USER_DATA);
+// Test runs don't use the graphics card, so they never fight with games or other apps for it.
+if (process.env.AERO_SNAPSHOT) app.disableHardwareAcceleration();
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
@@ -616,6 +725,19 @@ app.whenReady().then(() => {
   safely("themes", ensureThemesFolder);
   safely("theme watcher", watchThemes);
   sessionFor("default"); // the browser UI uses this session too, and needs aero://themes/ ready
+  safely("passwords", () => {
+    passwords = setupPasswords({ send, tabs, tabIdFor, currentProfile: () => currentProfile });
+  });
+  safely("power", () => {
+    power = setupPower({
+      tabs,
+      send,
+      sleepTab,
+      activeId: () => activeId,
+      settings: () => state.power || {},
+      saveSettings: s => { state.power = s; saveState(); }
+    });
+  });
   createWindow();
   safely("updates", setupAutoUpdates);
 });

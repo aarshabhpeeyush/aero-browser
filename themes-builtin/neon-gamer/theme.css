@@ -1,0 +1,24 @@
+/* Neon Gamer — the browser itself */
+:root {
+  --frame-a: #07070c;
+  --frame-b: #15101c;
+  --accent: #ff1f5a;
+  --text: #ffd6e2;
+  --text-shadow: 0 0 6px rgba(255, 31, 90, 0.7);
+  --gloss: 0.15;
+  --tab-radius: 4px;
+}
+#titlebar { border-bottom: 1px solid #ff1f5a; box-shadow: 0 1px 12px rgba(255, 31, 90, 0.5); }
+.tab { border-color: #3a1424; }
+.tab.active { color: #fff; background: linear-gradient(180deg, #2a0f1c, #1a0a12); border-color: #ff1f5a; box-shadow: 0 0 10px rgba(255, 31, 90, 0.6); }
+#toolbar { background: #0e0b12; border-top-color: #2a1420; border-bottom-color: #ff1f5a; }
+#bookmarks { background: #0e0b12; border-bottom-color: #2a1420; }
+#bookmarks button { color: #ffb3c8; }
+#address { background: #050508; border-color: #ff1f5a; box-shadow: 0 0 8px rgba(255, 31, 90, 0.4); }
+#url { color: #fff; }
+.navpair { background: #1a0a12; border-color: #ff1f5a; box-shadow: none; }
+.panel { background: #0e0b12; color: #ffd6e2; border-left-color: #ff1f5a; }
+.panel .hint, .panel small { color: #c98aa0 !important; }
+.profile-row, .accounts li, .pw-row, .usage-row, .meter { background: #1a0f16 !important; border-color: #3a1424 !important; color: #ffd6e2 !important; }
+.panel input, .panel select { background: #050508 !important; color: #fff !important; border-color: #ff1f5a !important; }
+.mini, .choice button, .gel.plain { background: #1a0a12; color: #ffd6e2; border-color: #3a1424; }

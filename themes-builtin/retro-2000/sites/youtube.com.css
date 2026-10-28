@@ -1,0 +1,12 @@
+/* Retro 2000 for YouTube: a Windows 98 title bar and square everything */
+
+#masthead-container #background, #masthead-container {
+  background: linear-gradient(90deg, #000080, #1084d0) !important;
+}
+#masthead-container yt-icon, #masthead-container #logo-icon { filter: brightness(0) invert(1); }
+
+ytd-thumbnail, ytd-thumbnail img, yt-image img, .yt-core-image {
+  border-radius: 0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+}

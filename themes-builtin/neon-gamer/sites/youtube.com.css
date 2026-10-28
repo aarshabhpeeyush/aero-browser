@@ -1,0 +1,18 @@
+/* Neon Gamer for YouTube (looks best with YouTube's own dark theme: profile picture → Appearance → Dark) */
+
+#masthead-container #background, #masthead-container {
+  background: #07070c !important;
+  border-bottom: 1px solid #ff1f5a;
+  box-shadow: 0 2px 16px rgba(255, 31, 90, 0.45);
+}
+
+/* Glowing logo and progress bar */
+#logo-icon, ytd-topbar-logo-renderer yt-icon { filter: drop-shadow(0 0 6px #ff1f5a) saturate(1.4); }
+.ytp-play-progress, .ytp-swatch-background-color { background: #ff1f5a !important; box-shadow: 0 0 10px #ff1f5a; }
+
+/* Thumbnails light up with a neon edge when you hover them */
+ytd-thumbnail, ytd-thumbnail img, yt-image img, .yt-core-image { border-radius: 6px !important; }
+ytd-rich-item-renderer:hover ytd-thumbnail, ytd-compact-video-renderer:hover ytd-thumbnail {
+  box-shadow: 0 0 0 2px #ff1f5a, 0 0 18px rgba(255, 31, 90, 0.7);
+  border-radius: 6px;
+}

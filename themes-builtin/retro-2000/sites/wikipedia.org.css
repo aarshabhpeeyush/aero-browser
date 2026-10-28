@@ -1,0 +1,11 @@
+/* Retro 2000 for Wikipedia: Times New Roman and a grey 3D page, like an old encyclopedia CD-ROM */
+
+html, body { background: #008080 !important; }
+.mw-page-container {
+  background: #c0c0c0 !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  margin-top: 10px;
+}
+.mw-body, .mw-body-content, .vector-body { font-family: "Times New Roman", Times, serif !important; }
+.mw-body h1, .mw-body h2, #firstHeading { font-family: "Times New Roman", Times, serif !important; color: #000080 !important; }

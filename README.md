@@ -27,11 +27,13 @@ From version 0.3.0, installed copies update themselves like Chrome. Every few ho
 
 ## Custom themes
 
-✨ Customize → **Custom themes** lists the themes in your themes folder (`%APPDATA%\Aero Browser	hemes`). Each theme is a folder with a `theme.css` file (and optionally `newtab.css`). The browser updates the moment you save. Bubble Pop and Luna XP are included as examples, and `THEME-GUIDE.md` in that folder explains everything you can change.
+✨ Customize → **Custom themes** lists the themes in your themes folder (`%APPDATA%\Aero Browser\themes`). Each theme is a folder with a `theme.css` file, and optionally `newtab.css`, `websites.css` (every site) and `sites/<domain>.css` (one site, e.g. `sites/youtube.com.css`). The browser updates the moment you save. Bubble Pop and Luna XP are included as examples, and `THEME-GUIDE.md` in that folder explains everything you can change.
 
 ## What it has
 
 - **Profiles & Google accounts**: click your profile picture to sign in to Google, add more accounts, or make extra profiles (like "School"). Each profile keeps its own logins
+- 🔑 **Password manager**: offers to save passwords when you log in and fills them with one click. There's a Passwords panel with a generator and an optional PIN. Passwords are encrypted with your Windows account (safeStorage) in `%APPDATA%\Aero Browser\passwords`, one vault per profile, and never leave the computer
+- ⚡ **Power**: live CPU/RAM graphs and per-tab usage. The RAM limiter puts unused background tabs to sleep, and the CPU limiter slows down busy background tabs (never the active tab or one playing sound)
 - Tabs at the **top, bottom, left or right**
 - Tabs with favicons and loading spinners, a glossy back/forward capsule, reload, home and an address bar that also searches
 - A bookmarks bar: click ☆ in the address bar to add the current page, right-click a bookmark to remove it
@@ -55,6 +57,8 @@ From version 0.3.0, installed copies update themselves like Chrome. Every few ho
 ## How it's built
 
 - `main.js`: the engine room. It creates the window and the tabs, and handles navigation and shortcuts.
+- `passwords.js`: the encrypted password vault. `power.js`: the CPU/RAM manager.
+- `tab-preload.js`: a small helper inside every tab that spots login forms and fills them.
 - `preload.js`: the safe "walkie-talkie" between the engine and the UI.
 - `ui/`: the glossy controls (HTML, CSS and JS). Change these to change how the browser looks.
 - `pages/newtab/`: the built-in Aero New Tab, opened at `aero://newtab/`.

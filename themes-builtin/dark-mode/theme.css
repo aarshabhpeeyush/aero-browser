@@ -1,0 +1,23 @@
+/* Dark Mode — the browser itself: dark glass */
+:root {
+  --frame-a: #0b0f17;
+  --frame-b: #1c2433;
+  --accent: #4a8cff;
+  --text: #e6ecf5;
+  --text-shadow: none;
+  --gloss: 0.25;
+}
+.tab.active { color: #e6ecf5; background: linear-gradient(180deg, #2a3446, #222a38); border-color: #3a475e; }
+#toolbar { background: linear-gradient(180deg, #222a38, #1a212d); border-top-color: #3a475e; border-bottom-color: #0b0f17; }
+#bookmarks { background: #1a212d; border-bottom-color: #0b0f17; }
+#bookmarks button { color: #c9d4e5; }
+#bookmarks button:hover { background: #2a3446; border-color: #3a475e; }
+#address { background: #10151f; border-color: #3a475e; box-shadow: none; }
+#url { color: #e6ecf5; }
+.navpair { background: #2a3446; border-color: #3a475e; box-shadow: none; }
+.panel { background: #161c27; color: #e6ecf5; border-left-color: #0b0f17; }
+.panel .hint, .panel small { color: #9fb0c8 !important; }
+.panel input, .panel select { background: #10151f !important; color: #e6ecf5 !important; border-color: #3a475e !important; }
+.profile-row, .accounts li, .pw-row, .usage-row, .meter { background: #1f2735 !important; border-color: #2c3647 !important; color: #e6ecf5 !important; }
+.mini, .choice button, .gel.plain { background: #222a38; color: #e6ecf5; border-color: #3a475e; }
+#pwBar { background: #2a2410; color: #f3e6b0; border-bottom-color: #5a4a14; }

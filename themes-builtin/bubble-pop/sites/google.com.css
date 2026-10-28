@@ -1,0 +1,12 @@
+/* Bubble Pop for Google (search, and other google.com pages). */
+
+/* A soft pink background */
+html { background: linear-gradient(180deg, #fff0f8, #ffe3f3) fixed !important; }
+body { background: transparent !important; }
+
+/* Pink Google logo */
+img[alt="Google"], svg[aria-label="Google"] { filter: hue-rotate(290deg) saturate(1.4); }
+
+/* Bubbly search box */
+textarea[name="q"], input[name="q"] { caret-color: #ff4fa8; }
+form[role="search"] { border-radius: 999px; box-shadow: 0 0 0 3px #ffc2e6; }

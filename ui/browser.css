@@ -566,3 +566,127 @@ button { font: inherit; }
 }
 .update-pill[hidden] { display: none; }
 @keyframes glow { to { box-shadow: 0 0 12px rgba(120, 255, 120, 0.9); } }
+
+/* ================= Password bar & panel ================= */
+
+#pwBar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  color: #04345c;
+  font-size: 13.5px;
+  background: linear-gradient(180deg, #fffbe6, #fff1b8);
+  border-bottom: 1px solid #e6c85a;
+}
+#pwBar[hidden] { display: none; }
+#pwBar .key { font-size: 16px; }
+#pwBarText { flex: 0 1 auto; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+#pwAccount { padding: 3px 8px; border-radius: 8px; border: 1px solid #c9a93a; font: inherit; color: #04345c; }
+#pwBar .bar-x { margin-left: auto; border: 0; background: none; color: #7a6420; cursor: pointer; font-size: 13px; }
+.gel.plain {
+  color: #04345c;
+  text-shadow: none;
+  border-color: #9ccbe8;
+  background: linear-gradient(180deg, #fff, #e8f4fc);
+}
+.gel[hidden], #pwAccount[hidden] { display: none; }
+
+.mini {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid #b9d9ee;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fff, #eaf5fc);
+  color: #04345c;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.mini:hover { border-color: var(--accent); background: #fff; }
+
+.hint.safe { padding: 8px 10px; border-radius: 10px; background: rgba(60, 194, 60, 0.12); color: #1d5a20; }
+.pw-status { min-height: 1em; margin: 4px 0; font-size: 12.5px; font-weight: 600; color: var(--accent-dark); }
+.pw-search, .pw-form input {
+  width: 100%;
+  padding: 7px 10px;
+  margin-bottom: 6px;
+  border: 1px solid #9ccbe8;
+  border-radius: 10px;
+  font: inherit;
+  color: #04345c;
+  background: #fff;
+}
+.pw-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+}
+.pw-row img { width: 18px; height: 18px; flex: none; }
+.pw-row .who { flex: 1; min-width: 0; }
+.pw-row b, .pw-row small, .pw-row code { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pw-row small { color: #2c5a80; }
+.pw-row code { font-size: 12px; color: #04345c; letter-spacing: 1px; }
+.pw-actions { display: flex; flex-wrap: wrap; gap: 3px; justify-content: flex-end; max-width: 120px; }
+.pw-pass { display: flex; gap: 4px; align-items: flex-start; }
+.pw-pass input { flex: 1; }
+.pw-generated {
+  display: block;
+  padding: 10px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  font-size: 15px;
+  word-break: break-all;
+  color: #04345c;
+  background: #fff;
+  border: 1px dashed var(--accent);
+  user-select: all;
+}
+
+/* ================= Power panel ================= */
+
+.meter {
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(235, 247, 255, 0.85));
+  border: 1px solid rgba(255,255,255,0.95);
+  box-shadow: 0 2px 6px rgba(0, 60, 130, 0.12);
+}
+.meter-top { display: flex; justify-content: space-between; align-items: baseline; }
+.meter-top span { font-size: 22px; font-weight: 300; color: var(--accent-dark); }
+.meter canvas { display: block; width: 100%; height: 56px; margin-top: 4px; }
+.meter small { color: #2c5a80; }
+#power input[type=range] { width: 100%; accent-color: var(--accent); }
+#tabUsage { list-style: none; margin: 0; padding: 0; }
+.usage-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.75);
+}
+.usage-row img, .usage-row > span:first-child { width: 16px; height: 16px; flex: none; font-size: 13px; }
+.usage-row .who { flex: 1; min-width: 0; }
+.usage-row b, .usage-row small { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.usage-row small { color: #2c5a80; }
+.usage-row.asleep { opacity: 0.6; }
+#powerBtn.limiting { box-shadow: 0 0 0 2px #fff, 0 0 10px #6fe84f; }
+
+/* Sleeping tabs look faded in the tab strip */
+.tab.sleeping .title { opacity: 0.6; font-style: italic; }
+
+/* Keep the password bar in the right place in the other layouts */
+#app.side { grid-template-rows: auto auto auto auto 1fr; }
+.side #pwBar { grid-column: 2; }
+.bars-right #pwBar { grid-column: 1; }
+.bars-bottom #pwBar { order: 2; }
+.signin-mode { margin-top: 4px; padding: 4px 8px; border-radius: 8px; border: 1px solid #9ccbe8; font: inherit; color: #04345c; background: #fff; }

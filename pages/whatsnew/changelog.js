@@ -1,6 +1,17 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "0.4.0",
+    date: "October 2026",
+    title: "Passwords, Power & website themes",
+    items: [
+      { icon: "🔑", title: "Password manager", text: "Log in to a site and Aero Browser offers to save your password. Next time, one click fills it in. The 🔑 button lets you see, copy, edit and add passwords, make strong new ones, and lock them with a PIN. Everything is encrypted and never leaves your computer." },
+      { icon: "⚡", title: "Power: CPU & RAM manager", text: "Like Opera GX: live CPU and RAM graphs, how much each tab uses, a RAM limiter that puts unused tabs to sleep 💤, and a CPU limiter that slows down busy background tabs." },
+      { icon: "🎨", title: "Themes that restyle websites", text: "Four new themes change websites too: 💧 Aqua Glass, 🌙 Dark Mode (makes every site dark), 🎮 Neon Gamer and 💾 Retro 2000, with extras for YouTube, Google, Roblox and Wikipedia. Make your own with websites.css and sites/<site>.css." },
+      { icon: "🔐", title: "Google sign-in modes", text: "If Google blocks signing in, open Profiles and switch “Sign in as” between Chromium and Firefox." }
+    ]
+  },
+  {
     version: "0.3.1",
     date: "October 2026",
     title: "Opening fix",

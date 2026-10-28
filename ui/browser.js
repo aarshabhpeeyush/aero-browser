@@ -107,8 +107,10 @@ function drawTab(info) {
   }
   el.title = info.title;
   el.querySelector(".title").textContent = info.title;
+  el.classList.toggle("sleeping", !!info.sleeping);
   const fav = el.querySelector(".fav");
-  if (info.loading) fav.innerHTML = `<span class="spin"></span>`;
+  if (info.sleeping) fav.textContent = "💤";
+  else if (info.loading) fav.innerHTML = `<span class="spin"></span>`;
   else if (info.favicon) {
     fav.innerHTML = `<img alt="">`;
     const img = fav.querySelector("img");
@@ -437,6 +439,17 @@ function renderProfiles() {
   };
   if (!signedIn.length) {
     addButton("Sign in to Google", "", () => openGoogle("https://accounts.google.com/ServiceLogin"));
+    // If Google says "This browser may not be secure", switching how we introduce ourselves can help.
+    const mode = document.createElement("select");
+    mode.innerHTML = `<option value="chromium">Sign in as: Chromium (normal)</option><option value="firefox">Sign in as: Firefox</option>`;
+    mode.value = profileState.signInMode || "chromium";
+    mode.title = "If Google blocks the sign-in, try the other option";
+    mode.className = "signin-mode";
+    mode.addEventListener("change", () => { Sound.click(); api.send("signin:set-mode", mode.value); });
+    buttons.append(mode, Object.assign(document.createElement("p"), {
+      className: "hint",
+      textContent: "Google blocked the sign-in? Pick the other option and try again."
+    }));
   } else {
     addButton("Add another Google account", "", () => openGoogle("https://accounts.google.com/AddSession"));
     addButton("Sign out of Google", "tiny red", () => openGoogle("https://accounts.google.com/Logout"));
@@ -560,11 +573,353 @@ drawBookmarks();
 applyPrefs();
 api.send("ui:ready");
 
+// ================= Password manager =================
+
+const pwOffers = new Map(); // tabId -> { host, username, update } — "Save password?"
+const pwFillable = new Map(); // tabId -> { host, accounts } — saved logins for this page
+const pwRevealed = new Map(); // login id -> password, only while the panel shows it
+let pwData = { logins: [], never: [], hasPin: false, unlocked: true, encrypted: true };
+let pwSearch = "";
+let pwEditing = null; // login being edited in the form
+let barFlash = null;
+
+function drawPwBar() {
+  const bar = $("#pwBar");
+  const offer = pwOffers.get(activeId);
+  const fill = pwFillable.get(activeId);
+  const select = $("#pwAccount");
+  select.hidden = true;
+  $("#pwBarSecondary").hidden = false;
+  $("#pwBarPrimary").hidden = false;
+
+  if (barFlash) {
+    $("#pwBarText").textContent = barFlash;
+    $("#pwBarPrimary").hidden = $("#pwBarSecondary").hidden = true;
+    bar.hidden = false;
+  } else if (offer) {
+    $("#pwBarText").textContent = `${offer.update ? "Update the saved password" : "Save your password"} for ${offer.host}${offer.username ? " (" + offer.username + ")" : ""}?`;
+    $("#pwBarPrimary").textContent = offer.update ? "Update" : "Save";
+    $("#pwBarSecondary").textContent = "Never for this site";
+    bar.hidden = false;
+  } else if (fill?.accounts.length) {
+    $("#pwBarText").textContent = `Saved login for ${fill.host}:`;
+    select.innerHTML = "";
+    for (const a of fill.accounts) select.add(new Option(a.username, a.id));
+    select.hidden = false;
+    $("#pwBarPrimary").textContent = "Fill in";
+    $("#pwBarSecondary").hidden = true;
+    bar.hidden = false;
+  } else {
+    bar.hidden = true;
+  }
+  requestAnimationFrame(sendBounds);
+}
+
+// A short message in the bar (and the Passwords panel), e.g. "Password saved".
+function flash(message) {
+  barFlash = message;
+  const status = $("#pwStatus");
+  if (status) status.textContent = message;
+  drawPwBar();
+  clearTimeout(flash.timer);
+  flash.timer = setTimeout(() => { barFlash = null; drawPwBar(); }, 2800);
+}
+
+$("#pwBarPrimary").addEventListener("click", () => {
+  const tabId = activeId;
+  if (pwOffers.has(tabId)) {
+    api.send("pw:save", tabId);
+    pwOffers.delete(tabId);
+    Sound.bloop();
+  } else if (pwFillable.has(tabId)) {
+    api.send("pw:fill", { tabId, id: $("#pwAccount").value });
+    pwFillable.delete(tabId); // the bar goes away once filled
+    Sound.bloop();
+  }
+  drawPwBar();
+});
+$("#pwBarSecondary").addEventListener("click", () => {
+  api.send("pw:never", activeId);
+  pwOffers.delete(activeId);
+  Sound.click();
+  drawPwBar();
+});
+$("#pwBarClose").addEventListener("click", () => {
+  if (pwOffers.has(activeId)) api.send("pw:dismiss", activeId);
+  pwOffers.delete(activeId);
+  pwFillable.delete(activeId);
+  barFlash = null;
+  Sound.click();
+  drawPwBar();
+});
+
+api.on("pw:offer", offer => { pwOffers.set(offer.tabId, offer); Sound.bloop(); drawPwBar(); });
+api.on("pw:fillable", data => {
+  if (data.accounts.length) pwFillable.set(data.tabId, data);
+  else pwFillable.delete(data.tabId);
+  drawPwBar();
+});
+api.on("pw:status", flash);
+api.on("tab:activated", drawPwBar);
+api.on("tab:closed", id => { pwOffers.delete(id); pwFillable.delete(id); });
+api.on("pw:revealed", ({ id, password }) => { pwRevealed.set(id, password); renderPasswords(); });
+api.on("pw:list", data => { pwData = data; renderPasswords(); });
+
+// Strong random passwords, made on this computer.
+function generatePassword(length = 16, symbols = true) {
+  const sets = ["abcdefghijkmnopqrstuvwxyz", "ABCDEFGHJKLMNPQRSTUVWXYZ", "23456789"];
+  if (symbols) sets.push("!@#$%&*?-_+=");
+  const all = sets.join("");
+  const random = n => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+  const chars = sets.map(set => set[random(set.length)]); // at least one of each kind
+  while (chars.length < length) chars.push(all[random(all.length)]);
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = random(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join("");
+}
+
+function el(tag, props = {}, ...children) {
+  const node = Object.assign(document.createElement(tag), props);
+  node.append(...children);
+  return node;
+}
+
+function renderPasswords() {
+  const body = $("#passwordsBody");
+  if ($("#passwords").hidden) return;
+  body.innerHTML = "";
+  const d = pwData;
+
+  body.append(el("p", { className: "hint safe", textContent: d.encrypted
+    ? "🔒 Encrypted with your Windows account. Your passwords never leave this computer."
+    : "⚠️ Windows encryption isn't available, so passwords can't be saved." }));
+  body.append(el("p", { id: "pwStatus", className: "pw-status" }));
+
+  // --- PIN lock ---
+  if (d.hasPin && !d.unlocked) {
+    const pin = el("input", { type: "password", placeholder: "PIN", inputMode: "numeric", maxLength: 8 });
+    const form = el("form", { className: "add-profile" }, pin, el("button", { className: "gel tiny", type: "submit", textContent: "Unlock" }));
+    form.addEventListener("submit", e => { e.preventDefault(); api.send("pw:unlock", pin.value); });
+    body.append(el("section", {}, el("h3", { textContent: "Locked 🔒" }), el("p", { className: "hint", textContent: "Type your PIN to see, copy or change passwords. It stays unlocked for 5 minutes." }), form));
+  }
+
+  // --- Saved logins ---
+  const list = el("section", {}, el("h3", { textContent: `Saved logins (${d.logins.length})` }));
+  const search = el("input", { className: "pw-search", placeholder: "Search…", value: pwSearch });
+  search.addEventListener("input", () => {
+    pwSearch = search.value;
+    renderPasswords();
+    $(".pw-search").focus();
+    $(".pw-search").setSelectionRange(pwSearch.length, pwSearch.length);
+  });
+  list.append(search);
+  const q = pwSearch.toLowerCase();
+  const shown = d.logins.filter(l => !q || l.host.includes(q) || l.username.toLowerCase().includes(q));
+  if (!shown.length) list.append(el("p", { className: "hint", textContent: d.logins.length ? "Nothing matches." : "No passwords yet. Log in to a website and click Save, or add one below." }));
+  for (const login of shown) {
+    const icon = el("img", { src: `https://www.google.com/s2/favicons?sz=32&domain=${login.host}`, alt: "" });
+    icon.onerror = () => icon.remove();
+    const pass = pwRevealed.has(login.id) ? pwRevealed.get(login.id) : "••••••••";
+    const button = (text, title, fn) => {
+      const b = el("button", { className: "mini", textContent: text, title });
+      b.addEventListener("click", fn);
+      return b;
+    };
+    list.append(el("div", { className: "pw-row" },
+      icon,
+      el("span", { className: "who" }, el("b", { textContent: login.host }), el("small", { textContent: login.username || "(no username)" }), el("code", { textContent: pass })),
+      el("span", { className: "pw-actions" },
+        button(pwRevealed.has(login.id) ? "🙈" : "👁", "Show / hide password", () => {
+          if (pwRevealed.has(login.id)) { pwRevealed.delete(login.id); renderPasswords(); } else api.send("pw:reveal", login.id);
+        }),
+        button("👤", "Copy username", () => api.send("pw:copy", { id: login.id, field: "username" })),
+        button("📋", "Copy password", () => api.send("pw:copy", { id: login.id, field: "password" })),
+        button("✎", "Edit", () => { pwEditing = login; renderPasswords(); $("#pwFormPass").focus(); }),
+        button("🗑", "Delete", () => {
+          if (confirm(`Delete the saved password for ${login.host}${login.username ? " (" + login.username + ")" : ""}?`)) api.send("pw:delete", login.id);
+        })
+      )
+    ));
+  }
+  body.append(list);
+
+  // --- Add / edit ---
+  const site = el("input", { placeholder: "Website (e.g. roblox.com)", value: pwEditing?.host || "" });
+  const user = el("input", { placeholder: "Username or email", value: pwEditing?.username || "" });
+  const pass = el("input", { id: "pwFormPass", type: "password", placeholder: pwEditing ? "New password" : "Password" });
+  const show = el("button", { type: "button", className: "mini", textContent: "👁", title: "Show password" });
+  show.addEventListener("click", () => (pass.type = pass.type === "password" ? "text" : "password"));
+  const gen = el("button", { type: "button", className: "mini", textContent: "🎲", title: "Make a strong password" });
+  gen.addEventListener("click", () => { pass.value = generatePassword(); pass.type = "text"; Sound.bloop(); });
+  const form = el("form", { className: "pw-form" },
+    site, user, el("div", { className: "pw-pass" }, pass, show, gen),
+    el("div", { className: "row" }, el("button", { className: "gel tiny", type: "submit", textContent: pwEditing ? "Save changes" : "Add password" }))
+  );
+  if (pwEditing) {
+    const cancel = el("button", { type: "button", className: "gel tiny plain", textContent: "Cancel" });
+    cancel.addEventListener("click", () => { pwEditing = null; renderPasswords(); });
+    form.querySelector(".row").append(cancel);
+  }
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    if (pwEditing && !pass.value) return flash("Type the new password (or press 🎲).");
+    api.send("pw:upsert", { id: pwEditing?.id, site: site.value, username: user.value, password: pass.value });
+    pwEditing = null;
+  });
+  body.append(el("section", {}, el("h3", { textContent: pwEditing ? "Edit login" : "Add a password" }), form));
+
+  // --- Generator ---
+  const length = el("input", { type: "range", min: 8, max: 32, value: 16 });
+  const symbols = el("input", { type: "checkbox", checked: true });
+  const out = el("code", { className: "pw-generated", textContent: generatePassword() });
+  const regen = () => (out.textContent = generatePassword(+length.value, symbols.checked));
+  length.addEventListener("input", regen);
+  symbols.addEventListener("change", regen);
+  const again = el("button", { className: "gel tiny", textContent: "🎲 New" });
+  again.addEventListener("click", () => { regen(); Sound.bloop(); });
+  const copy = el("button", { className: "gel tiny", textContent: "Copy" });
+  copy.addEventListener("click", () => { navigator.clipboard.writeText(out.textContent); flash("Copied!"); });
+  body.append(el("section", {},
+    el("h3", { textContent: "Password generator" }), out,
+    el("label", { className: "row" }, "Length", length),
+    el("label", { className: "toggle" }, symbols, "Symbols (!@#…)"),
+    el("div", { className: "row" }, again, copy)
+  ));
+
+  // --- PIN settings ---
+  const oldPin = el("input", { type: "password", placeholder: "Current PIN", inputMode: "numeric", maxLength: 8 });
+  const newPin = el("input", { type: "password", placeholder: d.hasPin ? "New PIN (blank = remove)" : "New PIN (4–8 numbers)", inputMode: "numeric", maxLength: 8 });
+  const pinForm = el("form", { className: "pw-form" }, ...(d.hasPin ? [oldPin] : []), newPin,
+    el("div", { className: "row" }, el("button", { className: "gel tiny", type: "submit", textContent: d.hasPin ? "Change PIN" : "Set PIN" })));
+  pinForm.addEventListener("submit", e => { e.preventDefault(); api.send("pw:set-pin", { oldPin: oldPin.value, newPin: newPin.value }); });
+  body.append(el("section", {}, el("h3", { textContent: "PIN lock" }),
+    el("p", { className: "hint", textContent: "A PIN stops anyone else on this computer from seeing or copying your passwords." }), pinForm));
+
+  // --- Never-save sites ---
+  if (d.never.length) {
+    const never = el("section", {}, el("h3", { textContent: "Never save on" }));
+    for (const host of d.never) {
+      const allow = el("button", { className: "mini", textContent: "Allow again" });
+      allow.addEventListener("click", () => api.send("pw:unnever", host));
+      never.append(el("div", { className: "pw-row" }, el("span", { className: "who" }, el("b", { textContent: host })), allow));
+    }
+    body.append(never);
+  }
+}
+
+$("#pwBtn").addEventListener("click", () => {
+  togglePanel("passwords");
+  if (!$("#passwords").hidden) { pwRevealed.clear(); api.send("pw:refresh"); }
+});
+
+// ================= Power (CPU & RAM manager) =================
+
+let perfSettingsShown = false;
+
+function drawGraph(canvas, values, max, limit, color) {
+  const dpr = devicePixelRatio || 1;
+  const w = canvas.clientWidth || 280;
+  const h = canvas.clientHeight || 56;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  if (values.length < 2) return;
+  const step = w / 59;
+  const x = i => w - (values.length - 1 - i) * step;
+  const y = v => h - 2 - Math.min(v / max, 1) * (h - 6);
+  const fill = ctx.createLinearGradient(0, 0, 0, h);
+  fill.addColorStop(0, color + "aa");
+  fill.addColorStop(1, color + "11");
+  ctx.beginPath();
+  ctx.moveTo(x(0), h);
+  values.forEach((v, i) => ctx.lineTo(x(i), y(v)));
+  ctx.lineTo(x(values.length - 1), h);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.beginPath();
+  values.forEach((v, i) => (i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v))));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  if (limit) {
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = "#e8433c";
+    ctx.beginPath();
+    ctx.moveTo(0, y(limit));
+    ctx.lineTo(w, y(limit));
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+const mb = n => (n >= 1024 ? (n / 1024).toFixed(1) + " GB" : Math.round(n) + " MB");
+
+api.on("perf:stats", stats => {
+  const s = stats.settings;
+  if (!perfSettingsShown) {
+    perfSettingsShown = true;
+    $("#ramOn").checked = s.ramOn;
+    $("#cpuOn").checked = s.cpuOn;
+    $("#ramLimit").value = s.ramLimit;
+    $("#cpuLimit").value = s.cpuLimit;
+  }
+  $("#ramLimitText").textContent = mb(+$("#ramLimit").value);
+  $("#cpuLimitText").textContent = $("#cpuLimit").value + "%";
+  $("#powerBtn").classList.toggle("limiting", s.ramOn || s.cpuOn);
+  if ($("#power").hidden) return;
+
+  $("#cpuNow").textContent = Math.round(stats.cpu) + "%";
+  $("#ramNow").textContent = mb(stats.ram);
+  $("#ramSystem").textContent = `Your computer: ${mb(stats.systemRam.total - stats.systemRam.free)} of ${mb(stats.systemRam.total)} in use`;
+  drawGraph($("#cpuGraph"), stats.history.map(p => p.cpu), 100, s.cpuOn && s.cpuLimit, "#3cc23c");
+  const ramMax = Math.max(s.ramOn ? s.ramLimit * 1.15 : 0, ...stats.history.map(p => p.ram * 1.25), 256);
+  drawGraph($("#ramGraph"), stats.history.map(p => p.ram), ramMax, s.ramOn && s.ramLimit, "#1e9be8");
+  $("#sleptCount").textContent = stats.sleptCount ? `· ${stats.sleptCount} put to sleep` : "";
+
+  const list = $("#tabUsage");
+  list.innerHTML = "";
+  for (const t of stats.tabs.filter(t => t.profileId === profileState.current)) {
+    const icon = t.favicon ? el("img", { src: t.favicon, alt: "" }) : el("span", { textContent: t.builtIn ? "🫧" : "🌐" });
+    if (icon.tagName === "IMG") icon.onerror = () => icon.replaceWith("🌐");
+    const badges = [t.active && "👀", t.sleeping && "💤", t.audible && "🔊", t.slowed && "🐢"].filter(Boolean).join(" ");
+    const row = el("li", { className: "usage-row" + (t.sleeping ? " asleep" : "") },
+      icon,
+      el("span", { className: "who" }, el("b", { textContent: t.title }), el("small", { textContent: t.sleeping ? "Asleep 💤" : `${mb(t.ram)} · CPU ${Math.round(t.cpu)}% ${badges}` }))
+    );
+    if (!t.active && !t.sleeping && !t.builtIn) {
+      const sleep = el("button", { className: "mini", textContent: "💤", title: "Put this tab to sleep to free memory" });
+      sleep.addEventListener("click", () => { api.send("tab:sleep", t.id); Sound.click(); });
+      row.append(sleep);
+    }
+    list.append(row);
+  }
+});
+
+const sendPerf = () => api.send("perf:settings", {
+  ramOn: $("#ramOn").checked,
+  cpuOn: $("#cpuOn").checked,
+  ramLimit: +$("#ramLimit").value,
+  cpuLimit: +$("#cpuLimit").value
+});
+for (const id of ["ramOn", "cpuOn"]) $("#" + id).addEventListener("change", () => { Sound.click(); sendPerf(); });
+for (const id of ["ramLimit", "cpuLimit"]) {
+  $("#" + id).addEventListener("input", () => {
+    $("#ramLimitText").textContent = mb(+$("#ramLimit").value);
+    $("#cpuLimitText").textContent = $("#cpuLimit").value + "%";
+  });
+  $("#" + id).addEventListener("change", sendPerf);
+}
+$("#powerBtn").addEventListener("click", () => togglePanel("power"));
+
 // ================= Pretend engine (design preview only) =================
 
 function makePretendEngine() {
   const handlers = {};
-  const emit = (ch, data) => handlers[ch]?.(data);
+  const emit = (ch, data) => handlers[ch]?.forEach(fn => fn(data));
   const fake = new Map();
   let next = 1;
   let active = null;
@@ -580,7 +935,7 @@ function makePretendEngine() {
     emit("tab:activated", (active = info.id));
   };
   return {
-    on(ch, fn) { handlers[ch] = fn; },
+    on(ch, fn) { (handlers[ch] ||= []).push(fn); },
     send(ch, data) {
       if (ch === "ui:ready" && !fake.size) {
         emit("profiles", profiles);

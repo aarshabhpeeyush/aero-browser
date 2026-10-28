@@ -1,0 +1,19 @@
+/* Dark Mode for EVERY website.
+   The trick: flip all the colours (white ↔ black), then flip pictures and videos back so
+   they look normal. Works on almost any site, even ones with no dark mode of their own. */
+
+html {
+  filter: invert(0.92) hue-rotate(180deg) !important;
+  background: #fff !important; /* becomes dark after the flip */
+}
+
+/* Flip pictures, videos and drawings back to their real colours */
+img, picture, video, canvas, iframe, embed, object,
+svg image, [style*="background-image"] {
+  filter: invert(1) hue-rotate(180deg) !important;
+}
+
+/* Easy-on-the-eyes scrollbars */
+::-webkit-scrollbar { width: 13px; height: 13px; }
+::-webkit-scrollbar-track { background: #e8e8e8; }
+::-webkit-scrollbar-thumb { border: 3px solid #e8e8e8; border-radius: 999px; background: #8a8a8a; }

@@ -1,0 +1,21 @@
+/* Aqua Glass for YouTube */
+
+/* Glassy sky-blue top bar */
+#masthead-container #background, #masthead-container, ytd-masthead {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 51%),
+    linear-gradient(180deg, #7fd4ff, #2aa7ec) !important;
+}
+
+/* Aqua logo and progress bar */
+#logo-icon, ytd-topbar-logo-renderer yt-icon { filter: hue-rotate(200deg) saturate(1.2); }
+.ytp-play-progress, .ytp-swatch-background-color { background: #19a7e8 !important; }
+
+/* Bubbly thumbnails with a glass edge */
+ytd-thumbnail, ytd-thumbnail img, yt-image img, .yt-core-image {
+  border-radius: 16px !important;
+}
+ytd-thumbnail { box-shadow: 0 4px 12px rgba(0, 90, 160, 0.25); }
+
+/* The search box glows */
+ytd-searchbox #container, .ytSearchboxComponentInputBox { border-color: #5fd0ff !important; box-shadow: 0 0 8px rgba(80, 200, 255, 0.5); }

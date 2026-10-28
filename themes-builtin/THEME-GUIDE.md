@@ -16,6 +16,8 @@ A theme is a folder in this **themes** folder. Each one can change how the brows
 | `theme.json` | Name, author and description shown in Customize |
 | `theme.css` | Restyles the browser: tabs, toolbar, buttons, panels |
 | `newtab.css` | *(optional)* Restyles the New Tab page and its widgets |
+| `websites.css` | *(optional)* Restyles **every website** |
+| `sites/<site>.css` | *(optional)* Restyles **one website**, e.g. `sites/youtube.com.css`, `sites/google.com.css`, `sites/roblox.com.css`. It also covers that site's sub-addresses, like www.youtube.com and music.youtube.com |
 | pictures and fonts | Use them from your CSS, e.g. `background: url(sky.png)` |
 
 ## Easiest changes: the colour variables
@@ -54,6 +56,13 @@ Your Customize choices add classes to `#app`, so a theme can react to them. For 
 
 Useful selectors: `#scene` (the wallpaper), `.glass`, `.panel`, `.pill`, `.clock`, `.orb` and each widget by name: `.clock`, `.search`, `.dock`, `.tasks`, `.notes`, `.music`, `.weather`, `.aquarium`, `.calendar`, `.timer`, `.bubblewrap`.
 **Tip:** open a New Tab and press **F12** to explore everything and try out changes live.
+
+## Websites (`websites.css` and `sites/`)
+
+- Websites already have their own styles, so put `!important` after a value when yours doesn't win, e.g. `background: pink !important;`.
+- To find what to style, open the site, press **F12**, click the arrow tool in the top-left corner of the developer tools, then click any part of the page. You'll see its name (like `#masthead` or `.game-card-thumb`).
+- Websites change their code now and then, so a site file might need a quick fix later.
+- Bubble Pop has examples for YouTube, Google and Roblox in its `sites` folder.
 
 ## Sharing your theme
 

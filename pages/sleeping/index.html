@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sleeping tab</title>
+  <style>
+    html, body { margin: 0; height: 100%; }
+    body {
+      display: grid;
+      place-items: center;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 40, 100, 0.5);
+      background: linear-gradient(180deg, #0b3d7a, #1e7bd6 60%, #7fd0ff);
+    }
+    a {
+      display: block;
+      padding: 36px 48px;
+      border-radius: 24px;
+      color: inherit;
+      text-align: center;
+      text-decoration: none;
+      background: linear-gradient(180deg, rgba(255,255,255,0.4), rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 51%, rgba(255,255,255,0.2));
+      border: 1px solid rgba(255,255,255,0.8);
+      box-shadow: 0 10px 30px rgba(0, 30, 80, 0.4);
+    }
+    .zz { font-size: 64px; animation: float 2.5s ease-in-out infinite alternate; }
+    @keyframes float { to { transform: translateY(-8px); } }
+    h1 { margin: 8px 0 4px; font-weight: 300; }
+    p { margin: 0; opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <a id="wake">
+    <div class="zz">💤</div>
+    <h1 id="title">This tab is asleep</h1>
+    <p>Sleeping to save memory. Click to wake it up.</p>
+  </a>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const url = params.get("url");
+    if (/^https?:/.test(url)) document.getElementById("wake").href = url;
+    if (params.get("title")) {
+      document.getElementById("title").textContent = params.get("title");
+      document.title = params.get("title");
+    }
+  </script>
+</body>
+</html>

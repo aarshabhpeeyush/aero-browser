@@ -1,0 +1,6 @@
+/* Dark Mode for Roblox.
+   Roblox already has a proper dark theme (Settings → Account Info → Theme → Dark),
+   so we don't flip its colours. Flipping would turn its dark theme light! */
+
+html, html img, html video, html canvas, html iframe, html picture,
+html [style*="background-image"] { filter: none !important; }

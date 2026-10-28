@@ -1,0 +1,15 @@
+/* Aqua Glass for Wikipedia: articles on a sheet of glass over the sky */
+
+html, body {
+  background: linear-gradient(180deg, #2a9ae8 0%, #8fd6ff 40%, #dff5ff 100%) fixed !important;
+}
+.mw-page-container {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-radius: 20px;
+  margin-top: 12px;
+  box-shadow: 0 10px 30px rgba(0, 70, 140, 0.25);
+}
+.mw-body h1, .mw-body h2, #firstHeading {
+  color: #0a6cb4 !important;
+  border-bottom-color: #9fe2ff !important;
+}

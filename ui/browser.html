@@ -36,6 +36,8 @@
         <button id="star" type="button" title="Bookmark this page">&#x2606;</button>
       </form>
       <button id="updateBtn" class="update-pill" hidden title="A new version is ready">&#x2B06; Restart to update</button>
+      <button id="powerBtn" class="orb small" title="Power: CPU & RAM manager">&#x26A1;</button>
+      <button id="pwBtn" class="orb small" title="Passwords">&#x1F511;</button>
       <button id="profileBtn" class="avatar" title="Profiles & Google accounts"></button>
       <button id="customizeBtn" class="orb green" title="Customize your browser">&#x2728;</button>
     </div>
@@ -43,8 +45,65 @@
     <div id="bookmarks"></div>
     <div id="progress"><div></div></div>
 
+    <!-- "Save password?" / "Fill saved login" bar -->
+    <div id="pwBar" hidden>
+      <span class="key">&#x1F511;</span>
+      <span id="pwBarText"></span>
+      <select id="pwAccount" hidden></select>
+      <button id="pwBarPrimary" class="gel tiny"></button>
+      <button id="pwBarSecondary" class="gel tiny plain"></button>
+      <button id="pwBarClose" class="bar-x" title="Close">&#x2715;</button>
+    </div>
+
     <div id="main">
       <div id="viewport"></div>
+
+      <aside id="passwords" class="panel" hidden>
+        <header>
+          <h2>Passwords</h2>
+          <button class="orb small close-panel" title="Close">&#x2715;</button>
+        </header>
+        <div id="passwordsBody"></div>
+      </aside>
+
+      <aside id="power" class="panel" hidden>
+        <header>
+          <h2>Power</h2>
+          <button class="orb small close-panel" title="Close">&#x2715;</button>
+        </header>
+        <div id="powerBody">
+          <section class="meters">
+            <div class="meter">
+              <div class="meter-top"><b>CPU</b><span id="cpuNow">0%</span></div>
+              <canvas id="cpuGraph" width="280" height="56"></canvas>
+            </div>
+            <div class="meter">
+              <div class="meter-top"><b>RAM</b><span id="ramNow">0 MB</span></div>
+              <canvas id="ramGraph" width="280" height="56"></canvas>
+              <small id="ramSystem"></small>
+            </div>
+          </section>
+
+          <section>
+            <h3>RAM limiter</h3>
+            <label class="toggle"><input type="checkbox" id="ramOn"> Keep the browser under <b id="ramLimitText"></b></label>
+            <input type="range" id="ramLimit" min="512" max="16384" step="256">
+            <p class="hint">Over the limit, the background tabs you haven't used for longest go to sleep 💤. They wake up when you click them.</p>
+          </section>
+
+          <section>
+            <h3>CPU limiter</h3>
+            <label class="toggle"><input type="checkbox" id="cpuOn"> Keep CPU under <b id="cpuLimitText"></b></label>
+            <input type="range" id="cpuLimit" min="5" max="100" step="5">
+            <p class="hint">Over the limit, busy background tabs are slowed down. The tab you're on and tabs playing sound never are.</p>
+          </section>
+
+          <section>
+            <h3>Tabs <small id="sleptCount"></small></h3>
+            <ul id="tabUsage"></ul>
+          </section>
+        </div>
+      </aside>
 
       <aside id="profiles" class="panel" hidden>
         <header>

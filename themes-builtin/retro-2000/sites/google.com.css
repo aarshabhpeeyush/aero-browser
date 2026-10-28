@@ -1,0 +1,26 @@
+/* Retro 2000 for Google: searching from outer space, like a 1999 homepage */
+
+html {
+  background:
+    radial-gradient(1px 1px at 20px 30px, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 90px 120px, #fff 50%, transparent 51%),
+    radial-gradient(2px 2px at 160px 60px, #ffe 50%, transparent 51%),
+    radial-gradient(1px 1px at 230px 170px, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 50px 200px, #cdf 50%, transparent 51%),
+    #000014 !important;
+  background-size: 260px 230px !important;
+}
+body { background: transparent !important; font-family: "Times New Roman", Times, serif !important; }
+
+/* Results in a grey Windows box so they're easy to read */
+#center_col {
+  background: #c0c0c0;
+  padding: 10px 14px !important;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+}
+#center_col, #center_col * { color: #000 !important; }
+#center_col a h3 { color: #0000ee !important; text-decoration: underline; }
+
+/* A rainbow logo */
+img[alt="Google"], svg[aria-label="Google"] { filter: drop-shadow(2px 2px 0 #ff0) drop-shadow(-2px -2px 0 #0ff); }
