@@ -45,8 +45,10 @@ button { font: inherit; }
   background:
     linear-gradient(180deg, rgba(255,255,255,calc(var(--gloss) * 0.55)) 0%, rgba(255,255,255,calc(var(--gloss) * 0.1)) 50%, rgba(255,255,255,0) 51%),
     linear-gradient(180deg, var(--frame-a), var(--frame-b));
-  -webkit-app-region: drag;
 }
+/* Only the EMPTY parts of the tab bar drag the window. (Buttons inside a drag area can stop
+   receiving clicks on Windows once a window has web page views in it.) */
+.drag-space, .app-orb { -webkit-app-region: drag; }
 .app-orb {
   width: 26px;
   height: 26px;
@@ -530,8 +532,7 @@ button { font: inherit; }
 /* Window buttons move to the top corner; the toolbar becomes the part you drag the window by */
 .side .winbtns { position: fixed; top: 0; right: 0; z-index: 5; height: 32px; }
 .bars-left #toolbar { padding-right: 150px; }
-.side #toolbar { -webkit-app-region: drag; }
-.side #toolbar > * { -webkit-app-region: no-drag; }
+.side .drag-space { min-height: 40px; }
 
 /* ================= Custom themes & updates ================= */
 

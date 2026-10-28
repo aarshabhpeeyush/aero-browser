@@ -1,6 +1,16 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "0.4.1",
+    date: "October 2026",
+    title: "Bug fixes",
+    items: [
+      { icon: "🪟", title: "Window buttons work again", text: "Minimise, maximise and close respond properly. Drag the window by the empty space in the tab bar." },
+      { icon: "🖼️", title: "Tabs always show up", text: "Fixed pages staying blank until you opened Customize." },
+      { icon: "1️⃣", title: "One browser at a time", text: "Opening Aero Browser again brings the open window to the front instead of starting a second copy." }
+    ]
+  },
+  {
     version: "0.4.0",
     date: "October 2026",
     title: "Passwords, Power & website themes",

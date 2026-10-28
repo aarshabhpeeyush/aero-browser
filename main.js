@@ -383,9 +383,9 @@ function activate(id) {
   if (tab.sleeping) wakeTab(id);
   power?.touch(id);
   for (const [tid, t] of tabs) {
-    t.view.setVisible(tid === id);
-    if (tid === id) t.view.setBounds(viewBounds);
+    if (tid !== id) t.view.setVisible(false);
   }
+  showView(tab.view);
   send("tab:activated", id);
   // A fresh tab should let you type in the address bar straight away.
   const url = tab.view.webContents.getURL();
@@ -395,6 +395,19 @@ function activate(id) {
   } else {
     tab.view.webContents.focus();
   }
+}
+
+// On Windows a page view that's switched back on isn't always drawn until its size changes
+// (which is why opening Customize used to make tabs appear). Nudging the size forces a redraw.
+function showView(view) {
+  view.setVisible(true);
+  const { x, y, width, height } = viewBounds;
+  view.setBounds({ x, y, width, height: Math.max(0, height - 1) });
+  setTimeout(() => {
+    if (view.webContents.isDestroyed()) return;
+    view.setBounds(viewBounds);
+    view.webContents.invalidate();
+  }, 30);
 }
 
 function removeTab(id) {
@@ -647,6 +660,8 @@ function createWindow() {
   win.webContents.on("before-input-event", (e, input) => handleKey(input) && e.preventDefault());
   win.on("maximize", () => send("win:state", "max"));
   win.on("unmaximize", () => send("win:state", "normal"));
+  // Coming back from minimised/hidden: make sure the page gets drawn again.
+  for (const event of ["show", "restore"]) win.on(event, () => activeTab() && showView(activeTab().view));
 
   // Debug helper: AERO_SNAPSHOT=<folder> saves pictures of the UI and the current tab, then quits.
   if (process.env.AERO_SNAPSHOT) {
@@ -685,18 +700,15 @@ function createWindow() {
           "navigator.userAgent + ' | userAgentData: ' + typeof navigator.userAgentData"
         ).catch(e => e.message));
       }
-      fs.writeFileSync(path.join(dir, "ui.png"), (await win.webContents.capturePage()).toPNG());
+      const uiShot = await Promise.race([win.webContents.capturePage().catch(() => null), new Promise(r => setTimeout(() => r(null), 3000))]);
+      if (uiShot && !uiShot.isEmpty()) fs.writeFileSync(path.join(dir, "ui.png"), uiShot.toPNG());
       const tab = activeTab();
       if (tab) {
-        // Ask Chromium to draw the page itself (works even when the window isn't on screen).
-        const wc = tab.view.webContents;
-        try {
-          if (!wc.debugger.isAttached()) wc.debugger.attach("1.3");
-          const shot = await wc.debugger.sendCommand("Page.captureScreenshot", { format: "png" });
-          fs.writeFileSync(path.join(dir, "tab.png"), Buffer.from(shot.data, "base64"));
-        } catch (err) {
-          log("[tab capture] " + err.message);
-        }
+        // Off-screen windows may not draw, so give the picture 3 seconds and move on without it.
+        const timeout = new Promise(resolve => setTimeout(() => resolve(null), 3000));
+        const image = await Promise.race([tab.view.webContents.capturePage().catch(() => null), timeout]);
+        if (image && !image.isEmpty()) fs.writeFileSync(path.join(dir, "tab.png"), image.toPNG());
+        else log("[tab capture] no picture (window not on screen)");
       }
       fs.writeFileSync(path.join(dir, "bounds.json"), JSON.stringify(viewBounds));
       app.exit(0);
@@ -711,6 +723,18 @@ app.setAppUserModelId("com.aero.browser");
 if (process.env.AERO_USER_DATA) app.setPath("userData", process.env.AERO_USER_DATA);
 // Test runs don't use the graphics card, so they never fight with games or other apps for it.
 if (process.env.AERO_SNAPSHOT) app.disableHardwareAcceleration();
+
+// Only one Aero Browser at a time: opening it again just brings the open window to the front.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (!win || win.isDestroyed()) return;
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  });
+}
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
