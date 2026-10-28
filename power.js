@@ -50,7 +50,7 @@ function setupPower(ctx) {
     const tabList = [];
     for (const [id, t] of ctx.tabs) {
       const wc = t.view.webContents;
-      if (wc.isDestroyed()) continue;
+      if (!wc || wc.isDestroyed()) continue;
       const m = byPid.get(wc.getOSProcessId());
       tabList.push({
         id,

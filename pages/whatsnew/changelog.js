@@ -1,6 +1,16 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "0.4.2",
+    date: "October 2026",
+    title: "Tabs show up properly",
+    items: [
+      { icon: "🖼️", title: "Tabs load properly", text: "Tabs in the background now keep loading, just like in Chrome, and pages no longer stay blank until you open Customize." },
+      { icon: "🔁", title: "Back from a game? Still drawn", text: "Switching back to Aero Browser from another app or game redraws the page straight away." },
+      { icon: "🩹", title: "Crashed pages reload themselves", text: "If a page crashes, its tab loads it again instead of breaking." }
+    ]
+  },
+  {
     version: "0.4.1",
     date: "October 2026",
     title: "Bug fixes",

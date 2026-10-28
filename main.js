@@ -261,7 +261,7 @@ const profileTabs = profileId => [...tabs.keys()].filter(id => tabs.get(id).prof
 
 function switchProfile(id) {
   if (id === currentProfile || !profiles.some(p => p.id === id)) return;
-  for (const t of tabs.values()) t.view.setVisible(false);
+  for (const t of tabs.values()) detachView(t);
   currentProfile = id;
   activeId = null;
   saveProfiles();
@@ -310,6 +310,7 @@ const activeTab = () => tabs.get(activeId);
 function tabInfo(id) {
   const t = tabs.get(id);
   const wc = t.view.webContents;
+  if (!wc || wc.isDestroyed()) return { id, profileId: t.profileId, url: "", title: "Closed tab", sleeping: false, loading: false, canBack: false, canForward: false, favicon: null };
   const url = t.sleeping ? t.sleeping.url : wc.getURL();
   return {
     id,
@@ -334,8 +335,6 @@ function createTab(url = HOME, background = false, profileId = currentProfile) {
   const wc = view.webContents;
   view.setBackgroundColor("#ffffff");
   tabs.set(id, { view, profileId, cssKey: null, favicon: null });
-  win.contentView.addChildView(view);
-  view.setVisible(false);
 
   wc.on("page-title-updated", () => update(id));
   wc.on("did-start-loading", () => update(id));
@@ -361,6 +360,11 @@ function createTab(url = HOME, background = false, profileId = currentProfile) {
   });
   wc.on("page-favicon-updated", (e, icons) => { tabs.get(id).favicon = icons[0] || null; update(id); });
   wc.on("dom-ready", () => applySiteStyle(id));
+  // If a page crashes (e.g. out of memory), load it again instead of leaving a dead tab.
+  wc.on("render-process-gone", (e, details) => {
+    if (details.reason === "clean-exit") return;
+    setTimeout(() => !wc.isDestroyed() && wc.reload(), 500);
+  });
   wc.on("before-input-event", (e, input) => handleKey(input) && e.preventDefault());
 
   // Links that want a new window open as a new tab (in the same profile) instead.
@@ -383,12 +387,12 @@ function activate(id) {
   if (tab.sleeping) wakeTab(id);
   power?.touch(id);
   for (const [tid, t] of tabs) {
-    if (tid !== id) t.view.setVisible(false);
+    if (tid !== id) detachView(t);
   }
   showView(tab.view);
   send("tab:activated", id);
   // A fresh tab should let you type in the address bar straight away.
-  const url = tab.view.webContents.getURL();
+  const url = tab.view.webContents?.getURL() || "";
   if (!url || url.startsWith(HOME)) {
     win.webContents.focus();
     send("ui:focus-address");
@@ -397,10 +401,24 @@ function activate(id) {
   }
 }
 
+// Background tabs are taken OFF the window instead of being made invisible: invisible views
+// get paused by Windows/Chromium and stop loading, but views off the window keep running
+// (just like background tabs in Chrome).
+function detachView(t) {
+  if (!t.attached) return;
+  win.contentView.removeChildView(t.view);
+  t.attached = false;
+}
+
 // On Windows a page view that's switched back on isn't always drawn until its size changes
 // (which is why opening Customize used to make tabs appear). Nudging the size forces a redraw.
 function showView(view) {
-  view.setVisible(true);
+  if (!view.webContents || view.webContents.isDestroyed()) return;
+  const t = [...tabs.values()].find(x => x.view === view);
+  if (t && !t.attached) {
+    win.contentView.addChildView(view);
+    t.attached = true;
+  }
   const { x, y, width, height } = viewBounds;
   view.setBounds({ x, y, width, height: Math.max(0, height - 1) });
   setTimeout(() => {
@@ -412,8 +430,8 @@ function showView(view) {
 
 function removeTab(id) {
   const t = tabs.get(id);
-  win.contentView.removeChildView(t.view);
-  t.view.webContents.close();
+  detachView(t);
+  if (t.view.webContents && !t.view.webContents.isDestroyed()) t.view.webContents.close();
   tabs.delete(id);
   passwords?.forgetTab(id);
   power?.forget(id);
@@ -660,8 +678,8 @@ function createWindow() {
   win.webContents.on("before-input-event", (e, input) => handleKey(input) && e.preventDefault());
   win.on("maximize", () => send("win:state", "max"));
   win.on("unmaximize", () => send("win:state", "normal"));
-  // Coming back from minimised/hidden: make sure the page gets drawn again.
-  for (const event of ["show", "restore"]) win.on(event, () => activeTab() && showView(activeTab().view));
+  // Coming back to the browser (from minimised, or from another app or game): redraw the page.
+  for (const event of ["show", "restore", "focus"]) win.on(event, () => activeTab() && showView(activeTab().view));
 
   // Debug helper: AERO_SNAPSHOT=<folder> saves pictures of the UI and the current tab, then quits.
   if (process.env.AERO_SNAPSHOT) {
@@ -721,6 +739,11 @@ app.setAppUserModelId("com.aero.browser");
 
 // Debug helper: AERO_USER_DATA=<folder> keeps a test run's profiles and logins away from your real ones.
 if (process.env.AERO_USER_DATA) app.setPath("userData", process.env.AERO_USER_DATA);
+// Windows tells Chromium which parts of a window are covered up so it can skip drawing them. With our
+// tab pages layered on top of the browser UI, it can wrongly decide a tab is hidden (often after a
+// fullscreen game was on top) and the page stays blank. Switching that check off keeps tabs drawn.
+app.commandLine.appendSwitch("disable-features", "CalculateNativeWinOcclusion");
+
 // Test runs don't use the graphics card, so they never fight with games or other apps for it.
 if (process.env.AERO_SNAPSHOT) app.disableHardwareAcceleration();
 
