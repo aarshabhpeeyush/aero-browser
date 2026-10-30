@@ -9,12 +9,15 @@ const TO_ENGINE = [
   "theme:set", "theme:install", "theme:open-folder", "whatsnew:open", "update:check", "update:restart",
   "pw:save", "pw:never", "pw:dismiss", "pw:fill", "pw:refresh", "pw:unlock", "pw:reveal", "pw:copy",
   "pw:upsert", "pw:delete", "pw:unnever", "pw:set-pin",
-  "perf:settings", "tab:sleep", "signin:set-mode"
+  "perf:settings", "tab:sleep", "signin:set-mode",
+  "tab:reopen", "tab:menu", "tab:prewake", "split:toggle", "incognito:open", "incognito:close",
+  "app:open", "app:close", "app:remove", "app:bounds", "set:adblock", "set:hide-ai"
 ];
 const FROM_ENGINE = [
   "tab:created", "tab:update", "tab:activated", "tab:closed", "ui:focus-address", "ui:resend-bounds", "win:state",
   "profiles", "themes", "app:info", "update:status",
-  "pw:list", "pw:status", "pw:offer", "pw:fillable", "pw:revealed", "perf:stats"
+  "pw:list", "pw:status", "pw:offer", "pw:fillable", "pw:revealed", "perf:stats",
+  "split:state", "ui:fullscreen", "adblock:counts", "settings"
 ];
 
 contextBridge.exposeInMainWorld("aero", {

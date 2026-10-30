@@ -1,7 +1,7 @@
 {
   "name": "aero-browser",
   "productName": "Aero Browser",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "description": "A glossy Frutiger Aero web browser you can change any time.",
   "author": "Aarshabh",
   "main": "main.js",
@@ -10,6 +10,7 @@
     "build": "electron-builder --win --publish never"
   },
   "dependencies": {
+    "@ghostery/adblocker-electron": "2.20.1",
     "electron-updater": "6.3.9"
   },
   "devDependencies": {
@@ -29,6 +30,7 @@
       "tab-preload.js",
       "passwords.js",
       "power.js",
+      "adblock.js",
       "ui/**",
       "pages/**",
       "themes-builtin/**",

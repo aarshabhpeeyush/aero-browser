@@ -82,7 +82,9 @@ function setupPasswords(ctx) {
     const t = ctx.tabs.get(tabId);
     if (!t) return;
     const origin = originOf(t.view.webContents.getURL());
-    const logins = origin && t.hasLoginForm ? loadVault(t.profileId).logins.filter(l => l.origin === origin) : [];
+    const logins = origin && t.hasLoginForm && t.profileId !== "incognito"
+      ? loadVault(t.profileId).logins.filter(l => l.origin === origin)
+      : [];
     ctx.send("pw:fillable", {
       tabId,
       host: origin ? hostOf(origin) : "",
@@ -108,6 +110,7 @@ function setupPasswords(ctx) {
     const tabId = ctx.tabIdFor(e.sender);
     if (tabId == null || !data || typeof data.password !== "string" || !data.password) return;
     const t = ctx.tabs.get(tabId);
+    if (t.profileId === "incognito") return; // incognito never saves anything
     const origin = originOf(e.sender.getURL()); // where the form really is, never what the page claims
     if (!origin) return;
     const vault = loadVault(t.profileId);

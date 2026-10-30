@@ -36,10 +36,13 @@ const DEFAULTS = {
   search: "google",
   restyle: true,
   sounds: true,
-  bookmarks: [
-    { title: "YouTube", url: "https://www.youtube.com/" },
-    { title: "Google", url: "https://www.google.com/" },
-    { title: "Wikipedia", url: "https://www.wikipedia.org/" }
+  bookmarks: [],
+  appsBar: true,
+  apps: [
+    { id: "discord", name: "Discord", url: "https://discord.com/app" },
+    { id: "spotify", name: "Spotify", url: "https://open.spotify.com/" },
+    { id: "whatsapp", name: "WhatsApp", url: "https://web.whatsapp.com/" },
+    { id: "ytmusic", name: "YouTube Music", url: "https://music.youtube.com/" }
   ]
 };
 
@@ -49,6 +52,11 @@ function loadPrefs() {
 }
 let prefs = loadPrefs();
 const savePrefs = () => localStorage.setItem("aero-browser", JSON.stringify(prefs));
+
+// Live state from the engine, used while drawing (declared early because drawing starts early).
+let blockedCounts = {}; // tab id -> ads/trackers blocked on its current page
+let splitState = null; // { left, right } while split screen is on
+let saverOn = false; // battery saver active
 
 // ================= Engine connection =================
 // Inside Aero Browser, window.aero talks to main.js. Opened as a plain web page
@@ -102,12 +110,15 @@ function drawTab(info) {
       if (e.button === 0 && !e.target.closest(".x")) api.send("tab:activate", info.id);
     });
     el.addEventListener("auxclick", e => e.button === 1 && closeTab(info.id));
+    el.addEventListener("mouseenter", () => tabs.get(info.id)?.sleeping && api.send("tab:prewake", info.id));
+    el.addEventListener("contextmenu", e => { e.preventDefault(); api.send("tab:menu", info.id); });
     el.querySelector(".x").addEventListener("click", () => closeTab(info.id));
     $("#tabs").append(el);
   }
   el.title = info.title;
   el.querySelector(".title").textContent = info.title;
   el.classList.toggle("sleeping", !!info.sleeping);
+  el.classList.toggle("in-split", !!splitState && (splitState.left === info.id || splitState.right === info.id));
   const fav = el.querySelector(".fav");
   if (info.sleeping) fav.textContent = "💤";
   else if (info.loading) fav.innerHTML = `<span class="spin"></span>`;
@@ -139,6 +150,9 @@ function drawActive() {
   const marked = prefs.bookmarks.some(b => b.url === info.url);
   $("#star").textContent = marked ? "★" : "☆";
   $("#star").disabled = !info.url;
+  const blocked = blockedCounts[activeId] || 0;
+  $("#shield").hidden = !blocked;
+  $("#shieldCount").textContent = blocked;
 }
 
 api.on("tab:created", info => {
@@ -272,6 +286,9 @@ function applyPrefs() {
     "size-" + prefs.size,
     "win-" + prefs.winButtons,
     prefs.bookmarksBar ? "" : "no-bookmarks",
+    prefs.appsBar ? "" : "no-apps",
+    profileState.incognito ? "incognito" : "",
+    saverOn ? "battery-saver" : "",
     tabs.get(activeId)?.loading ? "loading" : ""
   ].join(" ");
 
@@ -458,14 +475,15 @@ function renderProfiles() {
 
   // --- Other profiles ---
   const others = document.createElement("section");
-  others.innerHTML = `<h3>Switch profile</h3>`;
+  others.innerHTML = `<h3>Other profiles</h3>`;
   for (const p of profileState.profiles.filter(x => x.id !== me.id)) {
     const row = document.createElement("button");
     row.className = "profile-row";
     row.append(avatar(p, "mini"));
     row.insertAdjacentHTML("beforeend", `<span class="who"><b></b><small></small></span>`);
     row.querySelector("b").textContent = p.name;
-    row.querySelector("small").textContent = accountsOf(p.id)[0]?.email || "Not signed in";
+    const isOpen = (profileState.openProfiles || []).includes(p.id);
+    row.querySelector("small").textContent = (accountsOf(p.id)[0]?.email || "Not signed in") + (isOpen ? " · window open" : " · click to open its window");
     row.addEventListener("click", () => { Sound.bloop(); api.send("profile:switch", p.id); });
     others.append(row);
   }
@@ -481,7 +499,7 @@ function renderProfiles() {
     api.send("profile:add", { name, color });
   });
   others.append(form);
-  others.insertAdjacentHTML("beforeend", `<p class="hint">Each profile is like its own browser: it keeps its own Google accounts, logins and cookies.</p>`);
+  others.insertAdjacentHTML("beforeend", `<p class="hint">Each profile opens in its own window, like its own browser: it keeps its own Google accounts, logins, cookies and tabs.</p>`);
   body.append(others);
 
   // --- Remove ---
@@ -915,6 +933,178 @@ for (const id of ["ramLimit", "cpuLimit"]) {
   $("#" + id).addEventListener("change", sendPerf);
 }
 $("#powerBtn").addEventListener("click", () => togglePanel("power"));
+
+// ================= Ad blocker & AI Overviews =================
+
+
+api.on("adblock:counts", counts => {
+  blockedCounts = counts;
+  drawActive();
+});
+api.on("settings", s => {
+  $("#setAdblock").checked = s.adblock;
+  $("#setHideAi").checked = s.hideAi;
+});
+$("#setAdblock").addEventListener("change", e => { Sound.click(); api.send("set:adblock", e.target.checked); });
+$("#setHideAi").addEventListener("change", e => { Sound.click(); api.send("set:hide-ai", e.target.checked); });
+
+// ================= Split screen =================
+
+
+api.on("split:state", state => {
+  splitState = state;
+  $("#splitBtn").classList.toggle("on", !!state);
+  $("#splitBtn").title = state ? "Leave split screen" : "Split screen: two tabs side by side";
+  for (const info of tabs.values()) drawTab(info);
+  drawActive();
+});
+$("#splitBtn").addEventListener("click", () => { Sound.bloop(); api.send("split:toggle"); });
+
+// ================= Incognito =================
+
+function drawIncognito() {
+  $("#incognitoBadge").hidden = !profileState.incognito;
+  applyPrefs();
+}
+api.on("profiles", drawIncognito);
+
+// Extra buttons in the Profiles panel (added after it's drawn).
+const drawProfilesBase = renderProfiles;
+renderProfiles = function () {
+  drawProfilesBase();
+  const body = $("#profilesBody");
+  if (!body.firstChild) return;
+  const section = el("section", {}, el("h3", { textContent: "Incognito 🕶" }));
+  if (profileState.incognito || profileState.incognitoOpen) {
+    const close = el("button", { className: "gel red", textContent: "Close incognito window (forget everything)" });
+    close.addEventListener("click", () => { Sound.pop(); api.send("incognito:close"); });
+    section.append(close);
+  }
+  if (!profileState.incognito) {
+    const open = el("button", { className: "gel", textContent: profileState.incognitoOpen ? "Go to incognito window" : "Open incognito window" });
+    open.addEventListener("click", () => { Sound.bloop(); api.send("incognito:open"); });
+    section.prepend(open);
+  }
+  section.append(el("p", { className: "hint", textContent: "Incognito doesn't save history, cookies, logins or passwords. Everything is wiped when you close it. Shortcut: Ctrl+Shift+N" }));
+  body.prepend(section);
+};
+
+// ================= Battery saver =================
+
+
+api.on("perf:stats", stats => {
+  const on = !!stats.saver?.active;
+  $("#saverBadge").hidden = !on;
+  $("#saverBadge").title = stats.saver?.onBattery ? "Battery saver is on (you're unplugged)" : "Battery saver is on";
+  $("#saverStatus").textContent = on ? "· on 🍃" : stats.saver?.onBattery ? "· unplugged" : "";
+  document.querySelectorAll("#saverChoice button").forEach(b => b.classList.toggle("on", b.dataset.value === stats.settings.batterySaver));
+  if (on !== saverOn) {
+    saverOn = on;
+    applyPrefs();
+  }
+});
+document.querySelectorAll("#saverChoice button").forEach(b => b.addEventListener("click", () => {
+  Sound.click();
+  api.send("perf:settings", { batterySaver: b.dataset.value });
+}));
+
+// ================= Apps sidebar =================
+
+let openAppId = null;
+let addingApp = false;
+
+const appIcon = app => `https://www.google.com/s2/favicons?sz=64&domain=${new URL(app.url).hostname}`;
+
+function drawApps() {
+  const list = $("#appList");
+  list.innerHTML = "";
+  for (const app of prefs.apps) {
+    const b = el("button", { className: "app-btn" + (app.id === openAppId ? " on" : ""), title: app.name });
+    const img = el("img", { src: appIcon(app), alt: "" });
+    img.onerror = () => img.replaceWith(app.name[0].toUpperCase());
+    b.append(img);
+    b.addEventListener("click", () => {
+      Sound.bloop();
+      openAppId === app.id ? closeAppPanel() : openAppPanel(app);
+    });
+    list.append(b);
+  }
+}
+
+function openAppPanel(app) {
+  openAppId = app.id;
+  addingApp = false;
+  $("#appPanel").hidden = false;
+  $("#appTitle").textContent = app.name;
+  $("#appRemove").hidden = false;
+  $("#appArea").innerHTML = "";
+  api.send("app:open", { id: app.id, url: app.url });
+  drawApps();
+  requestAnimationFrame(sendAppBounds);
+}
+
+function closeAppPanel() {
+  openAppId = null;
+  addingApp = false;
+  $("#appPanel").hidden = true;
+  api.send("app:close");
+  drawApps();
+}
+
+function sendAppBounds() {
+  if ($("#appPanel").hidden || addingApp) return;
+  const r = $("#appArea").getBoundingClientRect();
+  api.send("app:bounds", { x: r.left, y: r.top, width: r.width, height: r.height });
+}
+new ResizeObserver(sendAppBounds).observe($("#appArea"));
+addEventListener("resize", sendAppBounds);
+
+// Adding an app: a little form in the panel, for any website at all.
+$("#appAdd").addEventListener("click", () => {
+  Sound.click();
+  if (openAppId) api.send("app:close");
+  openAppId = null;
+  addingApp = true;
+  $("#appPanel").hidden = false;
+  $("#appTitle").textContent = "Add an app";
+  $("#appRemove").hidden = true;
+  const name = el("input", { placeholder: "Name (e.g. Twitch)" });
+  const url = el("input", { placeholder: "Website (e.g. twitch.tv)" });
+  const form = el("form", { className: "pw-form app-form" }, name, url,
+    el("button", { className: "gel tiny", type: "submit", textContent: "Add app" }),
+    el("p", { className: "hint", textContent: "Any website can be an app: chats, music, games, school stuff… It opens in this side panel and keeps running while the panel is closed." }));
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    let address = url.value.trim();
+    if (!address) return url.focus();
+    if (!/^https?:\/\//i.test(address)) address = "https://" + address;
+    let host;
+    try { host = new URL(address).hostname.replace(/^www\./, ""); } catch { return url.select(); }
+    const app = { id: "app-" + Date.now().toString(36), name: name.value.trim() || host.split(".")[0], url: address };
+    prefs.apps.push(app);
+    savePrefs();
+    Sound.chime?.();
+    openAppPanel(app);
+  });
+  $("#appArea").innerHTML = "";
+  $("#appArea").append(form);
+  name.focus();
+  drawApps();
+});
+
+$("#appHide").addEventListener("click", () => { Sound.click(); closeAppPanel(); });
+$("#appRemove").addEventListener("click", () => {
+  const app = prefs.apps.find(a => a.id === openAppId);
+  if (!app || !confirm(`Remove ${app.name} from the apps sidebar?`)) return;
+  prefs.apps = prefs.apps.filter(a => a.id !== app.id);
+  savePrefs();
+  api.send("app:remove", app.id);
+  Sound.pop();
+  closeAppPanel();
+});
+
+drawApps();
+drawIncognito();
 
 // ================= Pretend engine (design preview only) =================
 

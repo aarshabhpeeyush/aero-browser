@@ -8,6 +8,32 @@ if (location.hostname === "accounts.google.com" && ipcRenderer.sendSync("signin:
   webFrame.executeJavaScript("Object.defineProperty(Navigator.prototype, 'userAgentData', { get: () => undefined });");
 }
 
+// ================= Hide Google's AI Overviews =================
+// Finds the "AI Overview" heading on Google search pages and hides the whole box around it.
+// (Switch this off in ✨ Customize → Browsing.)
+
+if (/(^|\.)google\.[a-z.]+$/.test(location.hostname) && ipcRenderer.sendSync("settings:hide-ai")) {
+  const RESULT_AREAS = ["rso", "rcnt", "center_col", "search", "main"];
+  const hideAiOverviews = () => {
+    for (const heading of document.querySelectorAll("h1, h2, h3, [role=heading]")) {
+      const text = heading.textContent.trim();
+      if (text.length > 40 || !/^AI (Overview|overview|Mode)/.test(text)) continue;
+      // Climb up to the block that sits directly inside Google's results area, and hide that.
+      let box = heading;
+      while (box.parentElement && box.parentElement !== document.body && !RESULT_AREAS.includes(box.parentElement.id)) box = box.parentElement;
+      if (box.parentElement && box.parentElement !== document.body) box.style.setProperty("display", "none", "important");
+    }
+  };
+  let aiTimer;
+  addEventListener("DOMContentLoaded", () => {
+    hideAiOverviews();
+    new MutationObserver(() => {
+      clearTimeout(aiTimer);
+      aiTimer = setTimeout(hideAiOverviews, 150);
+    }).observe(document.documentElement, { subtree: true, childList: true });
+  });
+}
+
 // ================= Password manager helper =================
 // Spots login forms, notices when you log in (so the browser can offer to save the password),
 // and fills saved logins in when you click Fill.

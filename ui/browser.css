@@ -689,5 +689,100 @@ button { font: inherit; }
 #app.side { grid-template-rows: auto auto auto auto 1fr; }
 .side #pwBar { grid-column: 2; }
 .bars-right #pwBar { grid-column: 1; }
+/* Pin every bar to its own row. Hidden bars (password bar, bookmarks) leave their row empty
+   instead of letting the page area slide into a zero-height row (which made pages blank). */
+.side #toolbar { grid-row: 1; }
+.side #bookmarks { grid-row: 2; }
+.side #progress { grid-row: 3; }
+.side #pwBar { grid-row: 4; }
+.side #main { grid-row: 5; min-height: 0; }
 .bars-bottom #pwBar { order: 2; }
 .signin-mode { margin-top: 4px; padding: 4px 8px; border-radius: 8px; border: 1px solid #9ccbe8; font: inherit; color: #04345c; background: #fff; }
+
+/* ================= 0.5.0: shield, split, incognito, battery saver, apps ================= */
+
+#shield { font-size: 12px; color: #2a8a2a; white-space: nowrap; cursor: default; }
+#shield b { font-weight: 700; }
+#shield[hidden], #incognitoBadge[hidden], #saverBadge[hidden], #appPanel[hidden] { display: none; }
+
+#splitBtn.on { box-shadow: 0 0 0 2px #fff, 0 0 10px var(--accent); }
+.tab.in-split { box-shadow: inset 0 -3px 0 var(--accent); }
+
+#incognitoBadge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  background: linear-gradient(180deg, #5b3b8c, #2b1747);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+}
+/* Incognito turns the browser frame dark purple, so you always know you're in it */
+#app.incognito #titlebar {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 50%),
+    linear-gradient(180deg, #2b1747, #4a2a78) !important;
+}
+#app.incognito .tab { color: #e9dcff; text-shadow: none; }
+#app.incognito .tab.active { color: #2b1747; }
+
+#saverBadge { font-size: 18px; filter: drop-shadow(0 0 4px rgba(80, 200, 80, 0.8)); }
+/* Battery saver switches off decorative animations */
+#app.battery-saver *, #app.battery-saver *::before, #app.battery-saver *::after { animation: none !important; transition: none !important; }
+
+/* Apps sidebar: a strip of round app buttons on the left of the page area */
+#appsBar {
+  width: 48px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  background: linear-gradient(90deg, var(--accent-light), color-mix(in srgb, var(--accent-light), #fff 35%));
+  border-right: 1px solid color-mix(in srgb, var(--accent), #fff 30%);
+}
+.no-apps #appsBar, .no-apps #appPanel { display: none; }
+#appList { display: flex; flex-direction: column; gap: 8px; }
+.app-btn, .app-add {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.95);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--accent-dark);
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.55) 50%, rgba(220,245,255,0.6) 51%, rgba(255,255,255,0.9) 100%);
+  box-shadow: 0 2px 6px rgba(0, 60, 130, 0.25);
+  transition: transform 0.15s;
+}
+.app-btn img { width: 20px; height: 20px; }
+.app-btn:hover, .app-add:hover { transform: scale(1.1); }
+.app-btn.on { box-shadow: 0 0 0 3px var(--accent), 0 2px 6px rgba(0, 60, 130, 0.25); }
+.app-add { font-size: 20px; font-weight: 300; border-style: dashed; }
+
+#appPanel {
+  width: 400px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid color-mix(in srgb, var(--accent), #fff 30%);
+  background: #fff;
+}
+.app-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-weight: 600;
+  color: #04345c;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-light), #fff 40%), var(--accent-light));
+}
+.app-head span { flex: 1; }
+.app-head .bar-x { border: 0; background: none; cursor: pointer; font-size: 13px; color: #04345c; }
+#appArea { flex: 1; min-height: 0; }
+.app-form { padding: 14px; }
