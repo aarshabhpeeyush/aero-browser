@@ -21,3 +21,5 @@
 .profile-row, .accounts li, .pw-row, .usage-row, .meter { background: #1f2735 !important; border-color: #2c3647 !important; color: #e6ecf5 !important; }
 .mini, .choice button, .gel.plain { background: #222a38; color: #e6ecf5; border-color: #3a475e; }
 #pwBar { background: #2a2410; color: #f3e6b0; border-bottom-color: #5a4a14; }
+
+#bookmarks .empty { color: #9fb0c8; }

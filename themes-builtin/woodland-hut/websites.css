@@ -1,0 +1,21 @@
+/* Woodland Hut on EVERY website: carved-wood scrollbars, mossy highlights and a lantern glow on text boxes. */
+
+::selection { background: #a9d26a !important; color: #2a1a08 !important; }
+
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-track { background: linear-gradient(90deg, #efdcae, #fbf1d6); }
+::-webkit-scrollbar-thumb {
+  border: 3px solid #efdcae;
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0 2px, transparent 2px 6px),
+    linear-gradient(90deg, #8a5a2b, #5a381c);
+}
+::-webkit-scrollbar-corner { background: #efdcae; }
+
+input:not([type=checkbox]):not([type=radio]):not([type=range]):focus,
+textarea:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px #e8b35a, 0 0 14px rgba(255, 180, 60, 0.6) !important;
+}
+input[type=checkbox], input[type=radio], input[type=range], progress { accent-color: #5f8f3a; }

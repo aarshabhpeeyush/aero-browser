@@ -1,6 +1,16 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "0.5.1",
+    date: "October 2026",
+    title: "Into the woods",
+    items: [
+      { icon: "🍄", title: "Woodland Hut theme", text: "A cozy fantasy cabin in an enchanted forest: carved wood, mossy stones, parchment and a flickering lantern. It restyles the New Tab, every website, and YouTube, Google and Wikipedia too. Find it in ✨ Customize → Custom themes." },
+      { icon: "➕", title: "Better New tab button", text: "With tabs on the left or right, the + is now a proper “+ New tab” button lined up under your tabs." },
+      { icon: "⎋", title: "Esc leaves full screen", text: "Press Esc to exit a full screen video, or full screen mode (F11)." }
+    ]
+  },
+  {
     version: "0.5.0",
     date: "October 2026",
     title: "Your friends asked, we built it",

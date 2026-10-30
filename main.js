@@ -968,12 +968,32 @@ function themeCssForSite(hostname) {
 
 // ================= Keyboard shortcuts =================
 
+function exitFullScreen(w) {
+  const id = w.fullscreenTab;
+  if (id == null) return w.win.setFullScreen(false);
+  // Ask the page to leave full screen (it tells us back through "leave-html-full-screen")...
+  tabs.get(id)?.view.webContents.executeJavaScript("document.fullscreenElement && document.exitFullscreen()", true).catch(() => {});
+  // ...and if it doesn't answer quickly, leave anyway.
+  setTimeout(() => {
+    if (w.fullscreenTab !== id || w.win.isDestroyed()) return;
+    w.fullscreenTab = null;
+    w.win.setFullScreen(false);
+    sendTo(w, "ui:fullscreen", false);
+    layoutViews(w, "esc left full screen");
+  }, 400);
+}
+
 function handleKey(input, w) {
   if (input.type !== "keyDown" || !w) return false;
   const key = input.key.toLowerCase();
   const ctrl = input.control || input.meta;
   const wc = activeTabOf(w)?.view.webContents;
 
+  // Esc leaves full screen (a video's, or F11's). Otherwise Esc works as normal on the page.
+  if (key === "escape" && (w.fullscreenTab != null || w.win.isFullScreen())) {
+    exitFullScreen(w);
+    return true;
+  }
   if (ctrl && input.shift && key === "t") reopenClosedTab(w);
   else if (ctrl && input.shift && key === "n") openProfileWindow(INCOGNITO);
   else if (ctrl && key === "n") openProfileWindow(w.profileId === INCOGNITO ? lastProfile : w.profileId);
@@ -1168,6 +1188,14 @@ function armSnapshot(w) {
     if (process.env.AERO_SNAPSHOT_TABJS && active()) {
       log("[tabjs] " + await active().view.webContents.executeJavaScript(process.env.AERO_SNAPSHOT_TABJS, true).catch(e => "error " + e.message));
       await new Promise(r => setTimeout(r, 1500));
+    }
+    // AERO_SNAPSHOT_KEY presses a key in the active tab (e.g. "Escape").
+    if (process.env.AERO_SNAPSHOT_KEY && active()) {
+      const wc = active().view.webContents;
+      wc.sendInputEvent({ type: "keyDown", keyCode: process.env.AERO_SNAPSHOT_KEY });
+      wc.sendInputEvent({ type: "keyUp", keyCode: process.env.AERO_SNAPSHOT_KEY });
+      await new Promise(r => setTimeout(r, 1500));
+      log("[after key] full screen: " + (w.fullscreenTab != null) + ", window full screen: " + win.isFullScreen());
     }
     if (process.env.AERO_SNAPSHOT_JS && !win.isDestroyed()) {
       await win.webContents.executeJavaScript(process.env.AERO_SNAPSHOT_JS).catch(e => log("[js] " + e.message));

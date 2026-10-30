@@ -22,3 +22,5 @@
 .profile-row, .accounts li, .pw-row, .usage-row, .meter { background: #1a0f16 !important; border-color: #3a1424 !important; color: #ffd6e2 !important; }
 .panel input, .panel select { background: #050508 !important; color: #fff !important; border-color: #ff1f5a !important; }
 .mini, .choice button, .gel.plain { background: #1a0a12; color: #ffd6e2; border-color: #3a1424; }
+
+#bookmarks .empty { color: #c98aa0; }

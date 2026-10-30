@@ -526,7 +526,18 @@ button { font: inherit; }
   border: 1px solid rgba(255,255,255,0.55);
 }
 .side.shape-pill .tab { border-radius: 999px; }
-.side #titlebar #newTab { align-self: flex-start; margin-left: 4px; }
+/* With side tabs, "+" becomes a full-width "+ New tab" button lined up under the tabs */
+.side #titlebar #newTab {
+  align-self: stretch;
+  width: auto;
+  height: calc(var(--tab-h) - 4px);
+  margin: 0;
+  border-radius: var(--tab-radius);
+  font-size: 13px;
+  font-weight: 600;
+}
+.side.shape-pill #titlebar #newTab { border-radius: 999px; }
+.side #titlebar #newTab::after { content: " New tab"; }
 .side .drag-space { flex: 1; }
 
 /* Window buttons move to the top corner; the toolbar becomes the part you drag the window by */
