@@ -39,6 +39,9 @@
       <button id="updateBtn" class="update-pill" hidden title="A new version is ready">&#x2B06; Restart to update</button>
       <span id="incognitoBadge" hidden>&#x1F576; Incognito</span>
       <span id="saverBadge" title="Battery saver is on" hidden>&#x1F343;</span>
+      <div id="extButtons"></div>
+      <button id="storeBtn" class="orb small" title="Aero Web Store: get extensions">&#x1F9E9;</button>
+      <button id="dlBtn" class="orb small" title="Downloads">&#x2B07;<b id="dlBadge" hidden></b></button>
       <button id="splitBtn" class="orb small" title="Split screen: two tabs side by side">&#x25EB;</button>
       <button id="powerBtn" class="orb small" title="Power: CPU & RAM manager">&#x26A1;</button>
       <button id="pwBtn" class="orb small" title="Passwords">&#x1F511;</button>
@@ -72,7 +75,28 @@
         </div>
         <div id="appArea"></div>
       </div>
-      <div id="viewport"></div>
+      <div id="viewport">
+        <!-- In split screen the two pages sit on top of these; the gap between them is the divider. -->
+        <div id="splitLayer" hidden>
+          <div id="splitMark"></div>
+          <div class="split-pane" id="splitLeft"></div>
+          <div id="splitDivider" title="Drag to resize"><span></span></div>
+          <div class="split-pane" id="splitRight"></div>
+        </div>
+      </div>
+
+      <aside id="downloads" class="panel" hidden>
+        <header>
+          <h2>Downloads</h2>
+          <button class="orb small close-panel" title="Close">&#x2715;</button>
+        </header>
+        <div class="row dl-actions">
+          <button id="dlFolder" class="gel tiny">Open Downloads folder</button>
+          <button id="dlClear" class="gel tiny plain">Clear list</button>
+        </div>
+        <ul id="dlList"></ul>
+        <p class="hint">Right-click any picture and choose <b>Save image</b> to download it.</p>
+      </aside>
 
       <aside id="passwords" class="panel" hidden>
         <header>
@@ -197,6 +221,23 @@
           <label class="toggle"><input type="checkbox" id="setHideAi"> Hide Google AI Overviews</label>
           <label class="toggle"><input type="checkbox" data-pref="appsBar"> Apps sidebar (Discord, Spotify…)</label>
           <label class="toggle"><input type="checkbox" data-pref="sounds"> Bubbly sounds</label>
+        </section>
+
+        <section>
+          <h3>Bookmarks</h3>
+          <p class="hint">Bring your bookmarks over from another browser:</p>
+          <div class="row wrap" id="bmSources"></div>
+          <div class="row wrap">
+            <button id="bmImportFile" class="gel tiny">Import from a file…</button>
+            <button id="bmExport" class="gel tiny">Export to a file…</button>
+          </div>
+          <p class="hint" id="bmStatus"></p>
+        </section>
+
+        <section>
+          <h3>Default browser</h3>
+          <p class="hint" id="defaultText">Checking…</p>
+          <button id="defaultSet" class="gel tiny">Make Aero my default browser</button>
         </section>
 
         <section>

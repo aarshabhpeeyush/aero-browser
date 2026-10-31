@@ -13,7 +13,7 @@ A theme is a folder in this **themes** folder. Each one can change how the brows
 
 | File | What it does |
 | --- | --- |
-| `theme.json` | Name, author and description shown in Customize |
+| `theme.json` | Name, author and description shown in Customize. Add `"websites": "light"` or `"dark"` to make sites with their own dark mode (like Google) match your theme, so their text stays readable |
 | `theme.css` | Restyles the browser: tabs, toolbar, buttons, panels |
 | `newtab.css` | *(optional)* Restyles the New Tab page and its widgets |
 | `websites.css` | *(optional)* Restyles **every website** |

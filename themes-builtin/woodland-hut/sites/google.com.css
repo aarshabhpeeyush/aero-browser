@@ -9,3 +9,11 @@ form[role="search"] > div:first-child, .RNNXgb {
   box-shadow: 0 4px 12px rgba(90, 50, 10, 0.25) !important;
 }
 #search a h3, #rso a h3 { color: #4f7a2c !important; }
+
+/* ---- When Google is dark anyway: the cabin at night, so its light text stays readable ---- */
+html:has(body[data-dt="1"]) { background: linear-gradient(180deg, #2a1c0e, #1a1108) fixed !important; }
+body[data-dt="1"] form[role="search"] > div:first-child, body[data-dt="1"] .RNNXgb {
+  background: #3a2814 !important;
+  border-color: #c08a4a !important;
+}
+body[data-dt="1"] #search a h3, body[data-dt="1"] #rso a h3 { color: #b6dd7a !important; }

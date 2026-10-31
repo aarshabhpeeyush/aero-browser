@@ -7,6 +7,5 @@ body { background: transparent !important; }
 /* Pink Google logo */
 img[alt="Google"], svg[aria-label="Google"] { filter: hue-rotate(290deg) saturate(1.4); }
 
-/* Bubbly search box */
-textarea[name="q"], input[name="q"] { caret-color: #ff4fa8; }
-form[role="search"] { border-radius: 999px; box-shadow: 0 0 0 3px #ffc2e6; }
+/* ---- When Google is dark anyway: midnight bubbles, so its white text stays readable ---- */
+html:has(body[data-dt="1"]) { background: linear-gradient(180deg, #2a0a26, #3d0f3a) fixed !important; }

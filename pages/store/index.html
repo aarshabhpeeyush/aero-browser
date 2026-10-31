@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Aero Web Store</title>
+  <link rel="stylesheet" href="store.css">
+  <link id="aeroTheme" rel="stylesheet" href="aero://themes/_active/newtab.css">
+</head>
+<body>
+  <div class="sun"></div>
+  <main>
+    <header class="glass hero">
+      <div class="logo">🧩</div>
+      <div>
+        <p class="kicker">Only in Aero Browser</p>
+        <h1>Aero Web Store</h1>
+        <p>Add extensions to Aero with one click.</p>
+      </div>
+      <input id="search" type="search" placeholder="Search extensions…">
+    </header>
+
+    <nav id="tabs">
+      <button data-tab="browse" class="on">Browse</button>
+      <button data-tab="installed">Installed <span id="installedCount"></span></button>
+    </nav>
+
+    <section id="browse">
+      <div id="categories"></div>
+      <div id="grid" class="grid"></div>
+
+      <div class="glass any">
+        <h2>Install any Chrome extension</h2>
+        <p>Find an extension on the Chrome Web Store, copy its address, and paste it here.</p>
+        <form id="anyForm">
+          <input id="anyInput" placeholder="https://chromewebstore.google.com/detail/…">
+          <button class="gel" type="submit">Add to Aero</button>
+        </form>
+        <p class="note">Aero runs Chrome extensions, but a few Chrome-only features aren't available, so some extensions only partly work.</p>
+      </div>
+    </section>
+
+    <section id="installed" hidden>
+      <div id="installedList" class="grid"></div>
+    </section>
+
+    <div id="toast" hidden></div>
+  </main>
+  <script src="store.js"></script>
+</body>
+</html>

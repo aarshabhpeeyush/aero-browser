@@ -268,7 +268,9 @@ button { font: inherit; }
   align-items: center;
   gap: 4px;
   padding: 0 10px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
   background: linear-gradient(180deg, var(--accent-light), color-mix(in srgb, var(--accent-light), #fff 30%));
   border-bottom: 1px solid color-mix(in srgb, var(--accent), #fff 30%);
 }
@@ -313,7 +315,8 @@ button { font: inherit; }
 
 #main { flex: 1; display: flex; min-height: 0; }
 /* The real web page is drawn on top of this box by the engine. */
-#viewport { flex: 1; background: #fff; }
+#viewport { flex: 1; background: #fff; position: relative; }
+#bookmarks button { flex: none; }
 
 /* Bars at the bottom */
 .bars-bottom #main { order: 1; }
@@ -797,3 +800,61 @@ button { font: inherit; }
 .app-head .bar-x { border: 0; background: none; cursor: pointer; font-size: 13px; color: #04345c; }
 #appArea { flex: 1; min-height: 0; }
 .app-form { padding: 14px; }
+
+/* ================= Split screen divider ================= */
+/* The pages are drawn on top of the panes; what shows between them is the divider. */
+#splitLayer { position: absolute; inset: 0; background: linear-gradient(180deg, var(--frame-a), var(--frame-b)); }
+#splitLayer[hidden] { display: none; }
+.split-pane { position: absolute; top: 3px; bottom: 0; left: 0; background: #fff; }
+#splitLeft { left: 0; }
+#splitRight { right: 0; }
+#splitMark {
+  position: absolute; top: 0; height: 3px; border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, var(--accent-light), var(--accent), var(--accent-light));
+  box-shadow: 0 0 6px var(--accent);
+}
+#splitDivider { position: absolute; top: 0; bottom: 0; width: 10px; cursor: col-resize; display: grid; place-items: center; }
+#splitDivider span {
+  width: 4px; height: 44px; border-radius: 4px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.6));
+  box-shadow: 0 0 0 1px rgba(0, 50, 110, 0.25), 0 1px 4px rgba(0, 40, 90, 0.35);
+}
+#splitDivider:hover span, .dragging #splitDivider span { background: #fff; box-shadow: 0 0 0 1px var(--accent), 0 0 8px var(--accent); }
+.dragging .split-pane { background: color-mix(in srgb, var(--accent-light), #fff 55%); }
+.dragging, .dragging * { cursor: col-resize !important; }
+
+/* ================= Downloads, extensions, store ================= */
+#dlBtn { position: relative; }
+#dlBadge {
+  position: absolute; right: -5px; top: -5px; min-width: 15px; height: 15px; padding: 0 3px;
+  border-radius: 999px; background: #3cc23c; color: #fff; font-size: 10px; line-height: 15px; text-shadow: none;
+  box-shadow: 0 0 0 1.5px #fff;
+}
+#dlBadge[hidden] { display: none; }
+#dlBtn.bounce { animation: dl-bounce 0.7s ease; }
+@keyframes dl-bounce { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(4px); } 60% { transform: translateY(-2px); } }
+#dlList { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+#dlList .empty { color: #4a6f92; font-style: italic; padding: 10px 2px; }
+.dl-item {
+  padding: 8px 10px; border-radius: 10px;
+  background: linear-gradient(180deg, #fff, #eef7ff); border: 1px solid #c6def5;
+}
+.dl-name { font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #123e66; }
+.dl-bar { height: 5px; margin: 6px 0 4px; border-radius: 999px; background: #d8e9f9; overflow: hidden; }
+.dl-bar div { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #7ee05a, #3cc23c); transition: width 0.25s; }
+.dl-item.cancelled .dl-bar div, .dl-item.failed .dl-bar div { background: #e8a0a0; }
+.dl-item.cancelled .dl-name, .dl-item.failed .dl-name { text-decoration: line-through; opacity: 0.7; }
+.dl-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.dl-row small { color: #4a6f92; }
+.dl-buttons { display: flex; gap: 4px; }
+.dl-actions { margin-top: 4px; }
+#extButtons { display: flex; align-items: center; gap: 3px; }
+#extButtons:empty { display: none; }
+.ext-btn {
+  width: 26px; height: 26px; flex: none; padding: 3px; border-radius: 7px; cursor: pointer;
+  border: 1px solid transparent; background: transparent; color: var(--text); font-weight: 700;
+}
+.ext-btn:hover { background: rgba(255,255,255,0.35); border-color: rgba(255,255,255,0.6); }
+.ext-btn img { width: 18px; height: 18px; display: block; margin: auto; }
+.row.wrap { flex-wrap: wrap; }
+#defaultSet[hidden] { display: none; }

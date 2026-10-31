@@ -7,17 +7,21 @@ html {
 }
 body { background: transparent !important; }
 
-/* Glass search box */
-form[role="search"] > div:first-child, .RNNXgb {
-  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(235,248,255,0.9)) !important;
-  border: 1px solid #fff !important;
-  box-shadow: 0 6px 20px rgba(0, 70, 140, 0.3), inset 0 1px 0 #fff !important;
-}
-
 /* Search results sit on frosted glass so they stay easy to read */
 #center_col, #rcnt #center_col {
   background: rgba(255, 255, 255, 0.85);
   border-radius: 18px;
   padding: 12px 16px !important;
   box-shadow: 0 6px 20px rgba(0, 70, 140, 0.2);
+}
+
+/* ---- When Google is dark anyway: a night sky, so its white text stays readable ---- */
+html:has(body[data-dt="1"]) {
+  background:
+    radial-gradient(ellipse at 50% 115%, #2f7d3a 0%, #1d5a2c 12%, transparent 30%),
+    linear-gradient(180deg, #021a3a 0%, #063f73 55%, #0a5a8f 100%) fixed !important;
+}
+body[data-dt="1"] #center_col, body[data-dt="1"] #rcnt #center_col {
+  background: rgba(6, 30, 58, 0.85);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(140, 210, 255, 0.25);
 }

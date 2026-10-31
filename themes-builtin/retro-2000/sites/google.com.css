@@ -24,3 +24,9 @@ body { background: transparent !important; font-family: "Times New Roman", Times
 
 /* A rainbow logo */
 img[alt="Google"], svg[aria-label="Google"] { filter: drop-shadow(2px 2px 0 #ff0) drop-shadow(-2px -2px 0 #0ff); }
+
+/* ---- When Google is light: a 98-style sky instead of outer space, so its dark text stays readable ---- */
+html:has(body:not([data-dt="1"])) {
+  background: linear-gradient(180deg, #7fb8f0, #d8ecff) fixed !important;
+  background-size: auto !important;
+}

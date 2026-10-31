@@ -7,6 +7,7 @@ It uses Chromium (the engine inside Chrome, Edge and Brave) to show websites. Ev
 
 Run the newest **`dist\Aero-Browser-Setup-<version>.exe`**. It adds Aero Browser to the Start menu and the desktop like any other app.
 Windows may show "Windows protected your PC" because the app isn't signed (signing costs money). Click **More info → Run anyway**.
+After installation, open **Settings → Apps → Default apps**, search for **Aero Browser**, and choose **Set default**. Windows requires you to make this choice in Settings.
 
 While working on the code, you can also double-click **`Start Aero Browser.bat`** to run it without installing.
 
@@ -35,7 +36,11 @@ From version 0.3.0, installed copies update themselves like Chrome. Every few ho
 - 🔑 **Password manager**: offers to save passwords when you log in and fills them with one click. There's a Passwords panel with a generator and an optional PIN. Passwords are encrypted with your Windows account (safeStorage) in `%APPDATA%\Aero Browser\passwords`, one vault per profile, and never leave the computer
 - ⚡ **Power**: live CPU/RAM graphs and per-tab usage. The RAM limiter puts unused background tabs to sleep, and the CPU limiter slows down busy background tabs (never the active tab or one playing sound)
 - 🛡️ **Ad blocker** (Ghostery's engine with uBlock-style lists), with a count of blocked ads and trackers in the address bar
-- ◫ **Split screen**: two tabs side by side
+- ◫ **Split screen**: two tabs side by side, with a divider you can drag
+- 🧩 **Aero Web Store** (`aero://store`): one-click Chrome extensions, with toolbar buttons for their popups
+- ⬇️ **Downloads** panel, plus "Save image" in the right-click menu
+- 📚 **Bookmark import/export**: from Chrome, Edge, Brave, Opera GX or an HTML file (Customize → Bookmarks)
+- 🌐 **Default browser**: Aero registers itself with Windows; Customize → Default browser opens the right Settings page
 - 🕶 **Incognito** (Ctrl+Shift+N): a temporary in-memory session that's wiped when closed
 - 💬 **Apps sidebar**: Discord, Spotify, WhatsApp, YouTube Music or any site in a side panel that keeps running
 - 📺 Full screen videos, 🖱️ right-click menus for pages and tabs, ↩️ Ctrl+Shift+T to reopen closed tabs
@@ -65,6 +70,7 @@ From version 0.3.0, installed copies update themselves like Chrome. Every few ho
 ## How it's built
 
 - `main.js`: the engine room. It creates the window and the tabs, and handles navigation and shortcuts.
+- `downloads.js`, `bookmarks.js`, `extensions.js`, `default-browser.js`: downloads, bookmark import/export, the extension installer and Windows default-browser registration.
 - `passwords.js`: the encrypted password vault. `power.js`: the CPU/RAM manager and battery saver. `adblock.js`: the ad blocker.
 - `tab-preload.js`: a small helper inside every tab that spots login forms and fills them.
 - `preload.js`: the safe "walkie-talkie" between the engine and the UI.

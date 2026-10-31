@@ -11,13 +11,18 @@ const TO_ENGINE = [
   "pw:upsert", "pw:delete", "pw:unnever", "pw:set-pin",
   "perf:settings", "tab:sleep", "signin:set-mode",
   "tab:reopen", "tab:menu", "tab:prewake", "split:toggle", "incognito:open", "incognito:close",
-  "app:open", "app:close", "app:remove", "app:bounds", "set:adblock", "set:hide-ai"
+  "app:open", "app:close", "app:remove", "app:bounds", "set:adblock", "set:hide-ai",
+  "split:ratio", "split:drag", "store:open", "ext:popup", "extensions:refresh", "default:check", "default:set",
+  "downloads:refresh", "downloads:open", "downloads:show", "downloads:cancel", "downloads:pause", "downloads:clear", "downloads:folder",
+  "bookmarks:sources", "bookmarks:import-browser", "bookmarks:import-file", "bookmarks:export-file"
 ];
 const FROM_ENGINE = [
   "tab:created", "tab:update", "tab:activated", "tab:closed", "ui:focus-address", "ui:resend-bounds", "win:state",
   "profiles", "themes", "app:info", "update:status",
   "pw:list", "pw:status", "pw:offer", "pw:fillable", "pw:revealed", "perf:stats",
-  "split:state", "ui:fullscreen", "adblock:counts", "settings"
+  "split:state", "ui:fullscreen", "adblock:counts", "settings",
+  "downloads:list", "downloads:started", "downloads:finished", "extensions:list", "default:status",
+  "bookmarks:sources", "bookmarks:imported", "bookmarks:exported"
 ];
 
 contextBridge.exposeInMainWorld("aero", {

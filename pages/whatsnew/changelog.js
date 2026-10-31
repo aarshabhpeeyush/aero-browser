@@ -1,6 +1,30 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "0.6.0",
+    date: "October 2026",
+    title: "Extensions, downloads and more",
+    items: [
+      { icon: "🧩", title: "Aero Web Store", text: "Click 🧩 in the toolbar to open the Aero Web Store and add extensions like Return YouTube Dislike, SponsorBlock, Dark Reader and Google Translate with one click. You can also paste any Chrome Web Store link to install that extension. Extensions get their own buttons next to the address bar." },
+      { icon: "⬇️", title: "Downloads", text: "Files you download go to your Downloads folder, and the ⬇ button shows their progress. Pause, cancel, open them or show them in the folder. Right-click any picture and choose Save image." },
+      { icon: "📚", title: "Bring your bookmarks", text: "✨ Customize → Bookmarks copies your bookmarks from Chrome, Edge, Brave or Opera GX in one click. You can also import or export a bookmarks file." },
+      { icon: "🌐", title: "Make Aero your default browser", text: "Aero now appears in Windows Settings → Default apps. ✨ Customize → Default browser takes you straight there, so links from other apps open in Aero." },
+      { icon: "◫", title: "Better split screen", text: "Drag the divider between the two pages to resize them, or double-click it to make them equal again. A glowing line shows which side you're using, and the white gap is gone." },
+      { icon: "🔐", title: "Sign in with Google on more sites", text: "Aero now introduces itself to Google the way Chrome does, so “Sign in with Google” works on sites like Aternos that used to say the browser may not be secure." },
+      { icon: "🔍", title: "Cleaner Google search", text: "The search box on Google no longer gets strange glowing boxes with some themes, and AI Overviews are hidden more reliably." },
+      { icon: "🎨", title: "Themes are readable on Google", text: "Light themes like Aqua Glass, Bubble Pop and Woodland Hut no longer leave Google with white text on a light background, and Dark Mode keeps Google dark. Built-in themes now also get their fixes when Aero updates (any file you changed yourself is left alone)." },
+      { icon: "🖼️", title: "Aero's icon is back", text: "Aero Browser shows its own globe icon again instead of Electron's." }
+    ]
+  },
+  {
+    version: "0.5.2",
+    date: "October 2026",
+    title: "Shorts scroll again",
+    items: [
+      { icon: "📱", title: "YouTube Shorts scroll properly", text: "The ad blocker was hiding ad Shorts in a way that left invisible gaps, so scrolling got stuck. Shorts pages now still block ad downloads but don't hide anything, and scrolling works. Thanks Hal_Jordan190 for the bug report!" }
+    ]
+  },
+  {
     version: "0.5.1",
     date: "October 2026",
     title: "Into the woods",

@@ -2,10 +2,38 @@
 // It lives in its own "isolated world", so websites can't see or use anything in here.
 const { webFrame, ipcRenderer } = require("electron");
 
-// In "Firefox" sign-in mode, Google's sign-in page sees us as Firefox (see main.js), so also hide
-// the Chromium-only "userAgentData" that would give the game away.
-if (location.hostname === "accounts.google.com" && ipcRenderer.sendSync("signin:mode") === "firefox") {
-  webFrame.executeJavaScript("Object.defineProperty(Navigator.prototype, 'userAgentData', { get: () => undefined });");
+// On Google's sign-in page, what the page's own code sees has to match how we introduce ourselves
+// (see signInMode in main.js):
+//   "firefox": hide the Chromium-only userAgentData that would give the game away.
+//   "chrome":  report Google Chrome's brands, the way Chrome itself does.
+if (location.hostname === "accounts.google.com") {
+  const { mode, full, major } = ipcRenderer.sendSync("signin:mode");
+  if (mode === "firefox") {
+    webFrame.executeJavaScript("Object.defineProperty(Navigator.prototype, 'userAgentData', { get: () => undefined });");
+  } else if (mode === "chrome") {
+    webFrame.executeJavaScript(`(() => {
+      const real = navigator.userAgentData;
+      if (!real) return;
+      const brands = [{ brand: "Google Chrome", version: "${major}" }, { brand: "Chromium", version: "${major}" }, { brand: "Not?A_Brand", version: "99" }];
+      const fullVersionList = [{ brand: "Google Chrome", version: "${full}" }, { brand: "Chromium", version: "${full}" }, { brand: "Not?A_Brand", version: "99.0.0.0" }];
+      const fake = {
+        brands, mobile: real.mobile, platform: real.platform,
+        getHighEntropyValues: hints => real.getHighEntropyValues(hints).then(v => ({ ...v, brands, fullVersionList, uaFullVersion: "${full}" })),
+        toJSON: () => ({ brands, mobile: real.mobile, platform: real.platform })
+      };
+      Object.defineProperty(Navigator.prototype, "userAgentData", { get: () => fake });
+    })();`);
+  }
+}
+
+// ================= Aero Web Store =================
+// Only the built-in store page (aero://store) gets the buttons that install and remove extensions.
+if (location.protocol === "aero:" && location.host === "store") {
+  require("electron").contextBridge.exposeInMainWorld("aeroStore", {
+    list: () => ipcRenderer.invoke("store:list"),
+    install: id => ipcRenderer.invoke("store:install", id),
+    remove: id => ipcRenderer.invoke("store:remove", id)
+  });
 }
 
 // ================= Hide Google's AI Overviews =================
@@ -14,12 +42,19 @@ if (location.hostname === "accounts.google.com" && ipcRenderer.sendSync("signin:
 
 if (/(^|\.)google\.[a-z.]+$/.test(location.hostname) && ipcRenderer.sendSync("settings:hide-ai")) {
   const RESULT_AREAS = ["rso", "rcnt", "center_col", "search", "main"];
+  // The "AI Overview" label can be a heading or a small label next to a ✨ icon, so look at every
+  // short piece of text that says it.
+  const isAiLabel = text => /^AI Overviews?$/i.test(text.trim());
   const hideAiOverviews = () => {
-    for (const heading of document.querySelectorAll("h1, h2, h3, [role=heading]")) {
-      const text = heading.textContent.trim();
-      if (text.length > 40 || !/^AI (Overview|overview|Mode)/.test(text)) continue;
+    const labels = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: node => (isAiLabel(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP)
+    });
+    while (walker.nextNode()) labels.push(walker.currentNode.parentElement);
+    for (const label of labels) {
       // Climb up to the block that sits directly inside Google's results area, and hide that.
-      let box = heading;
+      // (Labels elsewhere, like menus, climb all the way up and are left alone.)
+      let box = label;
       while (box.parentElement && box.parentElement !== document.body && !RESULT_AREAS.includes(box.parentElement.id)) box = box.parentElement;
       if (box.parentElement && box.parentElement !== document.body) box.style.setProperty("display", "none", "important");
     }

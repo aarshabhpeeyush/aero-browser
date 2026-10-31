@@ -458,8 +458,8 @@ function renderProfiles() {
     addButton("Sign in to Google", "", () => openGoogle("https://accounts.google.com/ServiceLogin"));
     // If Google says "This browser may not be secure", switching how we introduce ourselves can help.
     const mode = document.createElement("select");
-    mode.innerHTML = `<option value="chromium">Sign in as: Chromium (normal)</option><option value="firefox">Sign in as: Firefox</option>`;
-    mode.value = profileState.signInMode || "chromium";
+    mode.innerHTML = `<option value="chrome">Sign in as: Chrome (recommended)</option><option value="chromium">Sign in as: Chromium</option><option value="firefox">Sign in as: Firefox</option>`;
+    mode.value = profileState.signInMode || "chrome";
     mode.title = "If Google blocks the sign-in, try the other option";
     mode.className = "signin-mode";
     mode.addEventListener("change", () => { Sound.click(); api.send("signin:set-mode", mode.value); });
@@ -951,13 +951,65 @@ $("#setHideAi").addEventListener("change", e => { Sound.click(); api.send("set:h
 // ================= Split screen =================
 
 
+// The two pages sit side by side with a gap between them. That gap is the divider you can drag.
+// While dragging, the engine moves the pages out of the way and plain panes stand in for them.
+const SPLIT_GAP = 10;
+let splitDragRatio = null;
+function drawSplit() {
+  const layer = $("#splitLayer");
+  layer.hidden = !splitState;
+  if (!splitState) return;
+  const ratio = splitDragRatio ?? splitState.ratio ?? 0.5;
+  const width = $("#viewport").clientWidth;
+  const leftWidth = Math.round((width - SPLIT_GAP) * ratio);
+  $("#splitLeft").style.width = leftWidth + "px";
+  $("#splitRight").style.left = leftWidth + SPLIT_GAP + "px";
+  $("#splitDivider").style.left = leftWidth + "px";
+  const onRight = activeId === splitState.right;
+  $("#splitMark").style.left = onRight ? leftWidth + SPLIT_GAP + "px" : "0";
+  $("#splitMark").style.width = (onRight ? width - leftWidth - SPLIT_GAP : leftWidth) + "px";
+  layer.classList.toggle("dragging", splitDragRatio != null);
+}
+new ResizeObserver(drawSplit).observe($("#viewport"));
+$("#splitDivider").addEventListener("pointerdown", e => {
+  if (!splitState) return;
+  e.preventDefault();
+  const divider = e.currentTarget;
+  divider.setPointerCapture(e.pointerId);
+  splitDragRatio = splitState.ratio ?? 0.5;
+  api.send("split:drag", true);
+  drawSplit();
+  const box = $("#viewport").getBoundingClientRect();
+  const move = ev => {
+    splitDragRatio = Math.min(0.8, Math.max(0.2, (ev.clientX - box.left - SPLIT_GAP / 2) / (box.width - SPLIT_GAP)));
+    drawSplit();
+  };
+  const up = () => {
+    divider.removeEventListener("pointermove", move);
+    divider.removeEventListener("pointerup", up);
+    divider.removeEventListener("pointercancel", up);
+    api.send("split:ratio", splitDragRatio);
+    splitState = { ...splitState, ratio: splitDragRatio };
+    splitDragRatio = null;
+    api.send("split:drag", false);
+    drawSplit();
+  };
+  divider.addEventListener("pointermove", move);
+  divider.addEventListener("pointerup", up);
+  divider.addEventListener("pointercancel", up);
+});
+// Double-click the divider to make both sides the same size again.
+$("#splitDivider").addEventListener("dblclick", () => api.send("split:ratio", 0.5));
+
 api.on("split:state", state => {
   splitState = state;
+  drawSplit();
   $("#splitBtn").classList.toggle("on", !!state);
   $("#splitBtn").title = state ? "Leave split screen" : "Split screen: two tabs side by side";
   for (const info of tabs.values()) drawTab(info);
   drawActive();
 });
+api.on("tab:activated", () => drawSplit());
 $("#splitBtn").addEventListener("click", () => { Sound.bloop(); api.send("split:toggle"); });
 
 // ================= Incognito =================
@@ -1155,3 +1207,143 @@ function makePretendEngine() {
     }
   };
 }
+
+// ================= Downloads =================
+
+let downloadList = [];
+const prettySize = n => (n >= 1e9 ? (n / 1e9).toFixed(1) + " GB" : n >= 1e6 ? (n / 1e6).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1e3)) + " KB");
+function drawDownloads() {
+  const list = $("#dlList");
+  list.innerHTML = "";
+  const busy = downloadList.filter(d => d.state === "downloading" || d.state === "paused").length;
+  $("#dlBadge").hidden = !busy;
+  $("#dlBadge").textContent = busy;
+  if (!downloadList.length) {
+    list.innerHTML = `<li class="empty">Nothing downloaded yet</li>`;
+    return;
+  }
+  for (const d of downloadList) {
+    const li = document.createElement("li");
+    li.className = "dl-item " + d.state;
+    const pct = d.total ? Math.round((d.received / d.total) * 100) : 0;
+    const status = {
+      downloading: d.total ? `${prettySize(d.received)} of ${prettySize(d.total)}` : prettySize(d.received),
+      paused: "Paused",
+      done: d.total ? prettySize(d.total) : "Done",
+      cancelled: "Cancelled",
+      failed: "Failed"
+    }[d.state] || d.state;
+    li.innerHTML = `<div class="dl-name"></div><div class="dl-bar"><div></div></div><div class="dl-row"><small></small><span class="dl-buttons"></span></div>`;
+    li.querySelector(".dl-name").textContent = d.name;
+    li.querySelector(".dl-name").title = d.url;
+    li.querySelector(".dl-bar div").style.width = (d.state === "done" ? 100 : pct) + "%";
+    li.querySelector("small").textContent = status;
+    const buttons = li.querySelector(".dl-buttons");
+    const add = (label, channel) => {
+      const b = document.createElement("button");
+      b.className = "gel tiny plain";
+      b.textContent = label;
+      b.addEventListener("click", () => { Sound.click(); api.send(channel, d.id); });
+      buttons.append(b);
+    };
+    if (d.state === "done") { add("Open", "downloads:open"); add("Show in folder", "downloads:show"); }
+    if (d.state === "downloading") { add("Pause", "downloads:pause"); add("Cancel", "downloads:cancel"); }
+    if (d.state === "paused") { add("Resume", "downloads:pause"); add("Cancel", "downloads:cancel"); }
+    list.append(li);
+  }
+}
+api.on("downloads:list", list => { downloadList = list || []; drawDownloads(); });
+api.on("downloads:started", () => {
+  Sound.bloop();
+  $("#dlBtn").classList.add("bounce");
+  setTimeout(() => $("#dlBtn").classList.remove("bounce"), 700);
+});
+api.on("downloads:finished", d => { if (d?.state === "done") Sound.pop(); });
+$("#dlBtn").addEventListener("click", () => { togglePanel("downloads"); api.send("downloads:refresh"); });
+$("#dlFolder").addEventListener("click", () => api.send("downloads:folder"));
+$("#dlClear").addEventListener("click", () => { Sound.pop(); api.send("downloads:clear"); });
+api.send("downloads:refresh");
+
+// ================= Extensions =================
+// Installed extensions get a button in the toolbar; clicking it opens the extension's popup.
+
+api.on("extensions:list", list => {
+  const box = $("#extButtons");
+  box.innerHTML = "";
+  for (const ext of list || []) {
+    if (!ext.enabled) continue;
+    const b = document.createElement("button");
+    b.className = "ext-btn";
+    b.title = ext.name + (ext.hasPopup ? "" : " (works by itself on websites)");
+    if (ext.icon) {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.src = ext.icon;
+      b.append(img);
+    } else b.textContent = ext.name.slice(0, 1);
+    b.addEventListener("click", () => {
+      Sound.click();
+      if (!ext.hasPopup) return;
+      const r = b.getBoundingClientRect();
+      api.send("ext:popup", { id: ext.id, x: r.right, y: r.bottom + 4 });
+    });
+    box.append(b);
+  }
+});
+api.send("extensions:refresh");
+$("#storeBtn").addEventListener("click", () => { Sound.bloop(); api.send("store:open"); });
+
+// ================= Bookmark import / export =================
+
+api.on("bookmarks:sources", sources => {
+  const box = $("#bmSources");
+  box.innerHTML = "";
+  if (!sources?.length) box.innerHTML = `<small>No other browsers found on this computer.</small>`;
+  for (const src of sources || []) {
+    const b = document.createElement("button");
+    b.className = "gel tiny";
+    b.textContent = "From " + src.name;
+    b.addEventListener("click", () => {
+      Sound.click();
+      $("#bmStatus").textContent = "Importing…";
+      api.send("bookmarks:import-browser", src.id);
+    });
+    box.append(b);
+  }
+});
+api.on("bookmarks:imported", ({ from, bookmarks, error } = {}) => {
+  if (error) { $("#bmStatus").textContent = `${from}: ${error}`; return; }
+  if (!bookmarks) { $("#bmStatus").textContent = ""; return; } // the file picker was closed
+  const have = new Set(prefs.bookmarks.map(b => b.url));
+  const fresh = bookmarks.filter(b => b.url && !have.has(b.url) && have.add(b.url));
+  prefs.bookmarks.push(...fresh.map(b => ({ title: b.title || b.url, url: b.url })));
+  savePrefs();
+  drawBookmarks();
+  drawActive();
+  Sound.bloop();
+  $("#bmStatus").textContent = fresh.length
+    ? `Added ${fresh.length} bookmark${fresh.length === 1 ? "" : "s"} from ${from}.`
+    : `Nothing new in ${from}: you already have all ${bookmarks.length}.`;
+});
+api.on("bookmarks:exported", ({ file } = {}) => {
+  if (file) $("#bmStatus").textContent = "Saved to " + file;
+});
+$("#bmImportFile").addEventListener("click", () => api.send("bookmarks:import-file"));
+$("#bmExport").addEventListener("click", () => api.send("bookmarks:export-file", prefs.bookmarks.map(({ title, url }) => ({ title, url }))));
+api.send("bookmarks:sources");
+
+// ================= Default browser =================
+
+api.on("default:status", ({ isDefault, canSet } = {}) => {
+  $("#defaultText").textContent = isDefault
+    ? "✅ Aero is your default browser. Links you click in other apps open here."
+    : canSet
+      ? "Links from other apps open in another browser right now. Click below, then choose Aero Browser in Windows Settings."
+      : "Install Aero Browser to make it your default browser.";
+  $("#defaultSet").hidden = !!isDefault || !canSet;
+});
+$("#defaultSet").addEventListener("click", () => { Sound.bloop(); api.send("default:set"); });
+$("#customizeBtn").addEventListener("click", () => api.send("default:check"));
+// Coming back from Windows Settings: see whether Aero is the default now.
+addEventListener("focus", () => { if (!$("#customize").hidden) api.send("default:check"); });
+api.send("default:check");

@@ -1,0 +1,17 @@
+/* Fixes for websites that look broken with Aero styling or themes.
+   Added after every other style (including custom themes), so these always win. */
+
+/* Google search: no extra glow boxes around the logo, the search box or the text inside it.
+   (They didn't line up with Google's search box and looked broken, especially with suggestions open.) */
+form[role="search"],
+form[role="search"] > div:first-child,
+.RNNXgb {
+  box-shadow: none !important;
+}
+form[role="search"] textarea:focus,
+form[role="search"] input:focus,
+textarea[name="q"]:focus,
+input[name="q"]:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}

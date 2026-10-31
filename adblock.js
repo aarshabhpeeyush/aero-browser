@@ -7,7 +7,19 @@ const path = require("path");
 const { app, ipcMain } = require("electron");
 const { ElectronBlocker } = require("@ghostery/adblocker-electron");
 
-const BLOCKER_CHANNELS = ["@ghostery/adblocker/inject-cosmetic-filters", "@ghostery/adblocker/is-mutation-observer-enabled"];
+// Filter-list rules that break websites, switched off with exceptions:
+// - Hiding ad Shorts leaves an invisible slot in YouTube's Shorts feed that the scroll wheel gets
+//   stuck on. (Every other YouTube ad rule stays on.)
+const EXCEPTIONS = [
+  "youtube.com#@##shorts-inner-container > .ytd-shorts:has(> .ytd-reel-video-renderer > ytd-ad-slot-renderer)"
+];
+
+// Pages where the blocker only stops ad downloads and doesn't hide anything on the page,
+// because hiding (CSS rules and scripts) breaks them. YouTube Shorts wouldn't scroll with it on.
+const SKIP_HIDING = [/^https:\/\/(www\.|m\.)?youtube\.com\/shorts(\/|$|\?)/];
+const skipHiding = url => SKIP_HIDING.some(pattern => pattern.test(url || ""));
+
+const BLOCKER_CHANNELS =["@ghostery/adblocker/inject-cosmetic-filters", "@ghostery/adblocker/is-mutation-observer-enabled"];
 
 // The blocker library is written for newer Electron versions (registerPreloadScript arrived in
 // Electron 35). Our Electron has setPreloads, which does the same job, so give it a stand-in.
@@ -50,6 +62,10 @@ function setupAdblock({ enabled, onBlocked }) {
   })
     .then(b => {
       blocker = b;
+      blocker.updateFromDiff({ added: EXCEPTIONS });
+      // On pages where hiding things breaks the site (see SKIP_HIDING), only block ad downloads.
+      const injectHiding = blocker.onInjectCosmeticFilters;
+      blocker.onInjectCosmeticFilters = (event, url, msg) => (skipHiding(url) ? undefined : injectHiding(event, url, msg));
       blocker.on("request-blocked", request => onBlocked(request.tabId));
       for (const ses of sessions.keys()) apply(ses);
     })
@@ -67,4 +83,4 @@ function setupAdblock({ enabled, onBlocked }) {
   };
 }
 
-module.exports = { setupAdblock };
+module.exports = { setupAdblock, skipHiding };

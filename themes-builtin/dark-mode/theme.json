@@ -1,5 +1,6 @@
 {
   "name": "Dark Mode",
   "author": "Aero Browser",
-  "description": "Turns every website dark (even ones without a dark mode), with a dark glass browser"
+  "description": "Turns every website dark (even ones without a dark mode), with a dark glass browser",
+  "websites": "light"
 }

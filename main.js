@@ -2,26 +2,36 @@
 // Every profile gets its own window. Each window shows our own glossy UI (ui/browser.html), and every
 // tab is a Chromium web view placed on top of it.
 
-const { app, BrowserWindow, WebContentsView, ipcMain, protocol, net, session, Menu, dialog, shell, clipboard } = require("electron");
+const { app, BrowserWindow, WebContentsView, ipcMain, protocol, net, session, Menu, dialog, shell, clipboard, nativeTheme } = require("electron");
+const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
 const { pathToFileURL } = require("url");
 const { setupPasswords } = require("./passwords");
 const { setupPower } = require("./power");
-const { setupAdblock } = require("./adblock");
+const { setupAdblock, skipHiding } = require("./adblock");
+const { setupDownloads } = require("./downloads");
+const { setupBookmarks } = require("./bookmarks");
+const { setupExtensions } = require("./extensions");
+const { setupDefaultBrowser } = require("./default-browser");
 
 let passwords = null; // the password manager, started once the app is ready
 let power = null; // the CPU/RAM manager
 let adblock = null; // the ad blocker
+let downloads = null; // the downloads manager
+let extensions = null; // installed extensions
 
 const PAGES = path.join(__dirname, "pages");
 const HOME = "aero://newtab/";
 const SITE_CSS = fs.readFileSync(path.join(PAGES, "aero-sites.css"), "utf8");
+const SITE_FIXES_CSS = fs.readFileSync(path.join(PAGES, "site-fixes.css"), "utf8"); // always applied last
 
 const tabs = new Map(); // tab id -> { view, profileId, cssKey, favicon, attached, sleeping }
 let nextId = 1;
 let restyleSites = true;
 let searchUrl = "https://www.google.com/search?q=";
+const pendingLaunchUrls = process.platform === "win32" ? urlsFromArgs(process.argv) : [];
+let appReady = false;
 
 // aero:// is our own address scheme for built-in pages, like chrome:// in Chrome.
 protocol.registerSchemesAsPrivileged([
@@ -84,6 +94,8 @@ function sessionFor(profileId) {
 
 function setupSession(ses) {
   adblock?.addSession(ses);
+  downloads?.addSession(ses);
+  extensions?.addSession(ses);
 
   // Google won't let you sign in from apps that say they're "Electron", so we introduce
   // ourselves the way Chromium browsers like Brave and Edge do.
@@ -109,6 +121,12 @@ function setupSession(ses) {
       // "Firefox" sign-in mode: Google's sign-in page sees us as Firefox (with no Chromium hints).
       headers["User-Agent"] = FIREFOX_UA;
       for (const name of Object.keys(headers)) if (/^sec-ch-ua/i.test(name)) delete headers[name];
+    } else if (signInMode() === "chrome") {
+      // "Chrome" sign-in mode (the default): Google's sign-in page sees exactly what Google Chrome
+      // sends. "Sign in with Google" on other sites (like Aternos) rejects browsers that don't.
+      for (const name of Object.keys(headers)) if (/^sec-ch-ua(-full-version-list)?$/i.test(name)) delete headers[name];
+      headers["sec-ch-ua"] = CHROME_BRANDS(CHROME_MAJOR);
+      headers["sec-ch-ua-full-version-list"] = CHROME_BRANDS(CHROME_FULL, "99.0.0.0");
     }
     // Otherwise ("chromium" mode) we're simply a Chromium browser, like Brave or Edge.
     done({ requestHeaders: headers });
@@ -116,8 +134,12 @@ function setupSession(ses) {
 }
 
 const FIREFOX_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0";
-// How we introduce ourselves to Google's sign-in page: "chromium" (normal) or "firefox". Changeable in Profiles.
-const signInMode = () => (state.signInMode === "firefox" ? "firefox" : "chromium");
+const CHROME_FULL = process.versions.chrome;
+const CHROME_MAJOR = CHROME_FULL.split(".")[0];
+const CHROME_BRANDS = (version, other = "99") => `"Google Chrome";v="${version}", "Chromium";v="${version}", "Not?A_Brand";v="${other}"`;
+// How we introduce ourselves to Google's sign-in pages: "chrome" (default), "chromium" or "firefox".
+// Changeable in Profiles.
+const signInMode = () => (["firefox", "chromium"].includes(state.signInMode) ? state.signInMode : "chrome");
 const isGoogleSignIn = url => /^https:\/\/accounts\.google\.com\//.test(url);
 
 // ================= Saved state (theme, last version seen) =================
@@ -141,24 +163,40 @@ function saveState() {
 const themesDir = () => path.join(app.getPath("userData"), "themes");
 let themeVersion = Date.now(); // changes whenever a theme file changes, so pages reload it
 
-// Copies a file or folder one file at a time. (fs.cpSync can't read from inside the
-// installed app's app.asar archive, which once stopped the browser from opening.)
-function copyInto(from, to) {
-  if (fs.statSync(from).isDirectory()) {
-    fs.mkdirSync(to, { recursive: true });
-    for (const name of fs.readdirSync(from)) copyInto(path.join(from, name), path.join(to, name));
-  } else if (!fs.existsSync(to)) {
-    fs.writeFileSync(to, fs.readFileSync(from));
-  }
+// Built-in theme files get updated with new versions of the browser, unless you've changed that
+// file yourself: .builtin.json remembers what we last put there, so your edits are never overwritten.
+function refreshBuiltInThemes(builtIn, dir) {
+  const recordFile = path.join(dir, ".builtin.json");
+  let record = null; // null = a copy from before 0.6.0, which never recorded anything
+  try { record = JSON.parse(fs.readFileSync(recordFile, "utf8")); } catch {}
+  const hash = data => crypto.createHash("sha1").update(data).digest("hex");
+  const next = {};
+  const walk = rel => {
+    const from = path.join(builtIn, rel);
+    if (fs.statSync(from).isDirectory()) {
+      fs.mkdirSync(path.join(dir, rel), { recursive: true });
+      for (const name of fs.readdirSync(from)) walk(path.join(rel, name));
+      return;
+    }
+    const key = rel.split(path.sep).join("/");
+    const data = fs.readFileSync(from);
+    const to = path.join(dir, rel);
+    const current = fs.existsSync(to) ? fs.readFileSync(to) : null;
+    const untouched = !current || !record || record[key] === hash(current);
+    if (untouched && (!current || !current.equals(data))) fs.writeFileSync(to, data);
+    next[key] = untouched ? hash(data) : record[key];
+  };
+  for (const name of fs.readdirSync(builtIn)) if (name !== "THEME-GUIDE.md") walk(name);
+  fs.writeFileSync(recordFile, JSON.stringify(next, null, 1));
 }
 
 function ensureThemesFolder() {
   const dir = themesDir();
   fs.mkdirSync(dir, { recursive: true });
-  // Example themes and the guide are copied in (and any missing files filled back in),
-  // so people always have something to learn from.
+  // Example themes and the guide are copied in (and kept up to date), so people always have
+  // something to learn from.
   const builtIn = path.join(__dirname, "themes-builtin");
-  for (const name of fs.readdirSync(builtIn)) copyInto(path.join(builtIn, name), path.join(dir, name));
+  refreshBuiltInThemes(builtIn, dir);
   // The guide isn't something people edit, so keep it up to date with each version.
   fs.writeFileSync(path.join(dir, "THEME-GUIDE.md"), fs.readFileSync(path.join(builtIn, "THEME-GUIDE.md")));
 }
@@ -204,8 +242,23 @@ function serveThemeFile(pathname) {
 }
 
 // Tells every page using the theme to fetch it again (used for live editing).
+// A theme's theme.json can say "websites": "light" or "dark". Websites with their own dark mode
+// (like Google) then pick the matching one, so their text stays readable on the theme's colours.
+// Without it, websites follow Windows' light/dark setting.
+function applySiteColorScheme() {
+  let scheme = "system";
+  if (state.activeTheme) {
+    try {
+      const info = JSON.parse(fs.readFileSync(path.join(themesDir(), state.activeTheme, "theme.json"), "utf8"));
+      if (["light", "dark"].includes(info.websites)) scheme = info.websites;
+    } catch {}
+  }
+  nativeTheme.themeSource = scheme;
+}
+
 function refreshThemes() {
   themeVersion = Date.now();
+  applySiteColorScheme();
   sendThemes();
   for (const [id, t] of tabs) {
     if (t.view.webContents.getURL().startsWith("aero://")) {
@@ -348,7 +401,7 @@ function openProfileWindow(profileId, startUrls = []) {
     win, profileId, startUrls: [...startUrls],
     activeId: null, previousActive: null,
     viewBounds: { x: 0, y: 0, width: 0, height: 0 },
-    split: null, fullscreenTab: null,
+    split: null, splitRatio: 0.5, splitDragging: false, fullscreenTab: null,
     appViews: new Map(), openAppId: null, appBounds: null
   };
   windows.set(profileId, w);
@@ -468,6 +521,14 @@ function openInProfile(profileId, url) {
   else openProfileWindow(profileId, [url]);
 }
 
+// Windows passes web links as command-line arguments when Aero is selected as the default browser.
+function urlsFromArgs(args = []) {
+  return args.filter(value => {
+    if (typeof value !== "string" || !/^https?:\/\//i.test(value)) return false;
+    try { return ["http:", "https:"].includes(new URL(value).protocol); } catch { return false; }
+  });
+}
+
 function createTab(url = HOME, background = false, profileId = currentProfile) {
   const w = windows.get(profileId);
   if (!w) return null;
@@ -492,12 +553,20 @@ function createTab(url = HOME, background = false, profileId = currentProfile) {
       sendForTab(id, "adblock:counts", Object.fromEntries(blockedCounts));
     }
     t.hasLoginForm = false;
+    t.lastUrl = navUrl;
     passwords?.offerFill(id);
     update(id);
     // Signing in or out happens on Google pages, so check the account list after visiting one.
     if (/^https:\/\/([a-z]+\.)*google\.com\//.test(navUrl)) refreshAccountsSoon(profileId);
   });
-  wc.on("did-navigate-in-page", () => update(id));
+  wc.on("did-navigate-in-page", (e, navUrl, isMainFrame) => {
+    update(id);
+    // YouTube switches pages without loading a new one. The ad blocker leaves Shorts unhidden
+    // (hiding breaks its scrolling), so reload once when you go into Shorts from elsewhere on YouTube.
+    const t = tabs.get(id);
+    if (isMainFrame && state.adblock !== false && skipHiding(navUrl) && !skipHiding(t?.lastUrl)) wc.reload();
+    if (t) t.lastUrl = navUrl;
+  });
   // In Firefox sign-in mode, match what the page's own code sees (navigator.userAgent) too.
   wc.on("did-start-navigation", (details, navUrl, inPlace, isMainFrame) => {
     const target = details.url ?? navUrl;
@@ -569,7 +638,7 @@ function activate(id) {
   if (w.split && id !== w.split.left && id !== w.split.right) {
     if (previous === w.split.right) w.split.right = id;
     else w.split.left = id;
-    sendTo(w, "split:state", w.split);
+    sendSplit(w);
   }
   if (previous !== id) w.previousActive = previous;
   layoutViews(w, "show");
@@ -596,13 +665,16 @@ function detachView(t) {
 
 // ================= Page layout: normal, split screen and full screen =================
 
-const SPLIT_GAP = 6;
+const SPLIT_GAP = 10; // room for the divider you can drag
+const SPLIT_MARK = 3; // a coloured bar above the side you're using
+
+const sendSplit = w => sendTo(w, "split:state", w.split ? { ...w.split, ratio: w.splitRatio } : null);
 
 // Which of a window's tabs are on screen right now.
 function visibleTabIds(w) {
   if (!w) return [];
   if (w.fullscreenTab != null && tabs.has(w.fullscreenTab)) return [w.fullscreenTab];
-  if (w.split && tabs.has(w.split.left) && tabs.has(w.split.right)) return [w.split.left, w.split.right];
+  if (w.split && tabs.has(w.split.left) && tabs.has(w.split.right)) return w.splitDragging ? [] : [w.split.left, w.split.right];
   return w.activeId != null && tabs.has(w.activeId) ? [w.activeId] : [];
 }
 
@@ -616,10 +688,11 @@ function rectFor(w, id) {
     return { x: 0, y: 0, width, height };
   }
   if (w.split && (id === w.split.left || id === w.split.right) && visibleTabIds(w).length === 2) {
-    const half = Math.floor((vb.width - SPLIT_GAP) / 2);
+    const leftWidth = Math.round((vb.width - SPLIT_GAP) * w.splitRatio);
+    const top = { y: vb.y + SPLIT_MARK, height: Math.max(0, vb.height - SPLIT_MARK) };
     return id === w.split.left
-      ? { ...vb, width: half }
-      : { x: vb.x + half + SPLIT_GAP, y: vb.y, width: vb.width - half - SPLIT_GAP, height: vb.height };
+      ? { x: vb.x, width: leftWidth, ...top }
+      : { x: vb.x + leftWidth + SPLIT_GAP, width: vb.width - leftWidth - SPLIT_GAP, ...top };
   }
   return vb;
 }
@@ -669,7 +742,7 @@ function toggleSplit(w) {
     w.split = { left: w.activeId, right: partner };
     if (tabs.get(partner).sleeping) wakeTab(partner);
   }
-  sendTo(w, "split:state", w.split);
+  sendSplit(w);
   layoutViews(w, w.split ? "split on" : "split off");
 }
 
@@ -677,7 +750,7 @@ function splitWith(w, otherId) {
   if (!w || otherId === w.activeId || !tabs.has(otherId)) return;
   w.split = { left: w.activeId, right: otherId };
   if (tabs.get(otherId).sleeping) wakeTab(otherId);
-  sendTo(w, "split:state", w.split);
+  sendSplit(w);
   layoutViews(w, "split with tab");
 }
 
@@ -821,7 +894,7 @@ function closeTab(id) {
   if (closedTabs.length > 25) closedTabs.shift();
   if (w.split && (id === w.split.left || id === w.split.right)) {
     w.split = null;
-    sendTo(w, "split:state", null);
+    sendSplit(w);
   }
   if (w.fullscreenTab === id) w.fullscreenTab = null;
   const order = profileTabs(t.profileId);
@@ -866,10 +939,12 @@ function showPageMenu(id, p) {
       if (other.id !== t.profileId) add(`Open link as ${other.name}`, () => openInProfile(other.id, p.linkURL));
     }
     add("Copy link address", () => clipboard.writeText(p.linkURL));
+    add("Save link as file", () => wc.downloadURL(p.linkURL));
     line();
   }
   if (p.mediaType === "image" && p.srcURL) {
     add("Open image in new tab", () => createTab(p.srcURL, true, t.profileId));
+    add("Save image", () => wc.downloadURL(p.srcURL));
     add("Copy image", () => wc.copyImageAt(p.x, p.y));
     add("Copy image address", () => clipboard.writeText(p.srcURL));
     line();
@@ -939,13 +1014,14 @@ async function applySiteStyle(id) {
   const t = tabs.get(id);
   if (!t) return;
   const wc = t.view.webContents;
-  for (const key of [t.cssKey, t.themeCssKey]) if (key) await wc.removeInsertedCSS(key).catch(() => {});
-  t.cssKey = t.themeCssKey = null;
+  for (const key of [t.cssKey, t.themeCssKey, t.fixesCssKey]) if (key) await wc.removeInsertedCSS(key).catch(() => {});
+  t.cssKey = t.themeCssKey = t.fixesCssKey = null;
   const url = wc.getURL();
   if (!/^https?:/.test(url)) return;
   if (restyleSites) t.cssKey = await wc.insertCSS(SITE_CSS).catch(() => null);
   const themeCss = themeCssForSite(new URL(url).hostname);
   if (themeCss) t.themeCssKey = await wc.insertCSS(themeCss).catch(() => null);
+  t.fixesCssKey = await wc.insertCSS(SITE_FIXES_CSS).catch(() => null);
 }
 
 // A theme can restyle websites too:
@@ -1057,6 +1133,22 @@ onWindow("tab:activate", (w, id) => (id === w.activeId ? layoutViews(w, "tab cli
 onWindow("tab:reopen", w => reopenClosedTab(w));
 onWindow("tab:menu", (w, id) => showTabMenu(id));
 onWindow("split:toggle", w => toggleSplit(w));
+onWindow("split:ratio", (w, ratio) => {
+  if (!Number.isFinite(ratio)) return;
+  w.splitRatio = Math.min(0.8, Math.max(0.2, ratio));
+  layoutViews(w, "split resized", false);
+});
+// While the divider is being dragged the pages step aside (so the mouse doesn't get lost in them).
+onWindow("split:drag", (w, on) => {
+  w.splitDragging = !!on;
+  layoutViews(w, on ? "split drag" : "split drop", !on);
+  sendSplit(w);
+});
+onWindow("store:open", w => openInProfile(w.profileId, "aero://store/"));
+onWindow("ext:popup", (w, { id, x, y } = {}) => {
+  const cb = w.win.getContentBounds();
+  extensions?.openPopup(id, sessionFor(w.profileId), { x: cb.x + x, y: cb.y + y }, w.win);
+});
 onWindow("incognito:open", () => openProfileWindow(INCOGNITO));
 onWindow("incognito:close", () => closeIncognito());
 onWindow("app:open", (w, data) => openApp(w, data));
@@ -1112,9 +1204,9 @@ ipcMain.on("profile:switch", (e, id) => switchProfile(id));
 ipcMain.on("profile:add", (e, data) => addProfile(data || {}));
 ipcMain.on("profile:update", (e, data) => updateProfile(data || {}));
 ipcMain.on("profile:delete", (e, id) => deleteProfile(id));
-ipcMain.on("signin:mode", e => (e.returnValue = signInMode())); // asked by tab-preload.js
+ipcMain.on("signin:mode", e => (e.returnValue = { mode: signInMode(), full: CHROME_FULL, major: CHROME_MAJOR })); // asked by tab-preload.js
 ipcMain.on("signin:set-mode", (e, mode) => {
-  state.signInMode = mode === "firefox" ? "firefox" : "chromium";
+  state.signInMode = ["firefox", "chromium"].includes(mode) ? mode : "chrome";
   saveState();
   sendProfiles();
 });
@@ -1189,6 +1281,21 @@ function armSnapshot(w) {
       log("[tabjs] " + await active().view.webContents.executeJavaScript(process.env.AERO_SNAPSHOT_TABJS, true).catch(e => "error " + e.message));
       await new Promise(r => setTimeout(r, 1500));
     }
+    // AERO_SNAPSHOT_WHEEL=n scrolls the mouse wheel down n notches over the middle of the active tab.
+    if (process.env.AERO_SNAPSHOT_WHEEL && active()) {
+      const wc = active().view.webContents;
+      // Wait (up to 20s) for a Short to be showing, e.g. after clicking a Shorts link.
+      for (let i = 0; i < 40 && !/\/shorts\/[\w-]+/.test(wc.getURL()); i++) await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 4000));
+      log("[before wheel] " + wc.getURL());
+      const { width, height } = active().view.getBounds();
+      for (let i = 0; i < +process.env.AERO_SNAPSHOT_WHEEL; i++) {
+        wc.sendInputEvent({ type: "mouseMove", x: Math.round(width / 2), y: Math.round(height / 2) });
+        wc.sendInputEvent({ type: "mouseWheel", x: Math.round(width / 2), y: Math.round(height / 2), deltaX: 0, deltaY: -120, wheelTicksY: -1, canScroll: true });
+        await new Promise(r => setTimeout(r, 2500));
+        log(`[after wheel ${i + 1}] ` + wc.getURL());
+      }
+    }
     // AERO_SNAPSHOT_KEY presses a key in the active tab (e.g. "Escape").
     if (process.env.AERO_SNAPSHOT_KEY && active()) {
       const wc = active().view.webContents;
@@ -1198,7 +1305,7 @@ function armSnapshot(w) {
       log("[after key] full screen: " + (w.fullscreenTab != null) + ", window full screen: " + win.isFullScreen());
     }
     if (process.env.AERO_SNAPSHOT_JS && !win.isDestroyed()) {
-      await win.webContents.executeJavaScript(process.env.AERO_SNAPSHOT_JS).catch(e => log("[js] " + e.message));
+      log("[js] " + await win.webContents.executeJavaScript(process.env.AERO_SNAPSHOT_JS).catch(e => "error " + e.message));
       await new Promise(r => setTimeout(r, 1500));
     }
     if (process.env.AERO_SNAPSHOT_TABJS_AFTER && active()) {
@@ -1239,16 +1346,23 @@ if (process.env.AERO_SNAPSHOT && !process.env.AERO_SNAPSHOT_VISIBLE) app.disable
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on("second-instance", () => {
+  app.on("second-instance", (_event, commandLine) => {
+    const urls = urlsFromArgs(commandLine);
+    if (!appReady) {
+      pendingLaunchUrls.push(...urls);
+      return;
+    }
     const w = focusedWindow();
-    if (!w) return openProfileWindow(lastProfile);
+    if (!w) return openProfileWindow(lastProfile, urls);
     if (w.win.isMinimized()) w.win.restore();
     w.win.show();
     w.win.focus();
+    urls.forEach(url => createTab(url, false, w.profileId));
   });
 }
 
 app.whenReady().then(() => {
+  appReady = true;
   Menu.setApplicationMenu(null);
   chromeUserAgent = app.userAgentFallback.replace(/ (Electron|AeroBrowser|aero-browser)\/\S+/gi, "");
   app.userAgentFallback = chromeUserAgent;
@@ -1259,10 +1373,17 @@ app.whenReady().then(() => {
   safely("profiles", loadProfiles);
   safely("state", loadState);
   safely("themes", ensureThemesFolder);
+  safely("site colour scheme", applySiteColorScheme);
   safely("theme watcher", watchThemes);
   safely("adblock", () => {
     adblock = setupAdblock({ enabled: state.adblock !== false, onBlocked: countBlocked });
   });
+  safely("downloads", () => { downloads = setupDownloads({ send: sendAll }); });
+  safely("bookmarks", setupBookmarks);
+  safely("extensions", () => {
+    extensions = setupExtensions({ sessions: () => [...readySessions], send: sendAll, chromeVersion: CHROME_FULL });
+  });
+  safely("default browser", setupDefaultBrowser);
   sessionFor("default"); // the browser UI uses this session too, and needs aero://themes/ ready
   safely("passwords", () => {
     passwords = setupPasswords({
@@ -1286,7 +1407,7 @@ app.whenReady().then(() => {
     });
   });
   lastProfile = profiles.some(p => p.id === currentProfile) ? currentProfile : profiles[0].id;
-  openProfileWindow(lastProfile);
+  openProfileWindow(lastProfile, pendingLaunchUrls.splice(0));
   safely("updates", setupAutoUpdates);
 });
 

@@ -1,0 +1,13 @@
+{
+  "updated": "2026-10-30",
+  "extensions": [
+    { "id": "gebbhagfogifgggkldgodflihgfeippi", "name": "Return YouTube Dislike", "emoji": "👎", "category": "YouTube", "description": "Brings back the dislike count on YouTube videos." },
+    { "id": "mnjggcdmjocbbbhaepdhchncahnbgone", "name": "SponsorBlock", "emoji": "⏭️", "category": "YouTube", "description": "Skips sponsor segments, intros and \"like and subscribe\" reminders in YouTube videos." },
+    { "id": "enamippconapkdmgfgjchkhakpfinmaj", "name": "DeArrow", "emoji": "🎯", "category": "YouTube", "description": "Replaces clickbait YouTube titles and thumbnails with better, community-made ones." },
+    { "id": "khncfooichmfjbepaaaebmommgaepoid", "name": "Unhook", "emoji": "🧘", "category": "Focus", "description": "Hides YouTube recommendations, comments and Shorts so you can focus." },
+    { "id": "nlkaejimjacpillmajjnopmpbkbnocid", "name": "YouTube NonStop", "emoji": "▶️", "category": "YouTube", "description": "Clicks \"Video paused. Continue watching?\" for you, so music keeps playing." },
+    { "id": "eimadpbcbfnmbkopoojfekhnkhdbieeh", "name": "Dark Reader", "emoji": "🌙", "category": "Look", "description": "Dark mode for every website, with brightness and contrast controls." },
+    { "id": "bhlhnicpbhignbdhedgjhgdocnmhomnp", "name": "ColorZilla", "emoji": "🎨", "category": "Tools", "description": "Eyedropper and color picker: grab any color from any page." },
+    { "id": "aapbdbdomjkkjkaonfhkkikfgjllcleb", "name": "Google Translate", "emoji": "🌐", "category": "Tools", "description": "Translate words and whole pages while you browse." }
+  ]
+}
