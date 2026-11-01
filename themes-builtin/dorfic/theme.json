@@ -1,0 +1,9 @@
+{
+  "name": "DORFic",
+  "author": "Aero Browser",
+  "description": "The white and orange Frutiger Aero: glossy orange orbs, swooshes, rings and fresh oranges, on Google, YouTube, Wikipedia and more",
+  "websites": "light",
+  "paper": {
+    "google.com": "#fffaf4"
+  }
+}

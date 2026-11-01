@@ -1,6 +1,19 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "0.6.1",
+    date: "November 2026",
+    title: "Themes everywhere",
+    items: [
+      { icon: "🍊", title: "New theme: DORFic", text: "The white and orange Frutiger Aero: glossy orange orbs, swooshes, glowing rings and fresh oranges. It restyles the browser, the New Tab, Google, YouTube and Wikipedia." },
+      { icon: "🎯", title: "New theme: Frutiger Metro", text: "2000s vector art: sunburst rays, target rings, halftone dots and stars in lime, cyan, hot pink and black." },
+      { icon: "🎨", title: "Google matches your theme", text: "Light themes now paint Google's white boxes in the theme's own colours, including the sources box and the fade above “Ask anything”, so nothing bright white sticks out. Luna XP turns Google XP cream, and Retro 2000 makes Google look like a 1999 homepage." },
+      { icon: "🔴", title: "Neon Gamer is always dark", text: "Google stays dark with glowing red accents, even when Google tries to show its light look." },
+      { icon: "🌙", title: "Dark Mode works on YouTube", text: "YouTube is dark with Dark Mode whether or not YouTube's own dark theme is switched on." },
+      { icon: "🧩", title: "A glossier Web Store", text: "The Aero Web Store has a sunny sky, floating bubbles and roomier glass cards, and it changes with your theme so it's always easy to read." }
+    ]
+  },
+  {
     version: "0.6.0",
     date: "October 2026",
     title: "Extensions, downloads and more",

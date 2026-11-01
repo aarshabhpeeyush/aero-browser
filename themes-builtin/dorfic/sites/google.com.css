@@ -1,0 +1,26 @@
+/* DORFic for Google: white with an orange swoosh and glowing rings, orange titles.
+   (theme.json gives google.com a warm-white "paper" colour, which repaints Google's own white boxes.) */
+
+html {
+  background:
+    radial-gradient(circle at 96% 98%, transparent 140px, rgba(255, 138, 42, 0.28) 141px 144px, transparent 145px 175px, rgba(255, 138, 42, 0.16) 176px 178px, transparent 179px),
+    linear-gradient(172deg, transparent 70%, rgba(255, 150, 60, 0.16) 71%, rgba(255, 150, 60, 0.05) 85%, transparent 86%),
+    linear-gradient(180deg, #fffaf4, #fff0e2) fixed !important;
+}
+body { background: transparent !important; }
+
+/* Orange-tinted logo */
+img[alt="Google"], svg[aria-label="Google"] { filter: sepia(1) saturate(4) hue-rotate(-12deg) brightness(1.05); }
+
+/* Glossy white search box with an orange rim */
+body .RNNXgb {
+  background: linear-gradient(180deg, #ffffff, #fff8f1) !important;
+  border: 1px solid #ffa766 !important;
+  box-shadow: 0 2px 10px rgba(255, 110, 0, 0.18) !important;
+}
+#search a h3, #rso a h3 { color: #e8650a !important; }
+
+/* ---- When Google is dark anyway: orange glow at night ---- */
+html:has(body[data-dt="1"]) { background: linear-gradient(180deg, #2a1608, #1a0d04) fixed !important; }
+body[data-dt="1"] .RNNXgb { background: #33200f !important; border-color: #ff8a2a !important; }
+body[data-dt="1"] #search a h3, body[data-dt="1"] #rso a h3 { color: #ffb066 !important; }

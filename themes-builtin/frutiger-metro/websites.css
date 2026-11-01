@@ -1,0 +1,15 @@
+/* Frutiger Metro on EVERY website: lime scrollbars with black outlines, pink highlights. */
+
+::selection { background: #ff3fa4 !important; color: #fff !important; }
+
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-track { background: repeating-linear-gradient(45deg, #fff 0 6px, #f0ffe0 6px 12px); }
+::-webkit-scrollbar-thumb { border: 2px solid #111; border-radius: 999px; background: linear-gradient(90deg, #b8ff3a, #8cd600); }
+::-webkit-scrollbar-corner { background: #fff; }
+
+input:not([type=checkbox]):not([type=radio]):not([type=range]):focus,
+textarea:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px #111, 3px 3px 0 2px #ff3fa4 !important;
+}
+input[type=checkbox], input[type=radio], input[type=range], progress { accent-color: #ff3fa4; }

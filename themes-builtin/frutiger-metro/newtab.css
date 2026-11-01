@@ -1,0 +1,39 @@
+/* Frutiger Metro New Tab: a big sunburst with target rings, stars and halftone dots. */
+
+#scene { filter: saturate(1.6) hue-rotate(-25deg); }
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    /* target rings in two corners */
+    radial-gradient(circle at 8% 88%, #111 0 16px, #fff 16px 26px, #8cd600 26px 42px, #fff 42px 50px, #111 50px 56px, transparent 57px),
+    radial-gradient(circle at 92% 14%, #111 0 12px, #fff 12px 20px, #ff3fa4 20px 34px, #fff 34px 40px, #19b5e8 40px 52px, transparent 53px),
+    /* halftone fade */
+    radial-gradient(circle, rgba(255, 255, 255, 0.35) 2px, transparent 2.5px) 0 0 / 14px 14px,
+    /* sunburst */
+    repeating-conic-gradient(from 0deg at 50% 115%, rgba(255, 255, 255, 0.16) 0 7deg, transparent 7deg 15deg);
+}
+#bubbles { filter: hue-rotate(260deg) saturate(2); }
+
+/* Widgets: white stickers with black outlines and a hard coloured shadow */
+.glass, .panel, .pill, .clock {
+  background: #fff !important;
+  border: 3px solid #111 !important;
+  box-shadow: 5px 5px 0 #19b5e8 !important;
+  color: #111;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+}
+.panel header { background: #111; color: #fff; border-bottom: 3px solid #8cd600; }
+.panel textarea, .panel input[type=text], .search input {
+  background: #fff !important;
+  color: #111 !important;
+  border: 2px solid #111 !important;
+}
+.clock .time { color: #ff3fa4; text-shadow: 3px 3px 0 #111; }
+.orb {
+  border: 2px solid #111 !important;
+  background: radial-gradient(circle at 35% 30%, #b8ff3a 0%, #8cd600 55%, #5c9a00 100%) !important;
+  box-shadow: 2px 2px 0 #111 !important;
+}

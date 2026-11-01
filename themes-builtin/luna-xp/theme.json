@@ -1,5 +1,9 @@
 {
   "name": "Luna XP",
   "author": "Aero Browser",
-  "description": "Blue title bar, cream toolbar and a green Start-button glow, like Windows XP"
+  "description": "Blue title bar, cream toolbar and a green Start-button glow, like Windows XP",
+  "websites": "light",
+  "paper": {
+    "google.com": "#f4f2e8"
+  }
 }

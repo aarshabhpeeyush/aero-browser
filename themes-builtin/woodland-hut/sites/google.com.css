@@ -1,19 +1,19 @@
-/* Woodland Hut for Google: searching from a cozy cabin desk */
+/* Woodland Hut for Google: searching from a cozy cabin desk, on parchment.
+   (theme.json gives google.com a "paper" colour, which repaints Google's own white boxes.) */
 
-html { background: linear-gradient(180deg, #fbf1d6, #ead7a8) fixed !important; }
+html { background: linear-gradient(180deg, #fbf1d6, #f1e2bb) fixed !important; }
 body { background: transparent !important; font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif !important; }
 img[alt="Google"], svg[aria-label="Google"] { filter: sepia(0.8) saturate(1.4) hue-rotate(-25deg); }
-form[role="search"] > div:first-child, .RNNXgb {
+
+/* The search box: a carved wooden edge around fresh parchment */
+body .RNNXgb {
   background: #fffaf0 !important;
   border: 2px solid #8a5a2b !important;
-  box-shadow: 0 4px 12px rgba(90, 50, 10, 0.25) !important;
+  box-shadow: 0 3px 10px rgba(90, 50, 10, 0.2) !important;
 }
 #search a h3, #rso a h3 { color: #4f7a2c !important; }
 
 /* ---- When Google is dark anyway: the cabin at night, so its light text stays readable ---- */
 html:has(body[data-dt="1"]) { background: linear-gradient(180deg, #2a1c0e, #1a1108) fixed !important; }
-body[data-dt="1"] form[role="search"] > div:first-child, body[data-dt="1"] .RNNXgb {
-  background: #3a2814 !important;
-  border-color: #c08a4a !important;
-}
+body[data-dt="1"] .RNNXgb { background: #3a2814 !important; border-color: #c08a4a !important; }
 body[data-dt="1"] #search a h3, body[data-dt="1"] #rso a h3 { color: #b6dd7a !important; }

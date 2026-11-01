@@ -56,7 +56,7 @@ function card(ext) {
   const mine = installed.find(e => e.id === ext.id);
   const el = document.createElement("article");
   el.className = "glass card";
-  el.innerHTML = `<div class="icon"></div><div class="info"><h3></h3><span class="cat"></span><p></p></div><div class="actions"></div>`;
+  el.innerHTML = `<div class="top"><div class="icon"></div><div><h3></h3><span class="cat"></span></div></div><p></p><div class="actions"></div>`;
   const icon = el.querySelector(".icon");
   if (mine?.icon) icon.innerHTML = `<img alt="">`, (icon.querySelector("img").src = mine.icon);
   else icon.textContent = ext.emoji || "🧩";
@@ -119,6 +119,32 @@ for (const b of document.querySelectorAll("#tabs button")) {
   });
 }
 $("#search").addEventListener("input", draw);
+
+// Floating bubbles in the sky.
+for (let i = 0; i < 14; i++) {
+  const b = document.createElement("span");
+  const size = 18 + Math.random() * 60;
+  b.style.cssText = `left:${Math.random() * 100}%;width:${size}px;height:${size}px;animation-duration:${14 + Math.random() * 18}s;animation-delay:${-Math.random() * 30}s;--drift:${(Math.random() - 0.5) * 120}px`;
+  $("#bubbles").append(b);
+}
+
+// Themes can make the glass dark (like Dark Mode). Then the text switches to light colours.
+// It looks at the colours in a card's background and checks how bright they are.
+function matchGlass() {
+  const probe = document.querySelector(".glass");
+  if (!probe) return;
+  const cs = getComputedStyle(probe);
+  const colors = (cs.backgroundImage + " " + cs.backgroundColor).match(/rgba?\([^)]+\)/g) || [];
+  const solid = colors.map(c => c.match(/[\d.]+/g).map(Number)).filter(v => v.length < 4 || v[3] > 0.25);
+  if (!solid.length) return;
+  const light = solid.reduce((sum, [r, g, b]) => sum + (0.299 * r + 0.587 * g + 0.114 * b), 0) / solid.length;
+  document.body.classList.toggle("dark-glass", light < 128);
+}
+$("#aeroTheme").addEventListener("load", matchGlass);
+$("#aeroTheme").addEventListener("error", matchGlass);
+// The browser swaps the theme file when you pick another theme; check again when it does.
+new MutationObserver(() => setTimeout(matchGlass, 300)).observe($("#aeroTheme"), { attributes: true, attributeFilter: ["href"] });
+matchGlass();
 
 (async () => {
   if (!window.aeroStore) {

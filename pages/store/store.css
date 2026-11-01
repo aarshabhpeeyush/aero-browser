@@ -1,102 +1,174 @@
+/* Aero Web Store: a sunny Frutiger Aero sky with glossy glass cards.
+   It also loads your theme's newtab.css, so the sky (#scene), the bubbles and the glass cards change
+   with your theme. Text colours come from variables that flip to light text when the theme's glass
+   is dark (store.js checks). */
+
 * { box-sizing: border-box; }
+
+:root {
+  --ink: #04345c;        /* main text */
+  --muted: #2f5f86;      /* descriptions */
+  --label: #1f9a2c;      /* category labels */
+  --chip: rgba(255, 255, 255, 0.6);
+  --field: #fff;
+  --field-ink: #04345c;
+}
+body.dark-glass {
+  --ink: #f2f7ff;
+  --muted: #c3d3e8;
+  --label: #8ff08f;
+  --chip: rgba(255, 255, 255, 0.14);
+  --field: rgba(255, 255, 255, 0.12);
+  --field-ink: #f2f7ff;
+}
 
 body {
   margin: 0;
   min-height: 100vh;
   font-family: "Segoe UI", "Frutiger", Tahoma, sans-serif;
-  color: #04345c;
-  background:
-    radial-gradient(ellipse at 50% 120%, #c6f36b 0%, #5cc23c 15%, transparent 38%),
-    linear-gradient(180deg, #0a74d6 0%, #3aa6f0 35%, #8fd6ff 70%, #e6f8ff 100%) fixed;
+  color: var(--ink);
 }
-.sun {
-  position: fixed;
-  top: -200px;
-  right: -140px;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,240,0.95) 0%, rgba(255,255,220,0.4) 25%, transparent 65%);
-  pointer-events: none;
-}
-main { position: relative; max-width: 1000px; margin: 0 auto; padding: 36px 24px 60px; }
 
+/* ---- The sky: themes recolour it with their #scene filter ---- */
+#scene {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 30% at 30% 108%, #b8f06a 0%, #6fd14a 35%, transparent 70%),
+    radial-gradient(ellipse 90% 34% at 85% 112%, #9fe36a 0%, #3fae38 40%, transparent 72%),
+    linear-gradient(180deg, #0a74d6 0%, #3aa6f0 35%, #8fd6ff 70%, #e6f8ff 100%);
+}
+#scene .sun {
+  position: absolute;
+  top: -220px;
+  right: -160px;
+  width: 640px;
+  height: 640px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 240, 0.95) 0%, rgba(255, 255, 220, 0.4) 25%, transparent 65%);
+}
+/* Soft light rays from the sun */
+#scene .rays {
+  position: absolute;
+  inset: -40%;
+  background: repeating-conic-gradient(from 200deg at 88% 8%, rgba(255, 255, 255, 0.12) 0 4deg, transparent 4deg 12deg);
+  animation: turn 120s linear infinite;
+}
+@keyframes turn { to { transform: rotate(360deg); } }
+
+/* Floating glass bubbles */
+#bubbles { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+#bubbles span {
+  position: absolute;
+  bottom: -120px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.95) 0 8%, transparent 22%),
+    radial-gradient(circle at 50% 50%, transparent 55%, rgba(170, 230, 255, 0.45) 75%, rgba(255, 255, 255, 0.7) 100%);
+  animation: rise linear infinite;
+}
+@keyframes rise { to { transform: translate(var(--drift, 30px), -125vh); } }
+
+main { position: relative; max-width: 1040px; margin: 0 auto; padding: 32px 24px 70px; }
+
+/* ---- Glossy glass (themes restyle .glass) ---- */
 .glass {
-  background: linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.6) 51%, rgba(255,255,255,0.78) 100%);
-  border: 1px solid rgba(255,255,255,0.95);
-  border-radius: 20px;
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.72) 50%, rgba(240, 250, 255, 0.62) 51%, rgba(255, 255, 255, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 22px;
   box-shadow: 0 10px 30px rgba(0, 60, 130, 0.25), inset 0 1px 0 #fff;
 }
 
 .hero { display: flex; align-items: center; gap: 20px; padding: 22px 28px; flex-wrap: wrap; }
 .logo {
-  width: 76px;
-  height: 76px;
+  width: 78px;
+  height: 78px;
+  flex: none;
   border-radius: 50%;
   display: grid;
   place-items: center;
   font-size: 40px;
   border: 2px solid #fff;
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.2) 48%, rgba(255,255,255,0) 52%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.2) 48%, rgba(255, 255, 255, 0) 52%),
     radial-gradient(circle at 50% 110%, #c8ff7a 0%, #1e9be8 60%, #0a5fb4 100%);
-  box-shadow: 0 6px 16px rgba(0, 60, 130, 0.4);
+  box-shadow: 0 6px 16px rgba(0, 60, 130, 0.4), 0 0 0 6px rgba(255, 255, 255, 0.25);
 }
-.kicker { margin: 0; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #3cc23c; font-weight: 700; }
-h1 { margin: 2px 0; font-weight: 300; font-size: 34px; }
-.hero p { margin: 0; }
-#search {
-  margin-left: auto;
-  width: 260px;
-  padding: 10px 16px;
+.kicker { margin: 0; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--label); font-weight: 700; }
+h1 { margin: 2px 0; font-weight: 300; font-size: 36px; color: var(--ink); }
+.hero p { margin: 0; color: var(--muted); }
+#search, #anyInput {
+  padding: 10px 18px;
   border-radius: 999px;
-  border: 1px solid #9ccbe8;
+  border: 1px solid rgba(120, 190, 235, 0.8);
   font: inherit;
+  color: var(--field-ink);
+  background: var(--field);
   box-shadow: inset 0 2px 4px rgba(0, 60, 130, 0.15);
 }
+#search { margin-left: auto; width: 260px; }
+#search::placeholder, #anyInput::placeholder { color: var(--muted); opacity: 0.8; }
 
-#tabs { display: flex; gap: 8px; margin: 20px 0 12px; }
+/* ---- Tabs and category bubbles ---- */
+#tabs { display: flex; gap: 8px; margin: 22px 0 12px; }
 #tabs button, #categories button {
   padding: 7px 18px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.9);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   font: inherit;
-  color: #04345c;
+  font-weight: 600;
+  color: var(--ink);
   cursor: pointer;
-  background: rgba(255,255,255,0.6);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 55%), var(--chip);
+  box-shadow: 0 2px 6px rgba(0, 60, 130, 0.15);
 }
 #tabs button.on, #categories button.on {
   color: #fff;
   border-color: #0a5fb4;
   text-shadow: 0 1px 2px rgba(0, 40, 90, 0.5);
-  background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 51%), linear-gradient(180deg, #1e9be8, #0a5fb4);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 51%), linear-gradient(180deg, #2fb0f5, #0a5fb4);
 }
-#categories { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+#categories { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
-.card { display: flex; gap: 14px; padding: 16px; align-items: flex-start; }
+/* ---- Extension cards: icon orb and name on top, description, then the button ---- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.card:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(0, 60, 130, 0.3), inset 0 1px 0 #fff; }
+.card .top { display: flex; align-items: center; gap: 12px; }
 .card .icon {
-  width: 52px;
-  height: 52px;
+  width: 54px;
+  height: 54px;
   flex: none;
-  border-radius: 14px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
   font-size: 28px;
-  background: linear-gradient(180deg, #fff, #e3f5ff);
   border: 1px solid #fff;
-  box-shadow: 0 3px 8px rgba(0, 60, 130, 0.2);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.5) 48%, rgba(255, 255, 255, 0.15) 52%),
+    radial-gradient(circle at 50% 120%, #c8f7ff 0%, #e8f8ff 60%, #fff 100%);
+  box-shadow: 0 4px 10px rgba(0, 60, 130, 0.25);
 }
-.card .icon img { width: 36px; height: 36px; }
-.card .info { flex: 1; min-width: 0; }
-.card h3 { margin: 0; font-size: 16px; }
-.card .cat { font-size: 11px; font-weight: 700; color: #3cc23c; text-transform: uppercase; letter-spacing: 1px; }
-.card p { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: #2c5a80; }
-.card .actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
-.installed { font-size: 13px; font-weight: 700; color: #2a8a2a; white-space: nowrap; }
+.card .icon img { width: 34px; height: 34px; }
+.card h3 { margin: 0; font-size: 16px; line-height: 1.25; color: var(--ink); }
+.card .cat { font-size: 11px; font-weight: 700; color: var(--label); text-transform: uppercase; letter-spacing: 1px; }
+.card p { flex: 1; margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--muted); }
+.card .actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+.installed { margin-right: auto; font-size: 13px; font-weight: 700; color: var(--label); white-space: nowrap; }
 
+/* Glossy gel buttons */
 .gel {
-  padding: 8px 16px;
+  padding: 8px 18px;
   border: 1px solid #11782a;
   border-radius: 999px;
   color: #fff;
@@ -106,20 +178,21 @@ h1 { margin: 2px 0; font-weight: 300; font-size: 34px; }
   cursor: pointer;
   text-shadow: 0 1px 2px rgba(0, 50, 0, 0.5);
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 51%),
-    linear-gradient(180deg, #4fd14f, #11782a);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 51%),
+    linear-gradient(180deg, #5ee05e, #11782a);
+  box-shadow: 0 3px 8px rgba(0, 90, 20, 0.3);
 }
-.gel.red { border-color: #8a1010; background: linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 51%), linear-gradient(180deg, #ff6a6a, #b81414); padding: 4px 12px; font-size: 12px; }
+.gel.red { border-color: #8a1010; background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 51%), linear-gradient(180deg, #ff6a6a, #b81414); padding: 6px 14px; font-size: 12.5px; }
 .gel:disabled { opacity: 0.6; cursor: default; }
 .gel:hover:not(:disabled) { filter: brightness(1.1); }
 
-.any { margin-top: 22px; padding: 18px 22px; }
-.any h2 { margin: 0 0 4px; font-size: 18px; }
-.any p { margin: 0 0 10px; font-size: 13px; color: #2c5a80; }
+.any { margin-top: 24px; padding: 20px 24px; }
+.any h2 { margin: 0 0 4px; font-size: 19px; color: var(--ink); }
+.any p { margin: 0 0 10px; font-size: 13.5px; color: var(--muted); }
 #anyForm { display: flex; gap: 8px; }
-#anyInput { flex: 1; padding: 9px 14px; border-radius: 999px; border: 1px solid #9ccbe8; font: inherit; }
+#anyInput { flex: 1; }
 .note { margin-top: 10px !important; font-size: 12px !important; }
-.empty { grid-column: 1 / -1; text-align: center; color: #fff; text-shadow: 0 1px 3px rgba(0, 40, 90, 0.5); }
+.empty { grid-column: 1 / -1; text-align: center; color: #fff; text-shadow: 0 1px 3px rgba(0, 40, 90, 0.6); }
 
 #toast {
   position: fixed;
@@ -130,7 +203,7 @@ h1 { margin: 2px 0; font-weight: 300; font-size: 34px; }
   border-radius: 999px;
   color: #fff;
   font-weight: 600;
-  background: linear-gradient(180deg, #4fd14f, #11782a);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 50%), linear-gradient(180deg, #4fd14f, #11782a);
   box-shadow: 0 6px 18px rgba(0, 60, 0, 0.35);
 }
-#toast.error { background: linear-gradient(180deg, #ff6a6a, #b81414); }
+#toast.error { background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 50%), linear-gradient(180deg, #ff6a6a, #b81414); }

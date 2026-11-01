@@ -2,5 +2,8 @@
   "name": "Bubble Pop",
   "author": "Aero Browser",
   "description": "Pink and purple bubbles everywhere, including the New Tab",
-  "websites": "light"
+  "websites": "light",
+  "paper": {
+    "google.com": "#fff4fa"
+  }
 }

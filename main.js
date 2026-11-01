@@ -1195,6 +1195,18 @@ ipcMain.on("set:hide-ai", (e, on) => {
   sendAll("settings", { adblock: state.adblock !== false, hideAi: state.hideAi });
 });
 ipcMain.on("settings:hide-ai", e => (e.returnValue = state.hideAi !== false)); // asked by tab-preload.js
+// A theme can give a website a "paper" colour (theme.json: "paper": { "google.com": "#fbf1d6" }).
+// tab-preload.js then paints the site's own plain white boxes in it, so nothing bright white sticks out.
+ipcMain.on("theme:paper", (e, hostname) => {
+  let paper = null;
+  try {
+    const info = JSON.parse(fs.readFileSync(path.join(themesDir(), state.activeTheme, "theme.json"), "utf8"));
+    for (const [domain, color] of Object.entries(info.paper || {})) {
+      if ((hostname === domain || hostname.endsWith("." + domain)) && /^#[0-9a-f]{6}$/i.test(color)) paper = color;
+    }
+  } catch {}
+  e.returnValue = paper;
+});
 ipcMain.on("set:restyle", (e, on) => {
   restyleSites = on;
   for (const id of tabs.keys()) applySiteStyle(id);

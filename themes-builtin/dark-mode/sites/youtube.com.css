@@ -1,23 +1,15 @@
 /* Dark Mode for YouTube.
-   YouTube has its own dark colours, so instead of flipping everything we switch those on. */
+   YouTube shows <html dark> when it's using its own dark look. Then nothing needs flipping.
+   Otherwise the usual Dark Mode flip from websites.css turns it dark, with pictures and videos
+   flipped back to their real colours. */
 
-html, html img, html video, html canvas, html iframe, html picture,
-html [style*="background-image"] { filter: none !important; }
-
-html:not([dark]) {
-  --yt-spec-base-background: #0f0f0f !important;
-  --yt-spec-raised-background: #212121 !important;
-  --yt-spec-menu-background: #282828 !important;
-  --yt-spec-general-background-a: #181818 !important;
-  --yt-spec-general-background-b: #0f0f0f !important;
-  --yt-spec-text-primary: #f1f1f1 !important;
-  --yt-spec-text-secondary: #aaaaaa !important;
-  --yt-spec-icon-active-other: #f1f1f1 !important;
-  --yt-spec-icon-inactive: #f1f1f1 !important;
-  --yt-spec-10-percent-layer: rgba(255, 255, 255, 0.1) !important;
-  --yt-spec-badge-chip-background: rgba(255, 255, 255, 0.1) !important;
-  --yt-spec-button-chip-background-hover: rgba(255, 255, 255, 0.2) !important;
-  --yt-spec-outline: rgba(255, 255, 255, 0.2) !important;
-  background: #0f0f0f !important;
+html[dark],
+html[dark] :is(img, picture, video, canvas, iframe, embed, object, svg image, [style*="background-image"]) {
+  filter: none !important;
 }
-html:not([dark]) ytd-app, html:not([dark]) #masthead-container #background { background: #0f0f0f !important; }
+html[dark] { background: #0f0f0f !important; }
+
+/* Flipped YouTube: the red logo and buttons are drawings, so flip them back too */
+html:not([dark]) :is(#logo-icon, ytd-topbar-logo-renderer yt-icon, .ytp-chrome-bottom, ytd-thumbnail-overlay-time-status-renderer) {
+  filter: invert(1) hue-rotate(180deg) !important;
+}

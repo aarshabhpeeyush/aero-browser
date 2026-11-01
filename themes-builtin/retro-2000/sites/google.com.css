@@ -1,32 +1,64 @@
-/* Retro 2000 for Google: searching from outer space, like a 1999 homepage */
+/* Retro 2000 for Google: Google as a homepage from 1999.
+   Grey page, Times New Roman, blue underlined links, chunky 3D boxes and no rounded corners.
+   (theme.json gives google.com a grey "paper" colour, which repaints Google's own white boxes.) */
 
-html {
+html { background: #c0c0c0 !important; }
+body { background: transparent !important; }
+body :is(div, span, a, h1, h2, h3, h4, cite, em, b, li, p, textarea, input, button, g-section-with-header) {
+  font-family: "Times New Roman", Times, serif !important;
+}
+/* Old websites had square corners and no soft shadows */
+body * { border-radius: 0 !important; box-shadow: none !important; }
+
+/* A banner at the top, like every 90s homepage */
+#rcnt::before {
+  content: "★ Welcome to my Search Page! ★ Best viewed in Netscape Navigator 4.0 at 800×600 ★";
+  display: block;
+  margin: 0 0 14px;
+  padding: 4px 8px;
+  background: #000080;
+  color: #ffff00 !important;
+  font: bold 14px "Times New Roman", Times, serif;
+  text-align: center;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+}
+
+/* A rainbow logo */
+img[alt="Google"], svg[aria-label="Google"] { filter: drop-shadow(2px 2px 0 #ff0) drop-shadow(-2px -2px 0 #0ff); }
+
+/* The search box is a sunken white text box */
+body .RNNXgb {
+  background: #fff !important;
+  border: 2px solid !important;
+  border-color: #404040 #fff #fff #404040 !important;
+}
+
+/* Black text, and links in classic blue (purple once visited), underlined */
+body:not([data-dt="1"]) :is(div, span, cite, em, b, li, p, h2, h4) { color: #000 !important; }
+body:not([data-dt="1"]) a:link, body:not([data-dt="1"]) a:link h3, body:not([data-dt="1"]) a:link span { color: #0000ee !important; }
+body:not([data-dt="1"]) a:visited, body:not([data-dt="1"]) a:visited h3 { color: #551a8b !important; }
+#search a h3, #rso a h3 { text-decoration: underline !important; font-weight: bold !important; }
+
+/* Each result is separated by a carved line, like an <hr> */
+#rso > div { border-bottom: 2px groove #fff; padding-bottom: 6px; margin-bottom: 10px; }
+
+/* Buttons and chips look like Windows 98 buttons */
+body :is(button, [role="button"], g-more-link a) {
+  background-color: #c0c0c0 !important;
+  border: 2px solid !important;
+  border-color: #fff #404040 #404040 #fff !important;
+}
+
+/* ---- When Google is dark anyway: a starry night homepage ---- */
+html:has(body[data-dt="1"]) {
   background:
     radial-gradient(1px 1px at 20px 30px, #fff 50%, transparent 51%),
     radial-gradient(1px 1px at 90px 120px, #fff 50%, transparent 51%),
     radial-gradient(2px 2px at 160px 60px, #ffe 50%, transparent 51%),
     radial-gradient(1px 1px at 230px 170px, #fff 50%, transparent 51%),
-    radial-gradient(1px 1px at 50px 200px, #cdf 50%, transparent 51%),
     #000014 !important;
   background-size: 260px 230px !important;
 }
-body { background: transparent !important; font-family: "Times New Roman", Times, serif !important; }
-
-/* Results in a grey Windows box so they're easy to read */
-#center_col {
-  background: #c0c0c0;
-  padding: 10px 14px !important;
-  border: 2px solid;
-  border-color: #fff #404040 #404040 #fff;
-}
-#center_col, #center_col * { color: #000 !important; }
-#center_col a h3 { color: #0000ee !important; text-decoration: underline; }
-
-/* A rainbow logo */
-img[alt="Google"], svg[aria-label="Google"] { filter: drop-shadow(2px 2px 0 #ff0) drop-shadow(-2px -2px 0 #0ff); }
-
-/* ---- When Google is light: a 98-style sky instead of outer space, so its dark text stays readable ---- */
-html:has(body:not([data-dt="1"])) {
-  background: linear-gradient(180deg, #7fb8f0, #d8ecff) fixed !important;
-  background-size: auto !important;
-}
+body[data-dt="1"] .RNNXgb { background: #000 !important; }
+body[data-dt="1"] a:link h3 { color: #66ccff !important; }
