@@ -1,13 +1,75 @@
 {
-  "updated": "2026-10-30",
+  "updated": "2026-11-01",
   "extensions": [
-    { "id": "gebbhagfogifgggkldgodflihgfeippi", "name": "Return YouTube Dislike", "emoji": "👎", "category": "YouTube", "description": "Brings back the dislike count on YouTube videos." },
-    { "id": "mnjggcdmjocbbbhaepdhchncahnbgone", "name": "SponsorBlock", "emoji": "⏭️", "category": "YouTube", "description": "Skips sponsor segments, intros and \"like and subscribe\" reminders in YouTube videos." },
-    { "id": "enamippconapkdmgfgjchkhakpfinmaj", "name": "DeArrow", "emoji": "🎯", "category": "YouTube", "description": "Replaces clickbait YouTube titles and thumbnails with better, community-made ones." },
-    { "id": "khncfooichmfjbepaaaebmommgaepoid", "name": "Unhook", "emoji": "🧘", "category": "Focus", "description": "Hides YouTube recommendations, comments and Shorts so you can focus." },
-    { "id": "nlkaejimjacpillmajjnopmpbkbnocid", "name": "YouTube NonStop", "emoji": "▶️", "category": "YouTube", "description": "Clicks \"Video paused. Continue watching?\" for you, so music keeps playing." },
-    { "id": "eimadpbcbfnmbkopoojfekhnkhdbieeh", "name": "Dark Reader", "emoji": "🌙", "category": "Look", "description": "Dark mode for every website, with brightness and contrast controls." },
-    { "id": "bhlhnicpbhignbdhedgjhgdocnmhomnp", "name": "ColorZilla", "emoji": "🎨", "category": "Tools", "description": "Eyedropper and color picker: grab any color from any page." },
-    { "id": "aapbdbdomjkkjkaonfhkkikfgjllcleb", "name": "Google Translate", "emoji": "🌐", "category": "Tools", "description": "Translate words and whole pages while you browse." }
+    {
+      "id": "aero-beat-lab",
+      "name": "Beat Lab",
+      "emoji": "🎧",
+      "category": "Aero Originals",
+      "description": "Your own music studio: make beats on a drum machine, mix songs on two DJ decks with EQ and a crossfader, find their BPM, record your mix, and learn with lessons."
+    },
+    {
+      "id": "aero-school-assist",
+      "name": "School Assist",
+      "emoji": "🎒",
+      "category": "Aero Originals",
+      "description": "For 21K School: your timetable, assignments as a to-do list, inbox messages, holidays and birthdays in one place. Read-only: it never submits work or replies to anyone."
+    },
+    {
+      "id": "gebbhagfogifgggkldgodflihgfeippi",
+      "name": "Return YouTube Dislike",
+      "emoji": "👎",
+      "category": "YouTube",
+      "description": "Brings back the dislike count on YouTube videos."
+    },
+    {
+      "id": "mnjggcdmjocbbbhaepdhchncahnbgone",
+      "name": "SponsorBlock",
+      "emoji": "⏭️",
+      "category": "YouTube",
+      "description": "Skips sponsor segments, intros and \"like and subscribe\" reminders in YouTube videos."
+    },
+    {
+      "id": "enamippconapkdmgfgjchkhakpfinmaj",
+      "name": "DeArrow",
+      "emoji": "🎯",
+      "category": "YouTube",
+      "description": "Replaces clickbait YouTube titles and thumbnails with better, community-made ones."
+    },
+    {
+      "id": "khncfooichmfjbepaaaebmommgaepoid",
+      "name": "Unhook",
+      "emoji": "🧘",
+      "category": "Focus",
+      "description": "Hides YouTube recommendations, comments and Shorts so you can focus."
+    },
+    {
+      "id": "nlkaejimjacpillmajjnopmpbkbnocid",
+      "name": "YouTube NonStop",
+      "emoji": "▶️",
+      "category": "YouTube",
+      "description": "Clicks \"Video paused. Continue watching?\" for you, so music keeps playing."
+    },
+    {
+      "id": "eimadpbcbfnmbkopoojfekhnkhdbieeh",
+      "name": "Dark Reader",
+      "emoji": "🌙",
+      "category": "Look",
+      "description": "Dark mode for every website, with brightness and contrast controls."
+    },
+    {
+      "id": "bhlhnicpbhignbdhedgjhgdocnmhomnp",
+      "name": "ColorZilla",
+      "emoji": "🎨",
+      "category": "Tools",
+      "description": "Eyedropper and color picker: grab any color from any page."
+    },
+    {
+      "id": "aapbdbdomjkkjkaonfhkkikfgjllcleb",
+      "name": "Google Translate",
+      "emoji": "🌐",
+      "category": "Tools",
+      "description": "Translate words and whole pages while you browse."
+    }
   ]
 }

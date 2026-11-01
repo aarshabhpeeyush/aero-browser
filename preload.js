@@ -12,7 +12,7 @@ const TO_ENGINE = [
   "perf:settings", "tab:sleep", "signin:set-mode",
   "tab:reopen", "tab:menu", "tab:prewake", "split:toggle", "incognito:open", "incognito:close",
   "app:open", "app:close", "app:remove", "app:bounds", "set:adblock", "set:hide-ai",
-  "split:ratio", "split:drag", "store:open", "ext:popup", "extensions:refresh", "default:check", "default:set",
+  "split:ratio", "split:drag", "store:open", "ext:popup", "ext:open", "extensions:refresh", "default:check", "default:set",
   "downloads:refresh", "downloads:open", "downloads:show", "downloads:cancel", "downloads:pause", "downloads:clear", "downloads:folder",
   "bookmarks:sources", "bookmarks:import-browser", "bookmarks:import-file", "bookmarks:export-file"
 ];

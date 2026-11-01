@@ -1274,7 +1274,7 @@ api.on("extensions:list", list => {
     if (!ext.enabled) continue;
     const b = document.createElement("button");
     b.className = "ext-btn";
-    b.title = ext.name + (ext.hasPopup ? "" : " (works by itself on websites)");
+    b.title = ext.name + (ext.hasPopup || ext.hasPage ? "" : " (works by itself on websites)");
     if (ext.icon) {
       const img = document.createElement("img");
       img.alt = "";
@@ -1283,6 +1283,7 @@ api.on("extensions:list", list => {
     } else b.textContent = ext.name.slice(0, 1);
     b.addEventListener("click", () => {
       Sound.click();
+      if (ext.hasPage && !ext.hasPopup) return api.send("ext:open", ext.id);
       if (!ext.hasPopup) return;
       const r = b.getBoundingClientRect();
       api.send("ext:popup", { id: ext.id, x: r.right, y: r.bottom + 4 });

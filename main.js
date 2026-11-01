@@ -521,12 +521,22 @@ function openInProfile(profileId, url) {
   else openProfileWindow(profileId, [url]);
 }
 
-// Windows passes web links as command-line arguments when Aero is selected as the default browser.
+// Windows passes web links as command-line arguments when Aero is the default browser, and file
+// paths (like C:\Users\me\notes.pdf) when you double-click a file that opens with Aero.
+// The first argument is Aero itself, so it's skipped.
 function urlsFromArgs(args = []) {
-  return args.filter(value => {
-    if (typeof value !== "string" || !/^https?:\/\//i.test(value)) return false;
-    try { return ["http:", "https:"].includes(new URL(value).protocol); } catch { return false; }
-  });
+  const urls = [];
+  for (const value of args.slice(1)) {
+    if (typeof value !== "string" || value.startsWith("-")) continue;
+    if (/^https?:\/\//i.test(value)) {
+      try { if (["http:", "https:"].includes(new URL(value).protocol)) urls.push(value); } catch {}
+    } else if (/^file:\/\//i.test(value)) {
+      urls.push(value);
+    } else if (path.isAbsolute(value) && value !== process.execPath) {
+      try { if (fs.statSync(value).isFile()) urls.push(pathToFileURL(value).href); } catch {}
+    }
+  }
+  return urls;
 }
 
 function createTab(url = HOME, background = false, profileId = currentProfile) {
@@ -534,7 +544,8 @@ function createTab(url = HOME, background = false, profileId = currentProfile) {
   if (!w) return null;
   const id = nextId++;
   const view = new WebContentsView({
-    webPreferences: { sandbox: true, session: sessionFor(profileId), preload: path.join(__dirname, "tab-preload.js") }
+    // plugins: turns on Chromium's built-in PDF viewer
+    webPreferences: { sandbox: true, plugins: true, session: sessionFor(profileId), preload: path.join(__dirname, "tab-preload.js") }
   });
   const wc = view.webContents;
   view.setBackgroundColor("#ffffff");
@@ -1003,6 +1014,9 @@ function toUrl(text) {
   text = text.trim();
   if (!text) return HOME;
   if (/^(https?|aero|file):/i.test(text)) return text;
+  // A file on your computer, like C:\Users\me\notes.pdf (the quotes from "Copy as path" are fine)
+  const file = text.replace(/^"(.*)"$/, "$1");
+  if (/^[a-z]:[\\/]/i.test(file) || file.startsWith("\\\\")) return pathToFileURL(file).href;
   if (/^localhost(:\d+)?(\/|$)/i.test(text)) return "http://" + text;
   if (!/\s/.test(text) && /^[^.]+\.[^.]{2,}/.test(text)) return "https://" + text;
   return searchUrl + encodeURIComponent(text);
@@ -1145,6 +1159,11 @@ onWindow("split:drag", (w, on) => {
   sendSplit(w);
 });
 onWindow("store:open", w => openInProfile(w.profileId, "aero://store/"));
+// Extensions with their own page (like Aero Originals) open it in a new tab.
+onWindow("ext:open", (w, id) => {
+  const url = extensions?.pageUrl(id);
+  if (url) openInProfile(w.profileId, url);
+});
 onWindow("ext:popup", (w, { id, x, y } = {}) => {
   const cb = w.win.getContentBounds();
   extensions?.openPopup(id, sessionFor(w.profileId), { x: cb.x + x, y: cb.y + y }, w.win);

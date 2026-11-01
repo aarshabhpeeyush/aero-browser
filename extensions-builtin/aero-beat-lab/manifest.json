@@ -1,0 +1,9 @@
+{
+  "manifest_version": 3,
+  "name": "Beat Lab",
+  "version": "1.0.0",
+  "description": "Your own music studio: a drum machine, two DJ decks, BPM finder, mix recorder and lessons.",
+  "icons": { "32": "icons/icon32.png", "128": "icons/icon128.png" },
+  "action": { "default_title": "Beat Lab", "default_icon": { "32": "icons/icon32.png" } },
+  "aero_page": "app.html"
+}

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>School Assist</title>
+  <link rel="icon" href="icons/icon32.png">
+  <link rel="stylesheet" href="app.css">
+  <!-- Your Aero theme restyles the sky (#scene) and the glass panels -->
+  <link id="aeroTheme" rel="stylesheet" href="aero://themes/_active/newtab.css">
+</head>
+<body>
+  <div id="scene"><div class="sun"></div></div>
+
+  <header class="glass top">
+    <div class="logo">🎒</div>
+    <div>
+      <div class="eyebrow">Aero Original · 21K School</div>
+      <h1 id="greet">Hello</h1>
+      <div class="sub" id="today-date"></div>
+    </div>
+    <div class="top-right">
+      <div class="stat" id="att-stat" hidden>
+        <div class="ring" id="att-ring"><span id="att-pct"></span></div>
+        <div class="stat-label">attendance</div>
+      </div>
+      <div class="refresh-box">
+        <button id="refresh-btn" class="gel">↻ Refresh</button>
+        <div class="sub" id="updated"></div>
+      </div>
+    </div>
+  </header>
+
+  <div id="banner" class="glass banner" hidden></div>
+
+  <div id="welcome" class="glass welcome" hidden>
+    <h2>👋 Welcome to School Assist</h2>
+    <p>Press <b>↻ Refresh</b>. A 21K School tab opens. Log in if it asks (you type your password there yourself), and School Assist reads your timetable, assignments and messages. Every time you use the 21K School site in Aero, School Assist stays up to date by itself too.</p>
+  </div>
+
+  <main class="grid">
+    <section class="glass panel-box" id="today-panel">
+      <h2><span class="dot cyan"></span><span id="today-title">Today</span></h2>
+      <div id="today-list" class="list"></div>
+    </section>
+
+    <section class="glass panel-box" id="todo-panel">
+      <h2><span class="dot red"></span>To-do <span class="count" id="todo-count"></span></h2>
+      <div id="todo-list" class="list"></div>
+      <details id="overdue-box" hidden>
+        <summary>Past deadline <span class="count" id="overdue-count"></span></summary>
+        <div id="overdue-list" class="list"></div>
+      </details>
+      <details id="done-box" hidden>
+        <summary>Done <span class="count" id="done-count"></span></summary>
+        <div id="done-list" class="list"></div>
+      </details>
+    </section>
+
+    <section class="glass panel-box" id="inbox-panel">
+      <h2><span class="dot pink"></span>Inbox <span class="count" id="inbox-count"></span></h2>
+      <div id="inbox-list" class="list"></div>
+    </section>
+
+    <section class="glass panel-box" id="upcoming-panel">
+      <h2><span class="dot green"></span>Coming up <span class="sub">next 3 weeks</span></h2>
+      <div id="upcoming-list" class="list"></div>
+    </section>
+
+    <section class="glass panel-box" id="holidays-panel">
+      <h2><span class="dot orange"></span>Holidays</h2>
+      <div id="holidays-list" class="list"></div>
+    </section>
+
+    <section class="glass panel-box" id="birthdays-panel">
+      <h2><span class="dot pink"></span>Birthdays</h2>
+      <div id="birthdays-list" class="list"></div>
+      <form id="bday-form" class="bday-form">
+        <input id="bday-name" placeholder="Classmate's name" maxlength="60" required>
+        <input id="bday-date" type="date" required>
+        <button class="gel small" type="submit">Add</button>
+      </form>
+    </section>
+
+    <section class="glass panel-box wide" id="classes-panel">
+      <h2><span class="dot violet"></span>Classes</h2>
+      <div id="classes-list" class="classes"></div>
+    </section>
+  </main>
+
+  <footer class="foot">Read-only: School Assist never submits work or replies to anyone. Everything stays inside Aero on this computer.</footer>
+  <script src="app.js"></script>
+</body>
+</html>

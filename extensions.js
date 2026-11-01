@@ -5,6 +5,10 @@
 //
 // Electron supports most of what extensions need (content scripts, storage, messaging, background
 // workers), but not everything Chrome has, so some extensions only partly work.
+//
+// "Aero Originals" (ids starting with aero-) are our own extensions. They ship inside Aero in
+// extensions-builtin/ and are copied in instead of downloaded, and they update along with Aero.
+// An extension's manifest can name an "aero_page": its toolbar button then opens that page in a tab.
 
 const fs = require("fs");
 const path = require("path");
@@ -14,6 +18,19 @@ const { app, ipcMain, session, BrowserWindow } = require("electron");
 const extDir = () => path.join(app.getPath("userData"), "extensions");
 const listFile = () => path.join(extDir(), "installed.json");
 const isStoreId = id => /^[a-p]{32}$/.test(id || "");
+const ORIGINALS = path.join(__dirname, "extensions-builtin");
+const isOriginal = id => /^aero-[a-z-]+$/.test(id || "") && fs.existsSync(path.join(ORIGINALS, id, "manifest.json"));
+
+// Copies a folder one file at a time (fs.cpSync can't read from inside Aero's app.asar archive).
+function copyDir(from, to) {
+  fs.mkdirSync(to, { recursive: true });
+  for (const name of fs.readdirSync(from)) {
+    const src = path.join(from, name);
+    if (fs.statSync(src).isDirectory()) copyDir(src, path.join(to, name));
+    else fs.writeFileSync(path.join(to, name), fs.readFileSync(src));
+  }
+}
+const readManifest = dir => { try { return JSON.parse(fs.readFileSync(path.join(dir, "manifest.json"), "utf8")); } catch { return {}; } };
 
 // A .crx file is a zip with a small signed header in front. Strip the header to get the zip.
 function crxToZip(buf) {
@@ -54,6 +71,21 @@ function iconFor(dir, manifest) {
   return null;
 }
 
+// What we remember about an installed extension, read from its manifest.
+function entryFor(id, dir) {
+  const manifest = readManifest(dir);
+  const action = manifest.action || manifest.browser_action || {};
+  return {
+    id,
+    name: readText(dir, manifest, manifest.name),
+    description: readText(dir, manifest, manifest.description),
+    version: manifest.version,
+    popup: action.default_popup || null,
+    page: manifest.aero_page || null,
+    icon: iconFor(dir, manifest)
+  };
+}
+
 function setupExtensions({ sessions, send, chromeVersion }) {
   let installed = [];
   try { installed = JSON.parse(fs.readFileSync(listFile(), "utf8")); } catch {}
@@ -63,9 +95,24 @@ function setupExtensions({ sessions, send, chromeVersion }) {
   };
   const electronIds = new Map(); // store id -> Electron's id for the loaded extension
 
+  // Installed Aero Originals get the newer copy that came with this version of Aero.
+  for (const e of installed) {
+    if (!isOriginal(e.id)) continue;
+    const bundled = readManifest(path.join(ORIGINALS, e.id));
+    if (bundled.version && bundled.version !== e.version) {
+      try {
+        const dir = path.join(extDir(), e.id);
+        fs.rmSync(dir, { recursive: true, force: true });
+        copyDir(path.join(ORIGINALS, e.id), dir);
+        Object.assign(e, entryFor(e.id, dir), { enabled: e.enabled });
+      } catch {}
+    }
+  }
+  if (installed.some(e => isOriginal(e.id))) save();
+
   const describe = () => installed.map(e => ({
     id: e.id, name: e.name, version: e.version, description: e.description,
-    icon: e.icon, hasPopup: !!e.popup, enabled: e.enabled !== false
+    icon: e.icon, hasPopup: !!e.popup, hasPage: !!e.page, enabled: e.enabled !== false
   }));
   const announce = () => send("extensions:list", describe());
 
@@ -79,6 +126,12 @@ function setupExtensions({ sessions, send, chromeVersion }) {
   }
 
   async function install(id) {
+    const dir = path.join(extDir(), id);
+    if (isOriginal(id)) {
+      fs.rmSync(dir, { recursive: true, force: true });
+      copyDir(path.join(ORIGINALS, id), dir);
+      return finishInstall(id, dir);
+    }
     if (!isStoreId(id)) throw new Error("That isn't a Chrome Web Store extension id.");
     const url = `https://clients2.google.com/service/update2/crx?response=redirect&prodversion=${chromeVersion}&acceptformat=crx2,crx3&x=id%3D${id}%26uc`;
     // A private session with no extensions in it: an installed extension that watches network
@@ -86,21 +139,14 @@ function setupExtensions({ sessions, send, chromeVersion }) {
     const res = await session.fromPartition("aero-store-downloads").fetch(url);
     if (!res.ok) throw new Error("The Chrome Web Store didn't send it (" + res.status + ").");
     const zip = new AdmZip(crxToZip(Buffer.from(await res.arrayBuffer())));
-    const dir = path.join(extDir(), id);
     fs.rmSync(dir, { recursive: true, force: true });
     zip.extractAllTo(dir, true);
     fs.rmSync(path.join(dir, "_metadata"), { recursive: true, force: true }); // Chrome-only signature files
-    const manifest = JSON.parse(fs.readFileSync(path.join(dir, "manifest.json"), "utf8"));
-    const action = manifest.action || manifest.browser_action || {};
-    const entry = {
-      id,
-      name: readText(dir, manifest, manifest.name),
-      description: readText(dir, manifest, manifest.description),
-      version: manifest.version,
-      popup: action.default_popup || null,
-      icon: iconFor(dir, manifest),
-      enabled: true
-    };
+    return finishInstall(id, dir);
+  }
+
+  async function finishInstall(id, dir) {
+    const entry = { ...entryFor(id, dir), enabled: true };
     // Reinstalling: unload the old copy first.
     await uninstallFromSessions(id);
     installed = installed.filter(e => e.id !== id).concat(entry);
@@ -125,6 +171,13 @@ function setupExtensions({ sessions, send, chromeVersion }) {
     fs.rmSync(path.join(extDir(), id), { recursive: true, force: true });
     save();
     announce();
+  }
+
+  // The address of an extension's own page (its "aero_page"), to open in a tab.
+  function pageUrl(id) {
+    const e = installed.find(x => x.id === id);
+    const electronId = electronIds.get(id);
+    return e?.page && electronId ? `chrome-extension://${electronId}/${e.page.replace(/^\//, "")}` : null;
   }
 
   // Shows an extension's popup in a small window under its toolbar button.
@@ -172,6 +225,7 @@ function setupExtensions({ sessions, send, chromeVersion }) {
       }
     },
     openPopup,
+    pageUrl,
     list: describe
   };
 }

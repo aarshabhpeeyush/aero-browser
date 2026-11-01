@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Beat Lab</title>
+  <link rel="icon" href="icons/icon32.png">
+  <link rel="stylesheet" href="app.css">
+  <!-- Your Aero theme restyles the sky (#scene) and the glass panels -->
+  <link id="aeroTheme" rel="stylesheet" href="aero://themes/_active/newtab.css">
+</head>
+<body>
+  <div id="scene"><div class="rays"></div><div class="sun"></div></div>
+  <div id="bubbles"></div>
+
+  <main>
+    <header class="glass hero">
+      <div class="logo">🎧</div>
+      <div class="titles">
+        <p class="kicker">Aero Original</p>
+        <h1>Beat Lab</h1>
+      </div>
+      <div class="hero-right">
+        <label class="master">Master <input id="master" type="range" min="0" max="1" step="0.01" value="0.85"></label>
+        <button id="rec" class="gel red">● Record</button>
+        <span id="recTime" class="mono"></span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <div class="col-main">
+        <!-- ============ Drum machine ============ -->
+        <section class="glass panel-box" id="drums">
+          <div class="box-head">
+            <h2>🥁 Drum machine</h2>
+            <div class="controls">
+              <button id="drumPlay" class="gel">▶ Play</button>
+              <label>BPM <input id="drumBpm" type="number" min="60" max="190" value="110"></label>
+              <select id="preset">
+                <option value="">Presets…</option>
+                <option value="four">Four on the floor</option>
+                <option value="hiphop">Hip-hop</option>
+                <option value="break">Breakbeat</option>
+                <option value="reggaeton">Reggaeton</option>
+              </select>
+              <button id="drumSync" class="chip" title="Set the drum speed to Deck A's speed">Match Deck A</button>
+              <button id="drumClear" class="chip">Clear</button>
+              <label class="mini">Drums <input id="drumVol" type="range" min="0" max="1" step="0.01" value="0.8"></label>
+            </div>
+          </div>
+          <div id="grid" class="grid"></div>
+        </section>
+
+        <!-- ============ Decks + mixer ============ -->
+        <section class="decks">
+          <div class="glass deck" data-deck="A"></div>
+          <div class="glass mixer">
+            <h3>Mixer</h3>
+            <div class="xfade-wrap">
+              <span>A</span><input id="xfade" type="range" min="0" max="1" step="0.01" value="0.5"><span>B</span>
+            </div>
+            <button id="xCenter" class="chip">Center</button>
+            <p class="hint">Slide to fade from one song to the other.</p>
+          </div>
+          <div class="glass deck" data-deck="B"></div>
+        </section>
+      </div>
+
+      <!-- ============ Lessons ============ -->
+      <aside class="glass panel-box lessons">
+        <h2>🎓 Lessons</h2>
+        <div class="progress"><div id="lessonBar"></div></div>
+        <ol id="lessonList"></ol>
+        <p class="hint">Lessons tick themselves off when you do them.</p>
+      </aside>
+    </div>
+
+    <p class="foot">Load any music files you have (MP3, WAV, M4A…). Spotify songs can't be used in DJ apps.</p>
+  </main>
+
+  <template id="deckTemplate">
+    <div class="deck-head">
+      <span class="deck-name"></span>
+      <div class="deck-title">Drop a song here or click Load</div>
+      <label class="gel small load">Load<input type="file" accept="audio/*" hidden></label>
+    </div>
+    <canvas class="wave" width="600" height="90"></canvas>
+    <div class="deck-row">
+      <div class="bpm"><b class="bpm-num">--</b><small>BPM</small></div>
+      <div class="time mono">0:00 / 0:00</div>
+    </div>
+    <div class="deck-row buttons">
+      <button class="gel play" disabled>▶</button>
+      <button class="chip cue" disabled title="Jump back to the cue point">Cue</button>
+      <button class="chip setcue" disabled title="Make this spot the cue point">Set cue</button>
+      <button class="chip loop" disabled title="Loop the next 4 beats">Loop 4</button>
+      <button class="chip sync" disabled title="Match the other deck's speed">Sync</button>
+    </div>
+    <div class="deck-row sliders">
+      <label>Tempo <input class="tempo" type="range" min="-16" max="16" step="0.1" value="0"><span class="tempo-val">0%</span></label>
+    </div>
+    <div class="eq">
+      <label>High<input class="eq-high" type="range" min="-24" max="6" step="0.5" value="0" orient="vertical"></label>
+      <label>Mid<input class="eq-mid" type="range" min="-24" max="6" step="0.5" value="0" orient="vertical"></label>
+      <label>Low<input class="eq-low" type="range" min="-24" max="6" step="0.5" value="0" orient="vertical"></label>
+      <label>Volume<input class="vol" type="range" min="0" max="1" step="0.01" value="0.85" orient="vertical"></label>
+    </div>
+  </template>
+
+  <div id="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

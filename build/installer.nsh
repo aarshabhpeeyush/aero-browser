@@ -27,6 +27,13 @@
   WriteRegStr HKCU "Software\Classes\AeroHTML\DefaultIcon" "" `"$INSTDIR\${APP_EXECUTABLE_FILENAME}",0`
   WriteRegStr HKCU "Software\Classes\AeroHTML\shell\open\command" "" `"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"`
 
+  WriteRegStr HKCU "Software\Clients\StartMenuInternet\Aero Browser\Capabilities\FileAssociations" ".pdf" "AeroPDF"
+  WriteRegStr HKCU "Software\Classes\AeroPDF" "" "PDF Document"
+  WriteRegStr HKCU "Software\Classes\AeroPDF\DefaultIcon" "" `"$INSTDIR\${APP_EXECUTABLE_FILENAME}",0`
+  WriteRegStr HKCU "Software\Classes\AeroPDF\shell\open\command" "" `"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"`
+  WriteRegStr HKCU "Software\Classes\.pdf\OpenWithProgids" "AeroPDF" ""
+  WriteRegStr HKCU "Software\Classes\.html\OpenWithProgids" "AeroHTML" ""
+
   WriteRegStr HKCU "Software\Clients\StartMenuInternet\Aero Browser\InstallInfo" "ReinstallCommand" `"$INSTDIR\${APP_EXECUTABLE_FILENAME}"`
   WriteRegStr HKCU "Software\Clients\StartMenuInternet\Aero Browser\InstallInfo" "HideIconsCommand" `"$INSTDIR\${APP_EXECUTABLE_FILENAME}"`
   WriteRegStr HKCU "Software\Clients\StartMenuInternet\Aero Browser\InstallInfo" "ShowIconsCommand" `"$INSTDIR\${APP_EXECUTABLE_FILENAME}"`
@@ -37,4 +44,7 @@
   DeleteRegKey HKCU "Software\Clients\StartMenuInternet\Aero Browser"
   DeleteRegKey HKCU "Software\Classes\AeroURL"
   DeleteRegKey HKCU "Software\Classes\AeroHTML"
+  DeleteRegKey HKCU "Software\Classes\AeroPDF"
+  DeleteRegValue HKCU "Software\Classes\.pdf\OpenWithProgids" "AeroPDF"
+  DeleteRegValue HKCU "Software\Classes\.html\OpenWithProgids" "AeroHTML"
 !macroend

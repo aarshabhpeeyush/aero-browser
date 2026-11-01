@@ -38,6 +38,7 @@ From version 0.3.0, installed copies update themselves like Chrome. Every few ho
 - 🛡️ **Ad blocker** (Ghostery's engine with uBlock-style lists), with a count of blocked ads and trackers in the address bar
 - ◫ **Split screen**: two tabs side by side, with a divider you can drag
 - 🧩 **Aero Web Store** (`aero://store`): one-click Chrome extensions, with toolbar buttons for their popups
+- 🎧🎒 **Aero Originals**: our own extensions in `extensions-builtin/` — **Beat Lab** (drum machine, two DJ decks, BPM sync, recorder, lessons) and **School Assist** (21K School timetable, to-dos and inbox, read-only)
 - ⬇️ **Downloads** panel, plus "Save image" in the right-click menu
 - 📚 **Bookmark import/export**: from Chrome, Edge, Brave, Opera GX or an HTML file (Customize → Bookmarks)
 - 🌐 **Default browser**: Aero registers itself with Windows; Customize → Default browser opens the right Settings page

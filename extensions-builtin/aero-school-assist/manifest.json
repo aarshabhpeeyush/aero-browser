@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "School Assist",
+  "version": "1.0.0",
+  "description": "For 21K School: timetable, assignments as to-dos, inbox, holidays and birthdays in one place. Read-only.",
+  "icons": { "32": "icons/icon32.png", "128": "icons/icon128.png" },
+  "action": { "default_title": "School Assist", "default_icon": { "32": "icons/icon32.png" } },
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.21kschool.in/*", "https://21kschool.in/*"],
+      "js": ["hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://www.21kschool.in/*", "https://21kschool.in/*"],
+      "js": ["bridge.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "aero_page": "app.html"
+}

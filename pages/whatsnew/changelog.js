@@ -1,6 +1,19 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "0.6.2",
+    date: "November 2026",
+    title: "Aero Originals and PDFs",
+    items: [
+      { icon: "🎧", title: "Beat Lab", text: "Your own music studio, free in the Aero Web Store: make beats on a drum machine, mix songs on two DJ decks with EQ, loops and a crossfader, see each song's BPM and sync them, record your mix to Downloads, and learn DJing with 7 lessons." },
+      { icon: "🎒", title: "School Assist", text: "For 21K School: your timetable, assignments as a to-do list, teacher messages, coming-up events, holidays and birthdays in one place. Press Refresh (log in to 21K School yourself if it asks) and it reads everything, then keeps itself up to date while you use the school site. Read-only: it never submits work or replies to anyone." },
+      { icon: "✨", title: "Aero Originals in the store", text: "Beat Lab and School Assist are our own extensions. They come with Aero, install in a second, update along with Aero, open in their own tab, and change with your theme." },
+      { icon: "📄", title: "PDFs open in Aero", text: "Double-click a PDF (or any web page file) that's set to open with Aero, and it opens in a new tab with Aero's built-in PDF viewer, where you can zoom, search, print and save. PDF links on websites open there too." },
+      { icon: "📂", title: "Paste a file path", text: "Type or paste a file's location, like C:\\Users\\you\\notes.pdf, into the address bar to open it." },
+      { icon: "🪟", title: "Aero in “Open with”", text: "Aero now appears in Windows' “Open with” list for PDFs, so you can pick it for them in Default apps too." }
+    ]
+  },
+  {
     version: "0.6.1",
     date: "November 2026",
     title: "Themes everywhere",
