@@ -63,6 +63,14 @@ function card(ext) {
   el.querySelector("h3").textContent = mine?.name || ext.name;
   el.querySelector(".cat").textContent = ext.category || (mine ? "v" + mine.version : "");
   el.querySelector("p").textContent = ext.description || mine?.description || "";
+  // Credit for extensions made by other people, and any heads-up about them.
+  if (ext.author) el.querySelector(".cat").textContent += " · by " + ext.author;
+  if (ext.note) {
+    const note = document.createElement("div");
+    note.className = "warn";
+    note.textContent = ext.note;
+    el.querySelector("p").after(note);
+  }
   const actions = el.querySelector(".actions");
   if (mine) {
     const done = document.createElement("span");

@@ -1,6 +1,15 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "0.6.3",
+    date: "November 2026",
+    title: "GIFs for YouTube comments",
+    items: [
+      { icon: "🎞️", title: "Desktop GIFs", text: "New in the Aero Web Store, by rayytor: a GIF button in YouTube comments, so you can search Tenor and attach a GIF like on the YouTube phone app. Heads up: YouTube is blocking GIF comments from computers right now, so posting usually fails, but the GIF button and search work, and it starts working again as soon as YouTube or rayytor fixes it." },
+      { icon: "🏷️", title: "Credits and heads-ups in the store", text: "Extensions made by other people show who made them, and any known problems are shown right on their card." }
+    ]
+  },
+  {
     version: "0.6.2",
     date: "November 2026",
     title: "Aero Originals and PDFs",

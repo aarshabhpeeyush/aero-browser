@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-01",
+  "updated": "2026-11-02",
   "extensions": [
     {
       "id": "aero-beat-lab",
@@ -14,6 +14,15 @@
       "emoji": "🎒",
       "category": "Aero Originals",
       "description": "For 21K School: your timetable, assignments as a to-do list, inbox messages, holidays and birthdays in one place. Read-only: it never submits work or replies to anyone."
+    },
+    {
+      "id": "aero-desktop-gifs",
+      "name": "Desktop GIFs",
+      "emoji": "🎞️",
+      "category": "YouTube",
+      "author": "rayytor",
+      "description": "Adds a GIF button to YouTube comments so you can search Tenor and attach a GIF, like the YouTube phone app.",
+      "note": "⚠ YouTube is blocking GIF comments from computers right now, so posting usually fails. The GIF button and search still work."
     },
     {
       "id": "gebbhagfogifgggkldgodflihgfeippi",

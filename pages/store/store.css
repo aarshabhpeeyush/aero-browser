@@ -163,6 +163,10 @@ h1 { margin: 2px 0; font-weight: 300; font-size: 36px; color: var(--ink); }
 .card h3 { margin: 0; font-size: 16px; line-height: 1.25; color: var(--ink); }
 .card .cat { font-size: 11px; font-weight: 700; color: var(--label); text-transform: uppercase; letter-spacing: 1px; }
 .card p { flex: 1; margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--muted); }
+.card .warn {
+  margin: -2px 0 0; padding: 7px 10px; border-radius: 12px; font-size: 12.5px; line-height: 1.4; font-weight: 600;
+  color: #6a3a00; background: linear-gradient(180deg, #fff6d6, #ffe6a3); border: 1px solid #f0c060;
+}
 .card .actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
 .installed { margin-right: auto; font-size: 13px; font-weight: 700; color: var(--label); white-space: nowrap; }
 
