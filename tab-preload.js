@@ -2,30 +2,6 @@
 // It lives in its own "isolated world", so websites can't see or use anything in here.
 const { webFrame, ipcRenderer } = require("electron");
 
-// On Google's sign-in page, what the page's own code sees has to match how we introduce ourselves
-// (see signInMode in main.js):
-//   "firefox": hide the Chromium-only userAgentData that would give the game away.
-//   "chrome":  report Google Chrome's brands, the way Chrome itself does.
-if (location.hostname === "accounts.google.com") {
-  const { mode, full, major } = ipcRenderer.sendSync("signin:mode");
-  if (mode === "firefox") {
-    webFrame.executeJavaScript("Object.defineProperty(Navigator.prototype, 'userAgentData', { get: () => undefined });");
-  } else if (mode === "chrome") {
-    webFrame.executeJavaScript(`(() => {
-      const real = navigator.userAgentData;
-      if (!real) return;
-      const brands = [{ brand: "Google Chrome", version: "${major}" }, { brand: "Chromium", version: "${major}" }, { brand: "Not?A_Brand", version: "99" }];
-      const fullVersionList = [{ brand: "Google Chrome", version: "${full}" }, { brand: "Chromium", version: "${full}" }, { brand: "Not?A_Brand", version: "99.0.0.0" }];
-      const fake = {
-        brands, mobile: real.mobile, platform: real.platform,
-        getHighEntropyValues: hints => real.getHighEntropyValues(hints).then(v => ({ ...v, brands, fullVersionList, uaFullVersion: "${full}" })),
-        toJSON: () => ({ brands, mobile: real.mobile, platform: real.platform })
-      };
-      Object.defineProperty(Navigator.prototype, "userAgentData", { get: () => fake });
-    })();`);
-  }
-}
-
 // ================= Aero Web Store =================
 // Only the built-in store page (aero://store) gets the buttons that install and remove extensions.
 if (location.protocol === "aero:" && location.host === "store") {

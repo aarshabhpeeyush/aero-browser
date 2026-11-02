@@ -69,7 +69,7 @@ const profileName = id => (id === INCOGNITO ? "Incognito" : profiles.find(p => p
 function sendProfiles() {
   for (const w of windows.values()) {
     sendTo(w, "profiles", {
-      profiles, current: w.profileId, accounts, signInMode: signInMode(),
+      profiles, current: w.profileId, accounts,
       incognito: w.profileId === INCOGNITO, incognitoOpen: windows.has(INCOGNITO),
       openProfiles: [...windows.keys()]
     });
@@ -112,35 +112,15 @@ function setupSession(ses) {
     return net.fetch(pathToFileURL(file).toString());
   });
 
-  ses.webRequest.onBeforeSendHeaders({ urls: ["*://*.youtube.com/embed/*", "*://accounts.google.com/*"] }, (details, done) => {
+  ses.webRequest.onBeforeSendHeaders({ urls: ["*://*.youtube.com/embed/*"] }, (details, done) => {
+    // YouTube players refuse to start without a "Referer", which our built-in pages don't send.
     const headers = details.requestHeaders;
-    if (details.url.includes("youtube.com/embed/")) {
-      // YouTube players refuse to start without a "Referer", which our built-in pages don't send.
-      if (!headers.Referer) headers.Referer = "https://aero-browser.app/";
-    } else if (signInMode() === "firefox") {
-      // "Firefox" sign-in mode: Google's sign-in page sees us as Firefox (with no Chromium hints).
-      headers["User-Agent"] = FIREFOX_UA;
-      for (const name of Object.keys(headers)) if (/^sec-ch-ua/i.test(name)) delete headers[name];
-    } else if (signInMode() === "chrome") {
-      // "Chrome" sign-in mode (the default): Google's sign-in page sees exactly what Google Chrome
-      // sends. "Sign in with Google" on other sites (like Aternos) rejects browsers that don't.
-      for (const name of Object.keys(headers)) if (/^sec-ch-ua(-full-version-list)?$/i.test(name)) delete headers[name];
-      headers["sec-ch-ua"] = CHROME_BRANDS(CHROME_MAJOR);
-      headers["sec-ch-ua-full-version-list"] = CHROME_BRANDS(CHROME_FULL, "99.0.0.0");
-    }
-    // Otherwise ("chromium" mode) we're simply a Chromium browser, like Brave or Edge.
+    if (!headers.Referer) headers.Referer = "https://aero-browser.app/";
     done({ requestHeaders: headers });
   });
 }
 
-const FIREFOX_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0";
 const CHROME_FULL = process.versions.chrome;
-const CHROME_MAJOR = CHROME_FULL.split(".")[0];
-const CHROME_BRANDS = (version, other = "99") => `"Google Chrome";v="${version}", "Chromium";v="${version}", "Not?A_Brand";v="${other}"`;
-// How we introduce ourselves to Google's sign-in pages: "chrome" (default), "chromium" or "firefox".
-// Changeable in Profiles.
-const signInMode = () => (["firefox", "chromium"].includes(state.signInMode) ? state.signInMode : "chrome");
-const isGoogleSignIn = url => /^https:\/\/accounts\.google\.com\//.test(url);
 
 // ================= Saved state (theme, last version seen) =================
 
@@ -577,12 +557,6 @@ function createTab(url = HOME, background = false, profileId = currentProfile) {
     const t = tabs.get(id);
     if (isMainFrame && state.adblock !== false && skipHiding(navUrl) && !skipHiding(t?.lastUrl)) wc.reload();
     if (t) t.lastUrl = navUrl;
-  });
-  // In Firefox sign-in mode, match what the page's own code sees (navigator.userAgent) too.
-  wc.on("did-start-navigation", (details, navUrl, inPlace, isMainFrame) => {
-    const target = details.url ?? navUrl;
-    const firefox = isGoogleSignIn(target) && signInMode() === "firefox";
-    if (details.isMainFrame ?? isMainFrame) wc.setUserAgent(firefox ? FIREFOX_UA : chromeUserAgent);
   });
   wc.on("page-favicon-updated", (e, icons) => {
     if (!tabs.has(id)) return;
@@ -1235,12 +1209,6 @@ ipcMain.on("profile:switch", (e, id) => switchProfile(id));
 ipcMain.on("profile:add", (e, data) => addProfile(data || {}));
 ipcMain.on("profile:update", (e, data) => updateProfile(data || {}));
 ipcMain.on("profile:delete", (e, id) => deleteProfile(id));
-ipcMain.on("signin:mode", e => (e.returnValue = { mode: signInMode(), full: CHROME_FULL, major: CHROME_MAJOR })); // asked by tab-preload.js
-ipcMain.on("signin:set-mode", (e, mode) => {
-  state.signInMode = ["firefox", "chromium"].includes(mode) ? mode : "chrome";
-  saveState();
-  sendProfiles();
-});
 ipcMain.on("theme:set", (e, id) => {
   state.activeTheme = id || null;
   saveState();

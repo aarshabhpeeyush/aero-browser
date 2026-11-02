@@ -9,7 +9,7 @@ const TO_ENGINE = [
   "theme:set", "theme:install", "theme:open-folder", "whatsnew:open", "update:check", "update:restart",
   "pw:save", "pw:never", "pw:dismiss", "pw:fill", "pw:refresh", "pw:unlock", "pw:reveal", "pw:copy",
   "pw:upsert", "pw:delete", "pw:unnever", "pw:set-pin",
-  "perf:settings", "tab:sleep", "signin:set-mode",
+  "perf:settings", "tab:sleep",
   "tab:reopen", "tab:menu", "tab:prewake", "split:toggle", "incognito:open", "incognito:close",
   "app:open", "app:close", "app:remove", "app:bounds", "set:adblock", "set:hide-ai",
   "split:ratio", "split:drag", "store:open", "ext:popup", "ext:open", "extensions:refresh", "default:check", "default:set",

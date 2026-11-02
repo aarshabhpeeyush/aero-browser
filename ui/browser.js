@@ -456,16 +456,9 @@ function renderProfiles() {
   };
   if (!signedIn.length) {
     addButton("Sign in to Google", "", () => openGoogle("https://accounts.google.com/ServiceLogin"));
-    // If Google says "This browser may not be secure", switching how we introduce ourselves can help.
-    const mode = document.createElement("select");
-    mode.innerHTML = `<option value="chrome">Sign in as: Chrome (recommended)</option><option value="chromium">Sign in as: Chromium</option><option value="firefox">Sign in as: Firefox</option>`;
-    mode.value = profileState.signInMode || "chrome";
-    mode.title = "If Google blocks the sign-in, try the other option";
-    mode.className = "signin-mode";
-    mode.addEventListener("change", () => { Sound.click(); api.send("signin:set-mode", mode.value); });
-    buttons.append(mode, Object.assign(document.createElement("p"), {
+    buttons.append(Object.assign(document.createElement("p"), {
       className: "hint",
-      textContent: "Google blocked the sign-in? Pick the other option and try again."
+      textContent: "Google sometimes blocks signing in from newer browsers like Aero. If it does, use a site's email sign-in instead."
     }));
   } else {
     addButton("Add another Google account", "", () => openGoogle("https://accounts.google.com/AddSession"));

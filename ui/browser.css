@@ -711,7 +711,6 @@ button { font: inherit; }
 .side #pwBar { grid-row: 4; }
 .side #main { grid-row: 5; min-height: 0; }
 .bars-bottom #pwBar { order: 2; }
-.signin-mode { margin-top: 4px; padding: 4px 8px; border-radius: 8px; border: 1px solid #9ccbe8; font: inherit; color: #04345c; background: #fff; }
 
 /* ================= 0.5.0: shield, split, incognito, battery saver, apps ================= */
 

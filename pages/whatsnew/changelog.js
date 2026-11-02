@@ -1,6 +1,15 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "0.6.4",
+    date: "November 2026",
+    title: "Honest sign-in",
+    items: [
+      { icon: "🤝", title: "No more disguises on Google", text: "Aero used to pretend to be Chrome or Firefox on Google's sign-in page. Now it simply introduces itself as a Chromium browser, like Brave. If Google still blocks signing in, use a site's email sign-in instead." },
+      { icon: "🧹", title: "Simpler Profiles panel", text: "The “Sign in as” menu is gone, since Aero no longer switches disguises." }
+    ]
+  },
+  {
     version: "0.6.3",
     date: "November 2026",
     title: "GIFs for YouTube comments",
