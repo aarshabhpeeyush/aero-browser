@@ -53,6 +53,7 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y -q msitools
           ./mach --no-interactive bootstrap --application-choice browser
+          rustup target add x86_64-pc-windows-msvc
 
       - name: Build
         working-directory: /mnt/aeris/src
