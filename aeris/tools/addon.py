@@ -4,6 +4,9 @@ Usage: addon.py <firefox source folder>"""
 import json, pathlib, re, shutil, sys, zipfile
 from PIL import Image
 
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import chrome_theme  # noqa: E402
+
 repo = pathlib.Path(__file__).resolve().parents[2]
 src = pathlib.Path(sys.argv[1])
 home = src / "browser/extensions/aeris"
@@ -34,8 +37,8 @@ icon = Image.open(repo / "build/icon.png").convert("RGBA")
 for size in (16, 32, 48, 128):
     icon.resize((size, size), Image.LANCZOS).save(ext / f"icons/aeris-{size}.png")
 
-# ---- Themes: everything from Aero's theme folders except theme.css (that styled Aero's own frame),
-#      plus an index with each theme's colours for background.js ----
+# ---- Themes: Aero's theme folders, plus each theme.css converted for Aeris's frame (chrome.css and,
+#      for tabs at the side, chrome-side.css; see chrome_theme.py), and an index for background.js ----
 index = []
 for folder in sorted((repo / "themes-builtin").iterdir()):
     if not (folder / "theme.json").exists():
@@ -45,7 +48,10 @@ for folder in sorted((repo / "themes-builtin").iterdir()):
     root = re.search(r":root\s*\{(.*?)\}", css, re.S)
     vars_ = dict(re.findall(r"--([\w-]+)\s*:\s*([^;]+);", re.sub(r"/\*.*?\*/", "", root.group(1), flags=re.S))) if root else {}
     vars_ = {k: v.strip() for k, v in vars_.items()}
-    shutil.copytree(folder, ext / "themes" / folder.name, ignore=shutil.ignore_patterns("theme.css"))
+    shutil.copytree(folder, ext / "themes" / folder.name)
+    frame_css, side_css = chrome_theme.translate(css)
+    (ext / "themes" / folder.name / "chrome.css").write_text(frame_css, encoding="utf-8")
+    (ext / "themes" / folder.name / "chrome-side.css").write_text(side_css, encoding="utf-8")
     sites = sorted(f.stem for f in (folder / "sites").glob("*.css")) if (folder / "sites").exists() else []
     index.append({
         "id": folder.name,

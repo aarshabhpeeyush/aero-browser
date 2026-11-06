@@ -13,7 +13,16 @@
       { "name": "removeAddon", "type": "function", "async": true, "parameters": [{ "name": "id", "type": "string" }] },
       { "name": "addonInfo", "type": "function", "async": true, "description": "Whether these add-ons are installed, their version, and the address of their app page.", "parameters": [{ "name": "ids", "type": "array", "items": { "type": "string" } }, { "name": "page", "type": "string", "optional": true }] },
       { "name": "downloadUpdate", "type": "function", "async": true, "description": "Download a newer Aeris installer from GitHub; it installs quietly when you close Aeris.", "parameters": [{ "name": "url", "type": "string" }, { "name": "version", "type": "string" }] },
-      { "name": "restartToUpdate", "type": "function", "async": true, "parameters": [] }
+      { "name": "restartToUpdate", "type": "function", "async": true, "parameters": [] },
+      { "name": "getPrefs", "type": "function", "async": true, "description": "Read some of Firefox's settings (only the ones Customize uses).", "parameters": [{ "name": "names", "type": "array", "items": { "type": "string" } }] },
+      { "name": "setPrefs", "type": "function", "async": true, "description": "Change some of Firefox's settings (only the ones Customize uses).", "parameters": [{ "name": "prefs", "type": "object", "additionalProperties": { "type": "any" } }] },
+      { "name": "searchEngines", "type": "function", "async": true, "description": "The search engines, and which one is used.", "parameters": [] },
+      { "name": "setSearchEngine", "type": "function", "async": true, "parameters": [{ "name": "name", "type": "string" }] },
+      { "name": "isDefaultBrowser", "type": "function", "async": true, "parameters": [] },
+      { "name": "makeDefaultBrowser", "type": "function", "async": true, "description": "Opens Windows' default-apps settings with Aeris picked (Windows asks you to confirm).", "parameters": [] },
+      { "name": "setAddonEnabled", "type": "function", "async": true, "parameters": [{ "name": "id", "type": "string" }, { "name": "enabled", "type": "boolean" }] },
+      { "name": "openImportWizard", "type": "function", "async": true, "description": "Firefox's 'bring your bookmarks and passwords from another browser' window.", "parameters": [] },
+      { "name": "openLibrary", "type": "function", "async": true, "description": "The bookmarks library (to import or export bookmarks as a file).", "parameters": [] }
     ]
   }
 ]

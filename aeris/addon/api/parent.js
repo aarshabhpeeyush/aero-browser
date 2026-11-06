@@ -10,8 +10,29 @@ ChromeUtils.defineESModuleGetters(lazy, {
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
   AddonManager: "resource://gre/modules/AddonManager.sys.mjs",
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
-  OSCrypto: "resource://gre/modules/OSCrypto_win.sys.mjs"
+  MigrationUtils: "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
+  OSCrypto: "resource://gre/modules/OSCrypto_win.sys.mjs",
+  SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+  ShellService: "moz-src:///browser/components/shell/ShellService.sys.mjs"
 });
+
+// The Firefox settings Customize may read and change, and their type.
+const PREFS = {
+  "sidebar.verticalTabs": "bool",
+  "sidebar.position_start": "bool",
+  "sidebar.expandOnHover": "bool",
+  "sidebar.visibility": "string",
+  "browser.uidensity": "int",
+  "browser.toolbars.bookmarks.visibility": "string",
+  "browser.tabs.splitView.enabled": "bool",
+  "browser.tabs.groups.enabled": "bool",
+  "browser.tabs.hoverPreview.enabled": "bool",
+  "browser.tabs.notes.enabled": "bool",
+  "browser.tabs.unloadOnLowMemory": "bool"
+};
+const prefGet = { bool: "getBoolPref", string: "getStringPref", int: "getIntPref" };
+const prefSet = { bool: "setBoolPref", string: "setStringPref", int: "setIntPref" };
+const browserWindow = () => Services.wm.getMostRecentWindow("navigator:browser");
 
 const sss = Cc["@mozilla.org/content/style-sheet-service;1"].getService(Ci.nsIStyleSheetService);
 const UPDATE_PREFIX = "https://github.com/aarshabhpeeyush/aero-browser/releases/download/";
@@ -172,6 +193,54 @@ this.aeris = class extends ExtensionAPI {
           launchInstaller(["/S", "/RELAUNCH"]);
           Services.startup.quit(Ci.nsIAppStartup.eAttemptQuit);
           return true;
+        },
+
+        async getPrefs(names) {
+          const out = {};
+          for (const name of names) {
+            if (PREFS[name]) out[name] = Services.prefs[prefGet[PREFS[name]]](name);
+          }
+          return out;
+        },
+
+        async setPrefs(prefs) {
+          for (const [name, value] of Object.entries(prefs)) {
+            if (!PREFS[name]) throw new Error(`Customize can't change ${name}.`);
+            Services.prefs[prefSet[PREFS[name]]](name, value);
+          }
+        },
+
+        async searchEngines() {
+          const current = await lazy.SearchService.getDefault();
+          return (await lazy.SearchService.getVisibleEngines()).map(e => ({ name: e.name, isDefault: e.name === current.name }));
+        },
+
+        async setSearchEngine(name) {
+          const engine = lazy.SearchService.getEngineByName(name);
+          if (!engine) throw new Error(`There's no search engine called ${name}.`);
+          await lazy.SearchService.setDefault(engine, lazy.SearchService.CHANGE_REASON.USER ?? lazy.SearchService.CHANGE_REASON.USER_SEARCHBAR);
+        },
+
+        async isDefaultBrowser() {
+          return lazy.ShellService.isDefaultBrowser(false, false);
+        },
+
+        async makeDefaultBrowser() {
+          await lazy.ShellService.setDefaultBrowser(false);
+        },
+
+        async setAddonEnabled(id, enabled) {
+          const addon = await lazy.AddonManager.getAddonByID(id);
+          if (!addon) throw new Error("That add-on isn't installed.");
+          await (enabled ? addon.enable() : addon.disable());
+        },
+
+        async openImportWizard() {
+          lazy.MigrationUtils.showMigrationWizard(browserWindow(), {});
+        },
+
+        async openLibrary() {
+          browserWindow()?.PlacesCommandHook.showPlacesOrganizer("BookmarksToolbar");
         }
       }
     };

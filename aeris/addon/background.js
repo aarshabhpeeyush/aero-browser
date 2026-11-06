@@ -1,16 +1,36 @@
 // Aeris Core: themes, New Tab, moving in from Aero, Aero Originals and updates.
 // The privileged bits (restyling the browser frame, passwords, installing) are in api/parent.js.
 
-const DEFAULT_THEME = "aqua-glass";
 const RELEASES = "https://api.github.com/repos/aarshabhpeeyush/aero-browser/releases/latest";
-const DEFAULTS = { theme: DEFAULT_THEME, hideAi: false, restyle: true, imported: false, lastVersion: null, update: null };
 
-let THEMES = [];
-let chromeCss = "";
+// Aero's colour themes ("dark: true" ones use dark writing on light glass). "firefox" = Firefox's own look.
+const COLOR_THEMES = {
+  frost:     { name: "Frost",     a: "#c3d8ea", b: "#e2eef8", accent: "#3d8bd4", dark: true },
+  aqua:      { name: "Aqua Sky",  a: "#1f7fd6", b: "#7fd0ff", accent: "#1e9be8" },
+  meadow:    { name: "Meadow",    a: "#2f8f3f", b: "#a8e66b", accent: "#3cb83c" },
+  ocean:     { name: "Deep Ocean", a: "#031f45", b: "#0b6fb5", accent: "#22b8e0" },
+  bubblegum: { name: "Bubblegum", a: "#d0287f", b: "#ffb3e0", accent: "#ff5fb0" },
+  sunset:    { name: "Sunset",    a: "#e8601a", b: "#ffd27a", accent: "#ff8c1a" },
+  silver:    { name: "Silver",    a: "#7a8b9a", b: "#e6eef4", accent: "#4c7fb0" },
+  midnight:  { name: "Midnight",  a: "#0b0f1e", b: "#26324f", accent: "#5a7dff" }
+};
+
+// Customize choices, the same as Aero's: a colour theme, accent (null = the theme's), shine, tabs
+// top/left/right, tab shape, window buttons, size and bubbly sounds. "theme" is the custom theme
+// (one of Aero's theme folders, like Woodland Hut) laid on top, or null for none.
+const LOOK = { colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", sounds: true };
+const DEFAULTS = { theme: null, hideAi: true, restyle: true, imported: false, lastVersion: null, update: null, ...LOOK };
+
+let THEMES = []; // the custom themes (from themes/index.json)
 let registered = []; // website stylesheets for the active theme
 
 const settings = () => browser.storage.local.get(DEFAULTS);
-const fileText = async path => (await fetch(browser.runtime.getURL(path))).text();
+const fileText = async path => {
+  const res = await fetch(browser.runtime.getURL(path));
+  return res.ok ? res.text() : "";
+};
+const cssCache = {};
+const css = async path => (cssCache[path] ??= await fileText(path));
 
 // ================= Themes =================
 
@@ -23,70 +43,106 @@ function newer(a, b) {
   return pre_a.localeCompare(pre_b, undefined, { numeric: true }) > 0;
 }
 
-// Each theme's colours come from its Aero theme.css. Light themes have a "paper" colour (what
-// Google gets painted in), which also makes a good toolbar; dark themes use their own frame colour.
-function colorsFor(theme) {
-  const v = theme.vars;
-  const paper = theme.paper?.["google.com"];
+// Mix two #rrggbb colours (the theme API only takes plain colours, not color-mix()).
+function mix(a, b, amount) {
+  const ch = (h, i) => parseInt(h.slice(1 + i * 2, 3 + i * 2), 16);
+  if (!/^#[0-9a-f]{6}$/i.test(a) || !/^#[0-9a-f]{6}$/i.test(b)) return a;
+  return "#" + [0, 1, 2].map(i => Math.round(ch(a, i) * (1 - amount) + ch(b, i) * amount).toString(16).padStart(2, "0")).join("");
+}
+
+// The colours in use: the colour theme and your accent, with the custom theme's on top (like Aero).
+function activeColors(s, theme) {
+  const c = COLOR_THEMES[s.colorTheme] || COLOR_THEMES.frost;
+  const v = {
+    "frame-a": c.a,
+    "frame-b": c.b,
+    text: c.dark ? "#1d3550" : "#fff",
+    accent: s.accent || c.accent,
+    ...(theme?.vars || {})
+  };
+  if (theme && s.accent) v.accent = s.accent;
+  return v;
+}
+
+// Firefox draws menus, popups and the sidebar itself, so they get the colours through the theme
+// API. (The frame itself is styled with CSS, see buildChromeCss.) A custom theme with a "paper"
+// colour is light, one without is dark. Colour themes have Aero's light toolbar.
+function themeApiColors(v, theme) {
+  const paper = theme ? theme.paper?.["google.com"] : mix(v.accent, "#ffffff", 0.75);
   const dark = !paper;
-  const toolbar = paper || `color-mix(in srgb, ${v["frame-b"]} 80%, black)`;
   const toolbarText = dark ? v.text : "#14283c";
   return {
-    dark,
-    vars: {
-      "--aeris-frame-a": v["frame-a"],
-      "--aeris-frame-b": v["frame-b"],
-      "--aeris-accent": v.accent,
-      "--aeris-text": v.text,
-      "--aeris-text-shadow": v["text-shadow"] || "0 1px 2px rgba(0, 0, 0, 0.35)",
-      "--aeris-gloss": v.gloss ?? "0.7",
-      "--aeris-radius": v["tab-radius"] || "12px",
-      "--aeris-toolbar": toolbar,
-      "--aeris-toolbar-text": toolbarText,
-      "--aeris-field": dark ? "rgba(255, 255, 255, 0.1)" : "#fff",
-      "--aeris-field-text": dark ? v.text : "#10202e",
-      "--aeris-dark": dark ? "1" : "0"
+    colors: {
+      frame: v["frame-a"],
+      frame_inactive: v["frame-a"],
+      tab_background_text: v.text,
+      tab_selected: dark ? v["frame-b"] : paper,
+      tab_text: toolbarText,
+      tab_line: v.accent,
+      tab_loading: v.accent,
+      toolbar: dark ? v["frame-b"] : paper,
+      toolbar_text: toolbarText,
+      bookmark_text: toolbarText,
+      icons: toolbarText,
+      toolbar_field: dark ? "#1b2230" : "#ffffff",
+      toolbar_field_text: dark ? v.text : "#10202e",
+      toolbar_field_focus: dark ? "#1b2230" : "#ffffff",
+      toolbar_field_border_focus: v.accent,
+      toolbar_bottom_separator: "transparent",
+      popup: dark ? "#1b2230" : "#ffffff",
+      popup_text: dark ? v.text : "#10202e",
+      popup_highlight: v.accent,
+      popup_highlight_text: "#ffffff",
+      sidebar: dark ? "#141a26" : paper,
+      sidebar_text: dark ? v.text : "#14283c",
+      ntp_background: v["frame-b"],
+      ntp_text: v.text
     },
-    // Firefox draws menus, popups and the sidebar itself, so it gets the colours too.
-    // (The theme API only takes plain colours, so dark toolbars use the frame colour.)
-    api: {
-      colors: {
-        frame: v["frame-a"],
-        frame_inactive: v["frame-a"],
-        tab_background_text: v.text,
-        tab_selected: dark ? v["frame-b"] : paper,
-        tab_text: toolbarText,
-        tab_line: v.accent,
-        tab_loading: v.accent,
-        toolbar: dark ? v["frame-b"] : paper,
-        toolbar_text: toolbarText,
-        bookmark_text: toolbarText,
-        icons: toolbarText,
-        toolbar_field: dark ? "#1b2230" : "#ffffff",
-        toolbar_field_text: dark ? v.text : "#10202e",
-        toolbar_field_focus: dark ? "#1b2230" : "#ffffff",
-        toolbar_field_border_focus: v.accent,
-        toolbar_bottom_separator: "transparent",
-        popup: dark ? "#1b2230" : "#ffffff",
-        popup_text: dark ? v.text : "#10202e",
-        popup_highlight: v.accent,
-        popup_highlight_text: "#ffffff",
-        sidebar: dark ? "#141a26" : paper,
-        sidebar_text: dark ? v.text : "#14283c",
-        ntp_background: v["frame-b"],
-        ntp_text: v.text
-      },
-      properties: {
-        color_scheme: dark ? "dark" : "light",
-        content_color_scheme: theme.websites === "dark" ? "dark" : theme.websites === "light" ? "light" : "auto"
-      }
+    properties: {
+      color_scheme: dark ? "dark" : "light",
+      content_color_scheme: theme?.websites === "dark" ? "dark" : theme?.websites === "light" ? "light" : "auto"
     }
   };
 }
 
+// The frame's CSS, in Aero's order: the Aero look, your colour theme, accent and shine, the custom
+// theme on top (so it can change anything), then the layout choices.
+async function buildChromeCss(s, theme) {
+  const c = COLOR_THEMES[s.colorTheme] || COLOR_THEMES.frost;
+  const side = s.bars === "left" || s.bars === "right";
+  const parts = [
+    await css("chrome/aeris.css"),
+    `:root {
+  --frame-a: ${c.a};
+  --frame-b: ${c.b};
+  --text: ${c.dark ? "#1d3550" : "#fff"};
+  --text-shadow: ${c.dark ? "0 1px 0 rgba(255,255,255,0.7)" : "0 1px 2px rgba(0, 40, 90, 0.55)"};
+  --accent: ${s.accent || c.accent};
+  --gloss: ${s.gloss / 100};
+}`,
+    theme ? await css(`themes/${theme.id}/chrome.css`) : "",
+    side ? (await css("chrome/side.css")) + (theme ? await css(`themes/${theme.id}/chrome-side.css`) : "") : "",
+    s.tabShape === "pill" ? await css("chrome/shape-pill.css") : s.tabShape === "square" ? await css("chrome/shape-square.css") : "",
+    s.winButtons === "glossy" ? await css("chrome/buttons-glossy.css") : "",
+    s.size === "compact" ? await css("chrome/size-compact.css") : "",
+    // An accent you picked yourself still wins over the custom theme's.
+    theme && s.accent ? `:root { --accent: ${s.accent} !important; }` : ""
+  ];
+  return parts.join("\n");
+}
+
+// Tabs top/left/right and the size are Firefox settings (its own side tabs and density).
+async function applyLayout(s) {
+  await browser.aeris.setPrefs({
+    "sidebar.verticalTabs": s.bars === "left" || s.bars === "right",
+    "sidebar.position_start": s.bars !== "right",
+    "browser.uidensity": s.size === "compact" ? 1 : 0
+  });
+}
+
 async function applyTheme() {
   const s = await settings();
-  const theme = THEMES.find(t => t.id === s.theme);
+  const theme = THEMES.find(t => t.id === s.theme) || null;
 
   for (const r of registered) r.unregister();
   registered = [];
@@ -95,7 +151,7 @@ async function applyTheme() {
   registered.push(await browser.contentScripts.register({ matches: ["http://*/*", "https://*/*"], css: [{ file: "content/site-fixes.css" }], runAt: "document_start" }));
   if (s.restyle) registered.push(await browser.contentScripts.register({ matches: ["http://*/*", "https://*/*"], css: [{ file: "content/aero-sites.css" }], runAt: "document_start" }));
 
-  if (!theme) {
+  if (s.colorTheme === "firefox") {
     // "Firefox's own look"
     await browser.theme.reset();
     await browser.aeris.setChromeStyle("");
@@ -103,10 +159,12 @@ async function applyTheme() {
     return;
   }
 
-  const c = colorsFor(theme);
-  await browser.theme.update(c.api);
-  const vars = Object.entries(c.vars).map(([k, val]) => `  ${k}: ${val};`).join("\n");
-  await browser.aeris.setChromeStyle(`:root {\n${vars}\n}\n${chromeCss}`);
+  await browser.theme.update(themeApiColors(activeColors(s, theme), theme));
+  await browser.aeris.setChromeStyle(await buildChromeCss(s, theme));
+  if (!theme) {
+    await browser.storage.local.set({ paper: null });
+    return;
+  }
 
   // The theme's own website styles: websites.css for every site, sites/<domain>.css for one site.
   if (theme.websitesCss) {
@@ -150,7 +208,14 @@ async function importFromAero() {
       const changes = { hideAi: data.state?.hideAi !== false };
       if (theme && THEMES.some(t => t.id === theme)) changes.theme = result.theme = theme;
       if (typeof data.prefs?.restyle === "boolean") changes.restyle = data.prefs.restyle;
+      // Your Aero Customize choices (Aeris can't put tabs at the bottom, so those go on top).
+      for (const key of Object.keys(LOOK)) {
+        if (data.prefs?.[key] !== undefined) changes[key] = data.prefs[key];
+      }
+      if (COLOR_THEMES[data.prefs?.theme]) changes.colorTheme = data.prefs.theme;
+      if (changes.bars === "bottom") changes.bars = "top";
       await browser.storage.local.set(changes);
+      await applyLayout(await settings());
     }
   } catch (e) {
     result.error = String(e.message || e);
@@ -203,33 +268,88 @@ browser.webRequest.onBeforeSendHeaders.addListener(details => {
 
 // ================= Start =================
 
-async function openSettings(hash = "") {
-  const url = browser.runtime.getURL("settings/index.html");
-  const [tab] = await browser.tabs.query({ url: url + "*" });
-  if (tab) return browser.tabs.update(tab.id, { active: true, url: url + hash });
-  return browser.tabs.create({ url: url + hash });
-}
+// The Aeris button opens the side panel (Customize and Notes), like Aero's ✨ button.
+browser.browserAction.onClicked.addListener(() => browser.sidebarAction.toggle());
 
-browser.browserAction.onClicked.addListener(() => openSettings());
+// ================= Notes: clip text from websites =================
 
+browser.menus.create({ id: "clip", title: "Clip to Aeris Notes", contexts: ["selection"] });
+browser.menus.create({ id: "clip-page", title: "Add this page to Aeris Notes", contexts: ["page"] });
+browser.menus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId !== "clip" && info.menuItemId !== "clip-page") return;
+  browser.sidebarAction.open(); // must come first: it only works straight after your click
+  const { notes, currentNote } = await browser.storage.local.get({ notes: [], currentNote: null });
+  let note = notes.find(n => n.id === currentNote);
+  if (!note) {
+    note = { id: crypto.randomUUID(), text: "", updated: 0 };
+    notes.push(note);
+  }
+  const clip = info.menuItemId === "clip"
+    ? `> ${info.selectionText.trim().replace(/\n+/g, "\n> ")}\n— ${tab.title} (${tab.url})\n`
+    : `${tab.title}\n${tab.url}\n`;
+  note.text = (note.text.trimEnd() ? note.text.trimEnd() + "\n\n" : "") + clip;
+  note.updated = Date.now();
+  await browser.storage.local.set({ notes, currentNote: note.id, panelView: "notes" });
+  Sound.bloop();
+});
+
+// Customize changes show up straight away, like in Aero.
+browser.storage.onChanged.addListener(async (changes, area) => {
+  if (area !== "local") return;
+  const keys = Object.keys(changes);
+  if (keys.some(k => k === "theme" || k === "restyle" || k in LOOK)) applyTheme();
+  if (keys.some(k => k === "bars" || k === "size")) applyLayout(await settings());
+});
+
+// ================= Bubbly sounds (Aero's, made with the Web Audio API) =================
+
+const Sound = {
+  ctx: null,
+  on: true,
+  tone(type, from, to, dur, vol) {
+    if (!this.on) return;
+    this.ctx ||= new AudioContext();
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(from, t);
+    osc.frequency.exponentialRampToValueAtTime(to, t + dur);
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain).connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + dur);
+  },
+  bloop() { this.tone("sine", 300, 900, 0.18, 0.2); },
+  pop() { this.tone("sine", 1400, 2400, 0.07, 0.16); },
+  click() { this.tone("triangle", 1800, 1400, 0.05, 0.1); }
+};
 browser.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && (changes.theme || changes.restyle)) applyTheme();
+  if (area === "local" && changes.sounds) Sound.on = changes.sounds.newValue !== false;
+});
+browser.tabs.onCreated.addListener(() => Sound.bloop());
+browser.tabs.onRemoved.addListener((id, info) => { if (!info.isWindowClosing) Sound.pop(); });
+browser.bookmarks.onCreated.addListener(() => Sound.bloop());
+browser.bookmarks.onRemoved.addListener(() => Sound.pop());
+browser.webNavigation.onCommitted.addListener(d => {
+  if (d.frameId === 0 && d.transitionQualifiers.includes("forward_back")) Sound.click();
 });
 
 browser.runtime.onMessage.addListener(msg => {
   if (msg?.type === "import-aero") return importFromAero().then(r => (applyTheme(), r));
   if (msg?.type === "check-update") return checkForUpdate();
-  if (msg?.type === "themes") return Promise.resolve(THEMES);
+  if (msg?.type === "themes") return Promise.resolve({ colors: COLOR_THEMES, custom: THEMES });
 });
 
 browser.alarms.onAlarm.addListener(a => a.name === "update" && checkForUpdate());
 
 (async function start() {
   THEMES = JSON.parse(await fileText("themes/index.json"));
-  chromeCss = await fileText("chrome/aeris.css");
   await browser.aeris.setNewTabPage(browser.runtime.getURL("newtab/index.html"));
 
   const s = await settings();
+  Sound.on = s.sounds;
   if (!s.imported) await importFromAero();
   await applyTheme();
 

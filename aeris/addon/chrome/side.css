@@ -1,0 +1,6 @@
+/* Tabs at the side (from Aero's .side layout): the tab list is a glossy column, tabs are full glass rows */
+#sidebar-main .tabbrowser-tab .tab-background {
+  border-radius: var(--tab-radius) !important;
+  border: 1px solid rgba(255,255,255,0.55) !important;
+}
+#sidebar-main .tabbrowser-tab[selected] .tab-background { border-color: rgba(255,255,255,0.95) !important; }

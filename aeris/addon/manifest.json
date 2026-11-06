@@ -11,19 +11,27 @@
     "<all_urls>",
     "alarms",
     "bookmarks",
+    "menus",
     "search",
     "storage",
     "tabs",
     "theme",
     "unlimitedStorage",
+    "webNavigation",
     "webRequest",
     "webRequestBlocking"
   ],
+  "sidebar_action": {
+    "default_title": "Aeris",
+    "default_panel": "panel/index.html",
+    "default_icon": { "16": "icons/aeris-16.png", "32": "icons/aeris-32.png" },
+    "open_at_install": false
+  },
   "background": {
     "scripts": ["background.js"]
   },
   "browser_action": {
-    "default_title": "Aeris settings and themes",
+    "default_title": "Customize Aeris (themes, layout, notes)",
     "default_icon": { "16": "icons/aeris-16.png", "32": "icons/aeris-32.png" },
     "default_area": "navbar"
   },

@@ -1,0 +1,23 @@
+/* Window buttons: Glossy, like Windows 7 (from Aero's .winbtns) */
+.titlebar-buttonbox { align-self: flex-start !important; }
+.titlebar-button {
+  width: 30px !important;
+  height: 22px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(0, 40, 90, 0.5) !important;
+  border-top: 0 !important;
+  color: #fff !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 51%),
+    color-mix(in srgb, var(--accent), #fff 20%) !important;
+}
+.titlebar-min { border-radius: 0 0 0 6px !important; }
+.titlebar-close {
+  width: 46px !important;
+  border-radius: 0 0 6px 0 !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 51%),
+    linear-gradient(180deg, #e8604c, #c42b1c) !important;
+}
+.titlebar-button:hover { filter: brightness(1.2) saturate(1.2); }
+.titlebar-button > .toolbarbutton-icon { fill: #fff !important; stroke: #fff !important; }

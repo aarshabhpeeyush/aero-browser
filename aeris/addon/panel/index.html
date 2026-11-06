@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Aeris</title>
+  <link rel="stylesheet" href="panel.css">
+  <!-- Your colour theme and accent, then your custom theme on top (so a theme can change anything), like Aero -->
+  <style id="prefVars"></style>
+  <link id="userTheme" rel="stylesheet">
+</head>
+<body>
+  <aside id="customize" class="panel">
+    <div class="switcher choice">
+      <button data-show="customize">✨ Customize</button>
+      <button data-show="notes">📝 Notes</button>
+    </div>
+
+    <div id="customizeView">
+      <header><h2>Customize</h2></header>
+      <nav class="jumps">
+        <a href="#look">Theme</a><a href="#layout">Layout</a><a href="#browsing">Browsing</a>
+        <a href="#extras">Tab tools</a><a href="#addons">Add-ons</a><a href="#bookmarks">Bookmarks</a><a href="#about">About</a>
+      </nav>
+
+      <section id="look">
+        <h3>Theme</h3>
+        <div id="themes"></div>
+        <label class="row">Accent colour <input id="accent" type="color"> <button id="accentReset" class="gel tiny">Theme colour</button></label>
+        <label class="row">Shine <input id="gloss" type="range" min="0" max="100"></label>
+      </section>
+
+      <section>
+        <h3>Custom themes</h3>
+        <div id="customThemes"></div>
+        <p class="hint">Custom themes go on top of the colours above and restyle everything: the tabs, buttons, address bar, this panel, the New Tab and websites like YouTube and Google.</p>
+      </section>
+
+      <section id="layout">
+        <h3>Layout</h3>
+        <div class="choice" data-pref="bars">
+          <span>Tabs</span>
+          <button data-value="top">Top</button><button data-value="left">Left</button><button data-value="right">Right</button>
+        </div>
+        <div class="choice" data-pref="tabShape">
+          <span>Tab shape</span>
+          <button data-value="rounded">Rounded</button><button data-value="pill">Bubble</button><button data-value="square">Square</button>
+        </div>
+        <div class="choice" data-pref="winButtons">
+          <span>Window buttons</span>
+          <button data-value="simple">Simple</button><button data-value="glossy">Glossy</button>
+        </div>
+        <div class="choice" data-pref="size">
+          <span>Size</span>
+          <button data-value="comfy">Comfy</button><button data-value="compact">Compact</button>
+        </div>
+        <label class="toggle"><input type="checkbox" id="bookmarksBar"> Bookmarks bar</label>
+        <label class="toggle"><input type="checkbox" data-ffpref="sidebar.expandOnHover"> Side tabs open wider when you point at them</label>
+      </section>
+
+      <section id="browsing">
+        <h3>Browsing</h3>
+        <label class="row">Search with <select id="search"></select></label>
+        <label class="toggle"><input type="checkbox" data-pref="restyle"> Aero style on websites</label>
+        <label class="toggle"><input type="checkbox" id="adblock"> Block ads and trackers 🛡️</label>
+        <label class="toggle"><input type="checkbox" data-pref="hideAi"> Hide Google AI Overviews</label>
+        <label class="toggle"><input type="checkbox" data-pref="sounds"> Bubbly sounds</label>
+      </section>
+
+      <section id="extras">
+        <h3>Tab tools</h3>
+        <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.splitView.enabled"> Split view (right-click a tab → Add split view)</label>
+        <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.groups.enabled"> Tab groups with names and colours</label>
+        <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.hoverPreview.enabled"> Preview a tab when you point at it</label>
+        <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.notes.enabled"> Tab notes (right-click a tab → Add note)</label>
+        <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.unloadOnLowMemory"> Put unused tabs to sleep when memory runs low 💤</label>
+      </section>
+
+      <section id="addons">
+        <h3>Add-ons</h3>
+        <p class="hint">Aero Originals (Beat Lab, School Assist…) and add-ons we recommend, like Return YouTube Dislike and SponsorBlock.</p>
+        <div class="row wrap">
+          <button id="openStore" class="gel tiny">Open the Aeris Store</button>
+          <button id="openAddons" class="gel tiny">Manage add-ons</button>
+        </div>
+      </section>
+
+      <section id="bookmarks">
+        <h3>Bookmarks and passwords</h3>
+        <p class="hint" id="importText"></p>
+        <div class="row wrap">
+          <button id="importAero" class="gel tiny">Bring over from Aero</button>
+          <button id="importOther" class="gel tiny">From another browser…</button>
+          <button id="library" class="gel tiny">Import or export a file…</button>
+          <button id="passwords" class="gel tiny">Saved passwords</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Default browser</h3>
+        <p class="hint" id="defaultText">Checking…</p>
+        <button id="defaultSet" class="gel tiny">Make Aeris my default browser</button>
+      </section>
+
+      <section id="about">
+        <h3>About</h3>
+        <p class="about"><b>Aeris</b> <span id="version"></span><br><span id="updateText"></span></p>
+        <div class="row wrap">
+          <button id="checkUpdates" class="gel tiny">Check for updates</button>
+          <button id="restartUpdate" class="gel tiny" hidden>Restart to update</button>
+          <button id="whatsNew" class="gel tiny">What's new</button>
+          <button id="ffSettings" class="gel tiny">All Firefox settings</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="notesView" hidden>
+      <header>
+        <h2>Notes</h2>
+        <button id="newNote" class="gel tiny">+ New note</button>
+      </header>
+      <p class="hint">Right-click any text on a website and pick <b>Clip to Aeris Notes</b> to add it here, with a link back to the page.</p>
+      <div id="noteList"></div>
+      <textarea id="noteText" placeholder="Write anything…"></textarea>
+      <div class="row">
+        <span class="saved" id="saved"></span>
+        <span style="flex:1"></span>
+        <button id="addPage" class="gel tiny">Add this page</button>
+        <button id="deleteNote" class="gel tiny red">Delete</button>
+      </div>
+    </div>
+  </aside>
+  <script src="panel.js"></script>
+  <script src="notes.js"></script>
+</body>
+</html>

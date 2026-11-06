@@ -1,4 +1,4 @@
-// Gives Aeris's own pages (New Tab, What's New, Settings) the active theme's newtab.css, like Aero did,
+// Gives Aeris's own pages (New Tab, What's New, the Aeris Store) the active theme's newtab.css, like Aero did,
 // and swaps it straight away when you pick another theme.
 (() => {
   const link = document.getElementById("aeroTheme");
@@ -6,7 +6,7 @@
   let themes = null;
   async function apply() {
     themes ??= await (await fetch("/themes/index.json")).json();
-    const { theme } = await browser.storage.local.get({ theme: "aqua-glass" });
+    const { theme } = await browser.storage.local.get({ theme: null });
     const t = themes.find(x => x.id === theme);
     if (t?.newtabCss) link.href = `/themes/${t.id}/newtab.css`;
     else link.removeAttribute("href");

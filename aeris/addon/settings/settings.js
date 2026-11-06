@@ -1,4 +1,4 @@
-// Aeris settings: themes, browsing options, add-ons, moving in from Aero, and updates.
+// The Aeris Store: Aero Originals and recommended add-ons from Mozilla's store.
 
 const $ = id => document.getElementById(id);
 const store = browser.storage.local;
@@ -19,48 +19,6 @@ const el = (tag, cls, text) => {
   if (text != null) e.textContent = text;
   return e;
 };
-
-// ================= Themes =================
-
-async function drawThemes() {
-  const [themes, { theme: active }] = await Promise.all([browser.runtime.sendMessage({ type: "themes" }), store.get({ theme: "aqua-glass" })]);
-  const grid = $("themeGrid");
-  grid.innerHTML = "";
-  const choices = [...themes, { id: "none", name: "Firefox's own look", description: "No theme: Firefox's normal colours.", vars: { "frame-a": "#f0f0f4", "frame-b": "#f9f9fb", accent: "#0061e0", text: "#15141a" } }];
-  for (const t of choices) {
-    const card = el("button", "glass card theme" + (t.id === active || (t.id === "none" && !themes.some(x => x.id === active)) ? " on" : ""));
-    const preview = el("div", "preview");
-    preview.style.background = `linear-gradient(180deg, ${t.vars["frame-a"]}, ${t.vars["frame-b"]})`;
-    const dot = el("span", "dot");
-    dot.style.background = t.vars.accent;
-    const bar = el("span", "bar");
-    bar.style.background = t.paper?.["google.com"] || "rgba(255,255,255,0.15)";
-    preview.append(dot, bar);
-    card.append(preview, el("h3", null, t.name), el("p", null, t.description));
-    card.addEventListener("click", async () => {
-      await store.set({ theme: t.id });
-      drawThemes();
-      toast(`${t.name} is on`);
-    });
-    grid.append(card);
-  }
-}
-
-// ================= Browsing =================
-
-async function drawBrowsing() {
-  const s = await store.get({ hideAi: false, restyle: true });
-  $("hideAi").checked = s.hideAi;
-  $("restyle").checked = s.restyle;
-}
-$("hideAi").addEventListener("change", e => store.set({ hideAi: e.target.checked }));
-$("restyle").addEventListener("change", e => store.set({ restyle: e.target.checked }));
-for (const [id, url] of [["ffPrefs", "about:preferences"], ["ffImport", "about:preferences#general"]]) {
-  $(id).addEventListener("click", e => {
-    e.preventDefault();
-    browser.aeris.openBrowserPage(url);
-  });
-}
 
 // ================= Add-ons =================
 
@@ -140,68 +98,11 @@ async function drawRecommended() {
   }
 }
 
-// ================= From Aero =================
-
-function describeImport(r) {
-  if (!r) return "Aeris brings over your bookmarks, apps, theme, settings and saved passwords from Aero.";
-  if (!r.found) return "No Aero data was found on this computer. If you used Aero, open it once (version 0.6.5 or newer) and then press the button.";
-  const parts = [];
-  if (r.bookmarks) parts.push(`${r.bookmarks} bookmark${r.bookmarks === 1 ? "" : "s"}`);
-  if (r.apps) parts.push(`${r.apps} app${r.apps === 1 ? "" : "s"} (in the "Apps" folder on your bookmarks bar)`);
-  if (r.passwords) parts.push(`${r.passwords} password${r.passwords === 1 ? "" : "s"}`);
-  if (r.theme) parts.push("your theme");
-  const brought = parts.length ? `Brought over from Aero: ${parts.join(", ")}.` : "Everything from Aero was already here.";
-  return r.error ? `${brought} (Something didn't come over: ${r.error})` : brought;
-}
-
-async function drawImport() {
-  const { importResult } = await store.get({ importResult: null });
-  $("importText").textContent = describeImport(importResult);
-}
-$("importBtn").addEventListener("click", async () => {
-  $("importBtn").disabled = true;
-  const r = await browser.runtime.sendMessage({ type: "import-aero" });
-  $("importBtn").disabled = false;
-  $("importText").textContent = describeImport(r);
-  drawThemes();
-  drawBrowsing();
-});
-
-// ================= Updates =================
-
-async function drawUpdates() {
-  const [{ update }, info] = await Promise.all([store.get({ update: null }), browser.aeris.appInfo()]);
-  const pretty = info.aeris.replace(/-beta\.(\d+)$/, " Beta $1");
-  $("versionLine").textContent = `Version ${pretty} · built on Firefox ${info.firefox}`;
-  const text = {
-    latest: "You have the newest Aeris.",
-    downloading: `Downloading Aeris ${update?.version}…`,
-    ready: `Aeris ${update?.version} is ready. It installs when you close Aeris, or now with Restart to update.`,
-    error: `Couldn't check for updates (${update?.error}).`
-  }[update?.state] || "Aeris checks for new versions on its own and installs them when you close it.";
-  $("updateText").textContent = text;
-  $("restartBtn").classList.toggle("hidden", update?.state !== "ready");
-}
-$("checkBtn").addEventListener("click", async () => {
-  $("checkBtn").disabled = true;
-  $("updateText").textContent = "Checking…";
-  await browser.runtime.sendMessage({ type: "check-update" });
-  $("checkBtn").disabled = false;
-  drawUpdates();
-});
-$("restartBtn").addEventListener("click", () => browser.aeris.restartToUpdate());
-
-browser.storage.onChanged.addListener(changes => {
-  if (changes.update) drawUpdates();
-  if (changes.theme) drawThemes();
-});
-
-drawThemes();
-drawBrowsing();
 drawOriginals();
 drawRecommended();
-drawImport();
-drawUpdates();
+browser.storage.onChanged.addListener(changes => {
+  if (changes.theme) location.reload();
+});
 
 // ================= Look (same as the Aero Web Store) =================
 

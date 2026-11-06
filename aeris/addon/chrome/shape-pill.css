@@ -1,0 +1,6 @@
+/* Tab shape: Bubble (from Aero's .shape-pill) */
+#TabsToolbar .tabbrowser-tab { padding-block: 4px !important; }
+.tabbrowser-tab .tab-background {
+  border-radius: 999px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.55) !important;
+}

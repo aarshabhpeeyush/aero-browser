@@ -1,0 +1,5 @@
+/* Size: Compact (from Aero's .size-compact) */
+#TabsToolbar .tabbrowser-tab { padding-block: 3px 0 !important; }
+#nav-bar :is(#back-button, #forward-button, #reload-button, #stop-button) > .toolbarbutton-icon { width: 26px !important; height: 26px !important; padding: 5px !important; }
+#nav-bar #back-button > .toolbarbutton-icon { width: 28px !important; height: 28px !important; padding: 6px !important; }
+#TabsToolbar-customization-target::before { width: 20px; height: 20px; }
