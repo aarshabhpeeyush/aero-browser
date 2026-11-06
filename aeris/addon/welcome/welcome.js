@@ -108,7 +108,6 @@ $("#makeDefault").addEventListener("click", async () => {
 browser.aeris.setPrefs({ "browser.shell.checkDefaultBrowser": false });
 
 $("#finish").addEventListener("click", async () => {
-  await store.set({ toured: true });
   const tab = await browser.tabs.getCurrent();
   browser.tabs.update(tab.id, { url: browser.runtime.getURL("newtab/index.html") });
 });
