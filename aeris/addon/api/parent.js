@@ -109,7 +109,9 @@ this.aeris = class extends ExtensionAPI {
         },
 
         async appInfo() {
-          return { aeris: extension.manifest.version, firefox: Services.appinfo.version };
+          // version.json has the full name, like "1.0.0-beta.1" (the manifest only takes numbers).
+          const full = await extension.readJSON("version.json").catch(() => null);
+          return { aeris: full?.version || extension.manifest.version, firefox: Services.appinfo.version };
         },
 
         async readAeroExport() {

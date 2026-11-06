@@ -23,7 +23,9 @@ if '"aeris"' not in text:
     mb.write_text(text)
 
 manifest = json.loads((ext / "manifest.json").read_text())
-manifest["version"] = version
+# Firefox wants plain numbers ("1.0.0"); the full name ("1.0.0-beta.1") goes in version.json.
+manifest["version"] = version.split("-")[0]
+(ext / "version.json").write_text(json.dumps({"version": version}))
 (ext / "manifest.json").write_text(json.dumps(manifest, indent=2))
 
 # ---- Icons ----

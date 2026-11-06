@@ -18,10 +18,10 @@ SetCompressor /SOLID lzma
 ShowInstDetails show
 AutoCloseWindow true
 BrandingText "Aeris ${VERSION}"
-VIProductVersion "${VERSION}.0"
+VIProductVersion "${NUMVER}.0"
 VIAddVersionKey "ProductName" "Aeris"
 VIAddVersionKey "FileDescription" "Aeris setup"
-VIAddVersionKey "FileVersion" "${VERSION}"
+VIAddVersionKey "FileVersion" "${NUMVER}"
 VIAddVersionKey "ProductVersion" "${VERSION}"
 VIAddVersionKey "LegalCopyright" "Aeris is built on Firefox by Mozilla (MPL 2.0)"
 

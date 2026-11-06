@@ -14,11 +14,13 @@ const fileText = async path => (await fetch(browser.runtime.getURL(path))).text(
 
 // ================= Themes =================
 
-// "a.b.c" > "a.b.d"?
+// "a.b.c" > "a.b.d"? A beta comes before its finished version: 1.0.0-beta.1 < 1.0.0-beta.2 < 1.0.0.
 function newer(a, b) {
-  const pa = a.split(".").map(Number), pb = b.split(".").map(Number);
+  const [na, pre_a] = a.split("-"), [nb, pre_b] = b.split("-");
+  const pa = na.split(".").map(Number), pb = nb.split(".").map(Number);
   for (let i = 0; i < 3; i++) if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0);
-  return false;
+  if (!pre_a || !pre_b) return !pre_a && !!pre_b;
+  return pre_a.localeCompare(pre_b, undefined, { numeric: true }) > 0;
 }
 
 // Each theme's colours come from its Aero theme.css. Light themes have a "paper" colour (what

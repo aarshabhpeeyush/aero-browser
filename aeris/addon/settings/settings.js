@@ -171,7 +171,8 @@ $("importBtn").addEventListener("click", async () => {
 
 async function drawUpdates() {
   const [{ update }, info] = await Promise.all([store.get({ update: null }), browser.aeris.appInfo()]);
-  $("versionLine").textContent = `Version ${info.aeris} · built on Firefox ${info.firefox}`;
+  const pretty = info.aeris.replace(/-beta\.(\d+)$/, " Beta $1");
+  $("versionLine").textContent = `Version ${pretty} · built on Firefox ${info.firefox}`;
   const text = {
     latest: "You have the newest Aeris.",
     downloading: `Downloading Aeris ${update?.version}…`,

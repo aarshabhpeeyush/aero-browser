@@ -81,13 +81,14 @@ jobs:
       - name: Aeris setup
         run: |
           version=$(cat aeris/version.txt)
+          numver=${version%%-*}
           python3 -c "from PIL import Image; Image.open('build/icon.png').save('/mnt/aeris/aeris.ico', sizes=[(16,16),(32,32),(48,48),(256,256)])"
           inner=$(ls /mnt/aeris/firefox/*.installer.exe | head -1)
           mkdir -p /mnt/aeris/out
           makensis=$(command -v makensis || ls /mnt/mozbuild/nsis*/bin/makensis | head -1)
           echo "makensis: $makensis"
           curl -fsSL https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi -o /mnt/aeris/ublock.xpi
-          "$makensis" -V2 -DUBLOCK=/mnt/aeris/ublock.xpi -DVERSION="$version" -DINNER="$inner" -DICON=/mnt/aeris/aeris.ico             -DOUT="/mnt/aeris/out/Aeris-Setup-$version.exe" aeris/installer/aeris-setup.nsi
+          "$makensis" -V2 -DUBLOCK=/mnt/aeris/ublock.xpi -DVERSION="$version" -DNUMVER="$numver" -DINNER="$inner" -DICON=/mnt/aeris/aeris.ico             -DOUT="/mnt/aeris/out/Aeris-Setup-$version.exe" aeris/installer/aeris-setup.nsi
           ls -la /mnt/aeris/out
 
       - uses: actions/upload-artifact@v4

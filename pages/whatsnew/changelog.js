@@ -1,7 +1,7 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
-    version: "1.0.0",
+    version: "1.0.0-beta.1",
     date: "November 2026",
     title: "Aero is now Aeris",
     items: [
