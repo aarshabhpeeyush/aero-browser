@@ -372,7 +372,7 @@ browser.alarms.onAlarm.addListener(a => a.name === "update" && checkForUpdate())
     if (s.lastVersion) browser.tabs.create({ url: browser.runtime.getURL(`whatsnew/index.html?app=Aeris&v=${version}&from=${encodeURIComponent(s.lastVersion)}`) });
   }
   // The welcome tour, once. TOUR goes up when the tour changes a lot, so testers see the new one.
-  const TOUR = 2;
+  const TOUR = 3;
   const { toured } = await browser.storage.local.get({ toured: 0 });
   if (toured !== TOUR) {
     await browser.storage.local.set({ toured: TOUR });
