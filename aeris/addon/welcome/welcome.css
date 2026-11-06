@@ -1,5 +1,6 @@
-/* The welcome tour: one big rounded scene card (page one is the welcome picture), with a
-   thumbnail for each step underneath. The other steps sit on a soft, blurred copy of the scene. */
+/* The welcome tour. The welcome picture fills the whole window (page one is just the picture);
+   the other steps sit on a glass sheet over a softened copy of it. A glossy bar at the bottom
+   shows the steps. */
 
 :root {
   --accent: #1e9be8;
@@ -7,46 +8,26 @@
   --ink: #04345c;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; min-height: 100%; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
 body {
   font: 14px/1.5 "Segoe UI", "Frutiger", Tahoma, sans-serif;
   color: var(--ink);
-  background: linear-gradient(180deg, #f4f6f9, #eceff4);
-  display: grid;
-  place-items: center;
-  min-height: 100vh;
-  padding: 24px 16px;
+  background: #3aa0f0;
 }
-/* The card fits the window with room for the thumbnails underneath */
-main { width: min(1180px, 100%, calc((100vh - 160px) * 1189 / 674)); }
 
-/* ================= The card ================= */
-
-.stage {
-  position: relative;
+/* ================= The picture ================= */
+/* It always covers the window. It's kept at the picture's own shape and pinned to the top right,
+   where the title is, so the title and the logo next to it never get cut off or drift apart. */
+.scene {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: max(100vw, 100vh * 1189 / 674);
   aspect-ratio: 1189 / 674;
-  border-radius: 18px;
-  overflow: hidden;
-  background: url("hero.jpg") center / cover;
-  box-shadow: 0 18px 50px rgba(20, 40, 80, 0.18), 0 2px 6px rgba(20, 40, 80, 0.12);
+  background: url("hero.jpg") center / 100% 100%;
+  transition: filter 0.5s, transform 0.5s;
 }
-/* Behind every step but the first, the scene is softened so the words on it fade away */
-.stage::before {
-  content: "";
-  position: absolute;
-  inset: -20px;
-  background: inherit;
-  filter: blur(14px) saturate(1.1);
-  opacity: 0;
-  transition: opacity 0.4s;
-}
-.stage.soft::before { opacity: 1; }
-
-.step { position: absolute; inset: 0; animation: fade 0.35s ease; }
-.step[hidden] { display: none; }
-@keyframes fade { from { opacity: 0; transform: scale(0.99); } }
-
-/* Page one: the picture itself, with the Aeris logo in the sky beside the title */
+.scene.soft { filter: blur(14px) saturate(1.1); transform: scale(1.04); }
 .hero-logo {
   position: absolute;
   left: 46.5%;
@@ -54,33 +35,49 @@ main { width: min(1180px, 100%, calc((100vh - 160px) * 1189 / 674)); }
   width: 7.6%;
   filter: drop-shadow(0 4px 10px rgba(0, 40, 110, 0.45));
   animation: bob 4s ease-in-out infinite;
+  transition: opacity 0.4s;
 }
+.scene.soft .hero-logo { opacity: 0; }
 @keyframes bob { 50% { transform: translateY(-6px); } }
-.hero .next { position: absolute; right: 4%; bottom: 7%; }
+
+/* ================= Steps ================= */
+
+.stage { position: fixed; inset: 0 0 78px; }
+.step { position: absolute; inset: 0; animation: fade 0.35s ease; }
+.step[hidden] { display: none; }
+@keyframes fade { from { opacity: 0; transform: translateY(8px); } }
+
+/* Page one: the button and the "your stuff is here" note sit on the grass */
+.hero .next { position: absolute; right: 5vw; bottom: 0; }
 .hero-note {
   position: absolute;
-  left: 4%;
-  bottom: 7%;
-  max-width: 48%;
+  left: 5vw;
+  bottom: 6px;
+  max-width: 46vw;
   margin: 0;
-  padding: 8px 16px;
+  padding: 9px 18px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #fff;
+  box-shadow: 0 4px 14px rgba(0, 50, 30, 0.25);
   font-weight: 600;
 }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
-/* The other steps: a glass sheet on the softened scene */
+/* The other steps: a glass sheet in the middle */
 .glass {
   position: absolute;
-  inset: 5% 6%;
+  top: 5vh;
+  bottom: 0;
+  left: 50%;
+  width: min(900px, 92vw);
+  transform: translateX(-50%);
   overflow-y: auto;
-  padding: 26px 32px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(240, 249, 255, 0.84));
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10px 30px rgba(0, 50, 110, 0.18), inset 0 1px 0 #fff;
+  padding: 26px 34px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(238, 248, 255, 0.86));
+  border: 1px solid #fff;
+  box-shadow: 0 14px 40px rgba(0, 40, 90, 0.28), inset 0 1px 0 #fff;
 }
 .kicker { margin: 0; font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; font-weight: 700; color: #2f9e2f; }
 h2 { margin: 2px 0 6px; font-size: 24px; }
@@ -107,8 +104,8 @@ p { margin: 4px 0; }
 }
 .gel:hover { filter: brightness(1.12); }
 .gel:active { transform: scale(0.97); }
-.gel.big { padding: 12px 34px; font-size: 18px; box-shadow: 0 6px 18px rgba(0, 40, 90, 0.35); }
-.gel.plain { background: rgba(255, 255, 255, 0.8); color: var(--ink); text-shadow: none; border-color: #9ccbe8; box-shadow: none; }
+.gel.big { padding: 13px 38px; font-size: 19px; box-shadow: 0 6px 18px rgba(0, 40, 90, 0.35); }
+.gel.plain { background: rgba(255, 255, 255, 0.85); color: var(--ink); text-shadow: none; border-color: #9ccbe8; box-shadow: none; }
 
 /* ================= Choices ================= */
 
@@ -136,7 +133,7 @@ p { margin: 4px 0; }
   padding: 9px 12px;
   border-radius: 12px;
   border: 1px solid #cfe6f6;
-  background: rgba(255, 255, 255, 0.9);
+  background: #fff;
   color: var(--ink);
   font: inherit;
   text-align: left;
@@ -167,36 +164,38 @@ p { margin: 4px 0; }
 .tips li { margin: 6px 0; }
 kbd { padding: 1px 6px; border-radius: 5px; border: 1px solid #9ccbe8; background: #fff; font: 12px inherit; font-family: inherit; }
 
-/* ================= Step thumbnails under the card ================= */
+/* ================= The step bar at the bottom ================= */
 
-.thumbs { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
-.thumbs button {
-  width: 112px;
-  height: 62px;
-  padding: 0;
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background: url("hero.jpg") center / cover;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  filter: grayscale(0.9) brightness(1.25) contrast(0.8);
-  transition: filter 0.2s, transform 0.15s;
+.steps-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(225, 243, 255, 0.9));
+  border: 1px solid #fff;
+  box-shadow: 0 6px 20px rgba(0, 40, 90, 0.3), inset 0 1px 0 #fff;
 }
-.thumbs button span {
-  position: absolute;
-  inset: auto 0 0;
-  padding: 2px 4px;
-  font: 600 11px inherit;
+.steps-bar button {
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: 600 12.5px inherit;
   font-family: inherit;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-  background: linear-gradient(0deg, rgba(0, 30, 70, 0.55), transparent);
+  cursor: pointer;
+  white-space: nowrap;
 }
-.thumbs button:hover { filter: grayscale(0.4) brightness(1.1); transform: translateY(-2px); }
-.thumbs button.current {
-  opacity: 1;
-  filter: none;
-  border-color: #fff;
-  box-shadow: 0 0 0 3px var(--accent), 0 6px 14px rgba(0, 40, 90, 0.25);
+.steps-bar button:hover { background: #fff; border-color: #cfe6f6; }
+.steps-bar button.current {
+  color: #fff;
+  border-color: var(--accent-dark);
+  text-shadow: 0 1px 2px rgba(0, 40, 90, 0.5);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 51%),
+    linear-gradient(180deg, var(--accent), var(--accent-dark));
 }

@@ -13,15 +13,14 @@ function show(i) {
   at = Math.max(0, Math.min(steps.length - 1, i));
   steps.forEach((s, n) => (s.hidden = n !== at));
   // Page one shows the welcome picture as it is; the others soften it behind a glass sheet
-  $("#stage").classList.toggle("soft", at > 0);
+  $("#scene").classList.toggle("soft", at > 0);
   document.querySelectorAll("#thumbs button").forEach((t, n) => t.classList.toggle("current", n === at));
 }
-// A thumbnail for each step under the card
+// The step bar at the bottom: a glossy pill for each step
 steps.forEach((s, n) => {
   const t = document.createElement("button");
   t.title = s.dataset.label;
-  t.innerHTML = "<span></span>";
-  t.querySelector("span").textContent = s.dataset.label;
+  t.textContent = s.dataset.label;
   t.addEventListener("click", () => show(n));
   $("#thumbs").append(t);
 });

@@ -205,4 +205,5 @@ section[id] { scroll-margin-top: 54px; }
 #ramGraph { width: 100%; height: 56px; display: block; }
 
 /* The switcher's emoji buttons */
-.switcher button { font-size: 15px; }
+.switcher button { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 0 3px; font-size: 11px; line-height: 1.15; border-radius: 12px; }
+.switcher button span { font-size: 16px; }

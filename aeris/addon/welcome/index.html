@@ -7,12 +7,13 @@
   <link rel="stylesheet" href="welcome.css">
 </head>
 <body>
+  <!-- The welcome picture fills the window; the logo sits in its sky, beside the title -->
+  <div class="scene" id="scene"><img class="hero-logo" src="../icons/aeris-128.png" alt=""></div>
   <main>
     <div class="stage" id="stage">
 
-      <!-- Page one: the welcome picture -->
+      <!-- Page one: just the picture -->
       <section class="step hero" data-step="hello" data-label="Welcome">
-        <img class="hero-logo" src="../icons/aeris-128.png" alt="Aeris">
         <h1 class="sr">Welcome to Aeris: the future we were promised, as a browser</h1>
         <p class="hero-note" id="fromAero" hidden></p>
         <button class="gel big next">Let's go →</button>
@@ -107,7 +108,7 @@
       </section>
     </div>
 
-    <nav class="thumbs" id="thumbs" aria-label="Steps"></nav>
+    <nav class="steps-bar" id="thumbs" aria-label="Steps"></nav>
   </main>
   <script src="welcome.js"></script>
 </body>
