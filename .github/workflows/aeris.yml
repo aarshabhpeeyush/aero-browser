@@ -1,0 +1,82 @@
+# Builds Aeris (our Firefox-based browser) for Windows on GitHub's computers.
+# Start it from the Actions tab, or with: gh workflow run aeris.yml
+name: Build Aeris
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      MOZBUILD_STATE_PATH: /mnt/mozbuild
+      SCCACHE_GHA_ENABLED: "true"
+      SCCACHE_CACHE_SIZE: 9G
+      MOZ_PARALLEL_BUILD: 4
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make room
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+
+      - name: Workspace and swap on the big drive
+        run: |
+          sudo mkdir -p /mnt/aeris /mnt/mozbuild
+          sudo chown -R "$USER" /mnt/aeris /mnt/mozbuild
+          sudo fallocate -l 12G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          df -h / /mnt
+          free -h
+
+      - name: Download Firefox source
+        run: |
+          version=$(cat aeris/firefox-version.txt)
+          curl -fsSL "https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz" \
+            | tar -xJ -C /mnt/aeris
+          mv "/mnt/aeris/firefox-$version" /mnt/aeris/src
+
+      - name: Turn it into Aeris
+        run: |
+          pip install --quiet pillow
+          bash aeris/prepare.sh /mnt/aeris/src
+
+      - uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Get build tools
+        working-directory: /mnt/aeris/src
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q msitools
+          ./mach --no-interactive bootstrap --application-choice browser
+
+      - name: Build
+        working-directory: /mnt/aeris/src
+        run: ./mach build
+
+      - name: Package
+        working-directory: /mnt/aeris/src
+        run: |
+          ./mach package
+          ls -la obj-aeris/dist/
+          sccache --show-stats || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aeris-win64
+          path: /mnt/aeris/src/obj-aeris/dist/aeris-*.win64.zip
+          retention-days: 14
+
+      - name: Keep the build log if something broke
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aeris-logs
+          path: |
+            /mnt/aeris/src/obj-aeris/config.log
+            /mnt/aeris/src/obj-aeris/.mozbuild/last_log.json
+          if-no-files-found: ignore
