@@ -66,6 +66,12 @@ Section
     MessageBox MB_ICONSTOP "Aeris couldn't be installed (error $3). Please try again." /SD IDOK
     Abort
   ${EndIf}
+!ifdef UBLOCK
+  ; uBlock Origin comes with Aeris (Firefox adds it to each new profile from here).
+  SetOutPath "$0\distribution\extensions"
+  File "/oname=uBlock0@raymondhill.net.xpi" "${UBLOCK}"
+  SetOutPath "$TEMP"
+!endif
   WriteRegStr HKCU "Software\Aeris" "InstallDir" "$0"
   WriteRegStr HKCU "Software\Aeris" "Version" "${VERSION}"
 

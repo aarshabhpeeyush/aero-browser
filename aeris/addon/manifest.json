@@ -3,7 +3,6 @@
   "name": "Aeris Core",
   "description": "Aero's themes, New Tab, Aero Originals, settings and updates, built into Aeris.",
   "version": "1.0.0",
-  "hidden": true,
   "browser_specific_settings": {
     "gecko": { "id": "aeris-core@aeris.app" }
   },

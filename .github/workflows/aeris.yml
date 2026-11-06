@@ -61,11 +61,6 @@ jobs:
         # Lower priority, so GitHub's own runner program never gets starved and drops the job.
         run: nice -n 10 ./mach build
 
-      - name: Add uBlock Origin
-        run: |
-          mkdir -p /mnt/aeris/src/obj-aeris/dist/bin/distribution/extensions
-          curl -fsSL https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi             -o "/mnt/aeris/src/obj-aeris/dist/bin/distribution/extensions/uBlock0@raymondhill.net.xpi"
-
       - name: Package
         working-directory: /mnt/aeris/src
         run: |
@@ -91,7 +86,8 @@ jobs:
           mkdir -p /mnt/aeris/out
           makensis=$(command -v makensis || ls /mnt/mozbuild/nsis*/bin/makensis | head -1)
           echo "makensis: $makensis"
-          "$makensis" -V2 -DVERSION="$version" -DINNER="$inner" -DICON=/mnt/aeris/aeris.ico             -DOUT="/mnt/aeris/out/Aeris-Setup-$version.exe" aeris/installer/aeris-setup.nsi
+          curl -fsSL https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi -o /mnt/aeris/ublock.xpi
+          "$makensis" -V2 -DUBLOCK=/mnt/aeris/ublock.xpi -DVERSION="$version" -DINNER="$inner" -DICON=/mnt/aeris/aeris.ico             -DOUT="/mnt/aeris/out/Aeris-Setup-$version.exe" aeris/installer/aeris-setup.nsi
           ls -la /mnt/aeris/out
 
       - uses: actions/upload-artifact@v4

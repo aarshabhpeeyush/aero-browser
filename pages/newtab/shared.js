@@ -37,17 +37,19 @@ const AERO_LOCAL_DEFAULTS = {
 };
 
 // When a page is opened outside the extension (e.g. for testing), fall back to localStorage.
-const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage;
+// Firefox (Aeris) has a promise-based "browser"; Chrome's "chrome" also returns promises in Manifest V3.
+const extApi = typeof browser !== "undefined" ? browser : typeof chrome !== "undefined" ? chrome : null;
+const hasChromeStorage = !!extApi?.storage;
 
 function makeStore(area, key, defaults) {
   return {
     async load() {
-      if (hasChromeStorage) return chrome.storage[area].get(defaults);
+      if (hasChromeStorage) return extApi.storage[area].get(defaults);
       const saved = JSON.parse(localStorage.getItem(key) || "{}");
       return { ...defaults, ...saved };
     },
     async save(changes) {
-      if (hasChromeStorage) return chrome.storage[area].set(changes);
+      if (hasChromeStorage) return extApi.storage[area].set(changes);
       const saved = JSON.parse(localStorage.getItem(key) || "{}");
       localStorage.setItem(key, JSON.stringify({ ...saved, ...changes }));
     }

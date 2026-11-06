@@ -144,7 +144,8 @@ async function importFromAero() {
         result.apps = apps.length;
       }
       const theme = data.state?.activeTheme;
-      const changes = { hideAi: !!data.state?.hideAi };
+      // Aero hides Google's AI answers unless you switched that off.
+      const changes = { hideAi: data.state?.hideAi !== false };
       if (theme && THEMES.some(t => t.id === theme)) changes.theme = result.theme = theme;
       if (typeof data.prefs?.restyle === "boolean") changes.restyle = data.prefs.restyle;
       await browser.storage.local.set(changes);
@@ -233,6 +234,10 @@ browser.alarms.onAlarm.addListener(a => a.name === "update" && checkForUpdate())
   const { aeris: version } = await browser.aeris.appInfo();
   if (s.lastVersion !== version) {
     await browser.storage.local.set({ lastVersion: version });
+    // The very first window opens before Aeris Core is ready, on Firefox's home page.
+    if (!s.lastVersion) {
+      for (const tab of await browser.tabs.query({ url: "about:home" })) browser.tabs.update(tab.id, { url: browser.runtime.getURL("newtab/index.html") });
+    }
     const { importResult } = await browser.storage.local.get("importResult");
     const from = s.lastVersion || (importResult?.found ? "Aero" : null);
     browser.tabs.create({ url: browser.runtime.getURL(`whatsnew/index.html?app=Aeris&v=${version}${from ? "&from=" + encodeURIComponent(from) : ""}`) });

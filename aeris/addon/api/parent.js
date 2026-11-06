@@ -53,8 +53,14 @@ async function importAeroPasswords() {
     if (!file.endsWith(".vault")) continue;
     const data = await IOUtils.read(file);
     if (String.fromCharCode(...data.slice(0, 3)) !== "v10") continue;
-    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: data.slice(3, 15) }, key, data.slice(15));
-    const vault = JSON.parse(new TextDecoder().decode(plain));
+    // A vault locked with an older key can't be opened (Aero couldn't open it either), so skip it.
+    let vault;
+    try {
+      const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: data.slice(3, 15) }, key, data.slice(15));
+      vault = JSON.parse(new TextDecoder().decode(plain));
+    } catch {
+      continue;
+    }
     for (const l of vault.logins || []) {
       if (!l.origin || !l.password) continue;
       logins.push({
