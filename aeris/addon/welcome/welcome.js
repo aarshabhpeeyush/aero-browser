@@ -12,10 +12,19 @@ let prefs = {};
 function show(i) {
   at = Math.max(0, Math.min(steps.length - 1, i));
   steps.forEach((s, n) => (s.hidden = n !== at));
-  document.querySelectorAll("#dots span").forEach((d, n) => d.classList.toggle("on", n === at));
-  scrollTo({ top: 0, behavior: "smooth" });
+  // Page one shows the welcome picture as it is; the others soften it behind a glass sheet
+  $("#stage").classList.toggle("soft", at > 0);
+  document.querySelectorAll("#thumbs button").forEach((t, n) => t.classList.toggle("current", n === at));
 }
-for (const s of steps) $("#dots").append(document.createElement("span"));
+// A thumbnail for each step under the card
+steps.forEach((s, n) => {
+  const t = document.createElement("button");
+  t.title = s.dataset.label;
+  t.innerHTML = "<span></span>";
+  t.querySelector("span").textContent = s.dataset.label;
+  t.addEventListener("click", () => show(n));
+  $("#thumbs").append(t);
+});
 document.querySelectorAll(".next").forEach(b => b.addEventListener("click", () => show(at + 1)));
 document.querySelectorAll(".back").forEach(b => b.addEventListener("click", () => show(at - 1)));
 
@@ -103,14 +112,6 @@ $("#finish").addEventListener("click", async () => {
   const tab = await browser.tabs.getCurrent();
   browser.tabs.update(tab.id, { url: browser.runtime.getURL("newtab/index.html") });
 });
-
-// ================= Bubbles (like the Store) =================
-for (let i = 0; i < 14; i++) {
-  const b = document.createElement("span");
-  const size = 18 + Math.random() * 60;
-  b.style.cssText = `left:${Math.random() * 100}%;width:${size}px;height:${size}px;animation-duration:${14 + Math.random() * 18}s;animation-delay:${-Math.random() * 30}s;--drift:${(Math.random() - 0.5) * 120}px`;
-  $("#bubbles").append(b);
-}
 
 draw();
 show(0);

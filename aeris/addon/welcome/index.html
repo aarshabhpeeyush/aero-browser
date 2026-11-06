@@ -4,102 +4,111 @@
   <meta charset="utf-8">
   <title>Welcome to Aeris</title>
   <link rel="icon" href="../icons/aeris-32.png">
-  <link rel="stylesheet" href="../settings/settings.css">
   <link rel="stylesheet" href="welcome.css">
-  <link id="aeroTheme" rel="stylesheet">
 </head>
 <body>
-  <div id="scene"><div class="rays"></div><div class="sun"></div></div>
-  <div id="bubbles"></div>
   <main>
-    <div class="dots" id="dots"></div>
+    <div class="stage" id="stage">
 
-    <section class="glass step" data-step="hello">
-      <img class="big-logo" src="../icons/aeris-128.png" alt="">
-      <p class="kicker">Welcome to</p>
-      <h1>Aeris</h1>
-      <p class="lead">Aero's bubbly, glossy look on a real Firefox engine. Let's make it yours: it takes about a minute, and you can change everything later with the Aeris button on the toolbar.</p>
-      <p class="lead" id="fromAero" hidden></p>
-      <div class="nav"><span></span><button class="gel next">Let's go →</button></div>
-    </section>
+      <!-- Page one: the welcome picture -->
+      <section class="step hero" data-step="hello" data-label="Welcome">
+        <img class="hero-logo" src="../icons/aeris-128.png" alt="Aeris">
+        <h1 class="sr">Welcome to Aeris: the future we were promised, as a browser</h1>
+        <p class="hero-note" id="fromAero" hidden></p>
+        <button class="gel big next">Let's go →</button>
+      </section>
 
-    <section class="glass step" data-step="colours" hidden>
-      <p class="kicker">Step 1 of 5</p>
-      <h2>Pick your colours</h2>
-      <p>Click one: Aeris changes straight away.</p>
-      <div class="swatches" id="swatches"></div>
-      <h2 class="space">Want even more? Add a custom theme</h2>
-      <p>Custom themes restyle everything, including the New Tab and websites like YouTube and Google.</p>
-      <div class="theme-list" id="customs"></div>
-      <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
-    </section>
+      <section class="step" data-step="colours" data-label="Colours" hidden>
+        <div class="glass">
+          <p class="kicker">Step 1 of 5</p>
+          <h2>Pick your colours</h2>
+          <p>Click one: Aeris changes straight away.</p>
+          <div class="swatches" id="swatches"></div>
+          <h2 class="space">Want even more? Add a custom theme</h2>
+          <p>Custom themes restyle everything, including the New Tab and websites like YouTube and Google.</p>
+          <div class="theme-list" id="customs"></div>
+          <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
+        </div>
+      </section>
 
-    <section class="glass step" data-step="layout" hidden>
-      <p class="kicker">Step 2 of 5</p>
-      <h2>Where should your tabs go?</h2>
-      <div class="layouts" data-pref="bars">
-        <button data-value="top"><span class="mini top"><i></i><b></b></span>Top</button>
-        <button data-value="left"><span class="mini left"><i></i><b></b></span>Left</button>
-        <button data-value="right"><span class="mini right"><i></i><b></b></span>Right</button>
-      </div>
-      <h2 class="space">Tab shape</h2>
-      <div class="pills" data-pref="tabShape">
-        <button data-value="rounded">Rounded</button><button data-value="pill">Bubble</button><button data-value="square">Square</button>
-      </div>
-      <h2 class="space">Size</h2>
-      <div class="pills" data-pref="size">
-        <button data-value="comfy">Comfy</button><button data-value="compact">Compact</button>
-      </div>
-      <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
-    </section>
+      <section class="step" data-step="layout" data-label="Layout" hidden>
+        <div class="glass">
+          <p class="kicker">Step 2 of 5</p>
+          <h2>Where should your tabs go?</h2>
+          <div class="layouts" data-pref="bars">
+            <button data-value="top"><span class="mini top"><i></i><b></b></span>Top</button>
+            <button data-value="left"><span class="mini left"><i></i><b></b></span>Left</button>
+            <button data-value="right"><span class="mini right"><i></i><b></b></span>Right</button>
+          </div>
+          <h2 class="space">Tab shape</h2>
+          <div class="pills" data-pref="tabShape">
+            <button data-value="rounded">Rounded</button><button data-value="pill">Bubble</button><button data-value="square">Square</button>
+          </div>
+          <h2 class="space">Size</h2>
+          <div class="pills" data-pref="size">
+            <button data-value="comfy">Comfy</button><button data-value="compact">Compact</button>
+          </div>
+          <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
+        </div>
+      </section>
 
-    <section class="glass step" data-step="extras" hidden>
-      <p class="kicker">Step 3 of 5</p>
-      <h2>A few good things to switch on</h2>
-      <label class="tick"><input type="checkbox" id="adblock"> <span><b>Block ads and trackers 🛡️</b><small>With uBlock Origin, which comes with Aeris.</small></span></label>
-      <label class="tick"><input type="checkbox" data-pref="hideAi"> <span><b>Hide Google's AI Overviews</b><small>Just the normal search results.</small></span></label>
-      <label class="tick"><input type="checkbox" data-pref="sounds"> <span><b>Bubbly sounds</b><small>Little bloops and pops when you open and close tabs.</small></span></label>
-      <label class="tick"><input type="checkbox" data-pref="restyle"> <span><b>Aero style on websites</b><small>Rounder, glossier buttons and boxes on the sites you visit.</small></span></label>
-      <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
-    </section>
+      <section class="step" data-step="extras" data-label="Extras" hidden>
+        <div class="glass">
+          <p class="kicker">Step 3 of 5</p>
+          <h2>A few good things to switch on</h2>
+          <label class="tick"><input type="checkbox" id="adblock"> <span><b>Block ads and trackers 🛡️</b><small>With uBlock Origin, which comes with Aeris.</small></span></label>
+          <label class="tick"><input type="checkbox" data-pref="hideAi"> <span><b>Hide Google's AI Overviews</b><small>Just the normal search results.</small></span></label>
+          <label class="tick"><input type="checkbox" data-pref="sounds"> <span><b>Bubbly sounds</b><small>Little bloops and pops when you open and close tabs.</small></span></label>
+          <label class="tick"><input type="checkbox" data-pref="restyle"> <span><b>Aero style on websites</b><small>Rounder, glossier buttons and boxes on the sites you visit.</small></span></label>
+          <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
+        </div>
+      </section>
 
-    <section class="glass step" data-step="import" hidden>
-      <p class="kicker">Step 4 of 5</p>
-      <h2>Bring your stuff</h2>
-      <p id="importText">Aeris can bring your bookmarks and saved passwords from Aero, Chrome, Edge and other browsers.</p>
-      <div class="buttons">
-        <button class="gel" id="importAero">From Aero</button>
-        <button class="gel" id="importOther">From another browser…</button>
-      </div>
-      <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
-    </section>
+      <section class="step" data-step="import" data-label="Your stuff" hidden>
+        <div class="glass">
+          <p class="kicker">Step 4 of 5</p>
+          <h2>Bring your stuff</h2>
+          <p id="importText">Aeris can bring your bookmarks and saved passwords from Aero, Chrome, Edge and other browsers.</p>
+          <div class="buttons">
+            <button class="gel" id="importAero">From Aero</button>
+            <button class="gel" id="importOther">From another browser…</button>
+          </div>
+          <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
+        </div>
+      </section>
 
-    <section class="glass step" data-step="default" hidden>
-      <p class="kicker">Step 5 of 5</p>
-      <h2>Open links from other apps in Aeris?</h2>
-      <p id="defaultText">Make Aeris your default browser, and links from Discord, emails and other apps open here. Aeris asks only this once, and never nags you about it again.</p>
-      <div class="buttons">
-        <button class="gel" id="makeDefault">Yes, make Aeris my default</button>
-        <button class="gel plain next">Not now</button>
-      </div>
-      <div class="nav"><button class="gel plain back">← Back</button><span></span></div>
-    </section>
+      <section class="step" data-step="default" data-label="Default" hidden>
+        <div class="glass">
+          <p class="kicker">Step 5 of 5</p>
+          <h2>Open links from other apps in Aeris?</h2>
+          <p id="defaultText">Make Aeris your default browser, and links from Discord, emails and other apps open here. Aeris asks only this once, and never nags you about it again.</p>
+          <div class="buttons">
+            <button class="gel" id="makeDefault">Yes, make Aeris my default</button>
+            <button class="gel plain next">Not now</button>
+          </div>
+          <div class="nav"><button class="gel plain back">← Back</button><span></span></div>
+        </div>
+      </section>
 
-    <section class="glass step" data-step="done" hidden>
-      <p class="kicker">All set</p>
-      <h2>Aeris is ready ✨</h2>
-      <ul class="tips">
-        <li><b>The Aeris button</b> (the round one on the toolbar) opens your side panel: Customize, 📝 Notes, 🧩 Apps and 🗂️ Spaces. <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> works too.</li>
-        <li><b>Notes:</b> right-click any text on a website → <i>Clip to Aeris Notes</i>.</li>
-        <li><b>Spaces:</b> keep School, Games and Music tabs apart, and switch between them in the panel.</li>
-        <li><b>Split view:</b> right-click a tab → <i>Add split view</i> to see two pages side by side.</li>
-        <li><b>Focus mode:</b> <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>, or the ⛶ button in the address bar, hides the bars until you point at the top.</li>
-        <li><b>Something annoying on a website?</b> Right-click it → <i>Hide this on the website</i>.</li>
-      </ul>
-      <div class="nav"><button class="gel plain back">← Back</button><button class="gel" id="finish">Start browsing</button></div>
-    </section>
+      <section class="step" data-step="done" data-label="Ready" hidden>
+        <div class="glass">
+          <p class="kicker">All set</p>
+          <h2>Aeris is ready ✨</h2>
+          <ul class="tips">
+            <li><b>The Aeris button</b> (the round one on the toolbar) opens your side panel: Customize, 📝 Notes, 🧩 Apps and 🗂️ Spaces. <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> works too.</li>
+            <li><b>Notes:</b> right-click any text on a website → <i>Clip to Aeris Notes</i>.</li>
+            <li><b>Spaces:</b> keep School, Games and Music tabs apart, and switch between them in the panel.</li>
+            <li><b>Split view:</b> right-click a tab → <i>Add split view</i> to see two pages side by side.</li>
+            <li><b>Focus mode:</b> <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>, or the ⛶ button in the address bar, hides the bars until you point at the top.</li>
+            <li><b>Something annoying on a website?</b> Right-click it → <i>Hide this on the website</i>.</li>
+          </ul>
+          <div class="nav"><button class="gel plain back">← Back</button><button class="gel" id="finish">Start browsing</button></div>
+        </div>
+      </section>
+    </div>
+
+    <nav class="thumbs" id="thumbs" aria-label="Steps"></nav>
   </main>
-  <script src="../theme-link.js"></script>
   <script src="welcome.js"></script>
 </body>
 </html>
