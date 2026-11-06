@@ -45,7 +45,7 @@
     radial-gradient(circle at 50% 110%, #c8ff7a 0%, var(--accent) 60%, var(--accent-dark) 100%);
   box-shadow: 0 2px 5px rgba(0,40,90,0.4);
 }
-#sidebar-main #TabsToolbar-customization-target::before { display: none; }
+sidebar-main #TabsToolbar-customization-target::before { display: none; }
 
 /* Glass tabs */
 #TabsToolbar .tabbrowser-tab { padding-block: 6px 0 !important; }
@@ -166,13 +166,28 @@
 
 /* ================= Side bar (tabs at the side live here too) ================= */
 
-#sidebar-main {
+sidebar-main {
   color: var(--text) !important;
   background:
     linear-gradient(90deg, rgba(255,255,255,calc(var(--gloss) * 0.35)), rgba(255,255,255,0) 60%),
     linear-gradient(180deg, var(--frame-a), var(--frame-b)) !important;
 }
-#sidebar-main toolbarbutton { color: var(--text) !important; }
+/* Everything on it (New Tab, the buttons at the bottom) uses the theme's text colour, so it shows
+   up on dark themes too. Tab titles have their own colours (above). */
+sidebar-main {
+  fill: var(--text) !important;
+  --button-text-color: var(--text) !important;
+  --button-text-color-hover: var(--text) !important;
+  --button-icon-fill: var(--text) !important;
+  --toolbarbutton-icon-fill: var(--text) !important;
+  --toolbar-color: var(--text) !important;
+  --sidebar-text-color: var(--text) !important;
+}
+sidebar-main :is(toolbarbutton, moz-button, button, .toolbarbutton-text, #vertical-tabs-newtab-button, #vertical-tabs-newtab-button *, .tools-and-extensions *) {
+  color: var(--text) !important;
+  fill: var(--text) !important;
+}
+sidebar-main :is(toolbarbutton, moz-button):hover { background-color: rgba(255,255,255,0.15) !important; border-radius: 8px; }
 
 /* ================= Menus and panels: rounder ================= */
 panel, menupopup { --panel-border-radius: 14px !important; }

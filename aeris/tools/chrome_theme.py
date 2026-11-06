@@ -33,7 +33,7 @@ MAP = {
     "#bookmarks .empty": "#personal-toolbar-empty-description",
     ".winbtns button": ".titlebar-button",
     ".win-simple .winbtns button": ".titlebar-button",
-    "#appsBar": "#sidebar-main",
+    "#appsBar": "sidebar-main",
     # Fonts only (see FONT_ONLY)
     "body": ":root",
     "button": "toolbarbutton",
@@ -41,7 +41,7 @@ MAP = {
     "select": None,
 }
 # Tabs at the side: only used when Aeris has its tabs on the left or right.
-SIDE_MAP = {".side #titlebar": "#sidebar-main"}
+SIDE_MAP = {".side #titlebar": "sidebar-main"}
 FONT_ONLY = {"body", "button", "input", "select"}
 
 

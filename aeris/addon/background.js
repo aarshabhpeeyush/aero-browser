@@ -93,8 +93,8 @@ function themeApiColors(v, theme) {
       popup_text: dark ? v.text : "#10202e",
       popup_highlight: v.accent,
       popup_highlight_text: "#ffffff",
-      sidebar: dark ? "#141a26" : paper,
-      sidebar_text: dark ? v.text : "#14283c",
+      sidebar: v["frame-a"],
+      sidebar_text: v.text,
       ntp_background: v["frame-b"],
       ntp_text: v.text
     },
