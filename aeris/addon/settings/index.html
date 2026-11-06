@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Aeris settings</title>
+  <link rel="icon" href="../icons/aeris-32.png">
+  <link rel="stylesheet" href="settings.css">
+  <link id="aeroTheme" rel="stylesheet">
+</head>
+<body>
+  <div id="scene"><div class="rays"></div><div class="sun"></div></div>
+  <div id="bubbles"></div>
+  <main>
+    <header class="glass hero">
+      <img class="logo" src="../icons/aeris-128.png" alt="">
+      <div>
+        <p class="kicker">Aeris</p>
+        <h1>Settings and themes</h1>
+        <p id="versionLine">Built on Firefox.</p>
+      </div>
+    </header>
+
+    <nav id="tabs">
+      <a href="#themes">Themes</a>
+      <a href="#browsing">Browsing</a>
+      <a href="#store">Add-ons</a>
+      <a href="#aero">From Aero</a>
+      <a href="#updates">Updates</a>
+    </nav>
+
+    <section id="themes" class="glass pane">
+      <h2>Themes</h2>
+      <p>Each theme changes the browser, the New Tab page, and websites like Google, YouTube and Wikipedia.</p>
+      <div id="themeGrid" class="grid"></div>
+    </section>
+
+    <section id="browsing" class="glass pane">
+      <h2>Browsing</h2>
+      <label class="row"><input type="checkbox" id="hideAi"><span><b>Hide Google's AI Overviews</b><br>Removes the AI box at the top of Google searches.</span></label>
+      <label class="row"><input type="checkbox" id="restyle"><span><b>Aero touches on websites</b><br>Softer, rounder buttons and boxes on the sites you visit.</span></label>
+      <p class="note">Firefox's own settings (search engine, passwords, privacy, downloads) are in <a href="about:preferences" id="ffPrefs">Firefox settings</a>.</p>
+    </section>
+
+    <section id="store" class="glass pane">
+      <h2>Aero Originals</h2>
+      <p>Our own extensions. They come with Aeris and install in a second.</p>
+      <div id="originals" class="grid"></div>
+      <h2 class="space">Recommended add-ons</h2>
+      <p>Popular add-ons from Firefox Add-ons (addons.mozilla.org). The ad blocker uBlock Origin is already built in.</p>
+      <div id="recommended" class="grid"></div>
+      <p class="note">Find thousands more at <a href="https://addons.mozilla.org/firefox/" target="_blank">addons.mozilla.org</a>.</p>
+    </section>
+
+    <section id="aero" class="glass pane">
+      <h2>Moving in from Aero</h2>
+      <p id="importText">Aeris brings over your bookmarks, apps, theme, settings and saved passwords from Aero.</p>
+      <button class="gel" id="importBtn">Bring them over again</button>
+      <p class="note">Coming from Chrome or Edge? Use <a href="about:preferences#general" id="ffImport">Import browser data</a> in Firefox settings.</p>
+    </section>
+
+    <section id="updates" class="glass pane">
+      <h2>Updates</h2>
+      <p id="updateText">Aeris checks for new versions on its own and installs them when you close it.</p>
+      <button class="gel" id="checkBtn">Check now</button>
+      <button class="gel hidden" id="restartBtn">Restart to update</button>
+    </section>
+  </main>
+  <div id="toast" hidden></div>
+  <script src="../theme-link.js"></script>
+  <script src="catalog.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

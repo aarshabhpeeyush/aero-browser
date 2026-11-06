@@ -1205,6 +1205,14 @@ ipcMain.on("set:restyle", (e, on) => {
   for (const id of tabs.keys()) applySiteStyle(id);
 });
 ipcMain.on("set:search", (e, url) => { searchUrl = url; });
+// Aeris, the Firefox-based Aero, reads this copy of your bookmarks, apps and settings when it
+// first starts, so nothing is lost when you move over. (Passwords stay in the encrypted vault.)
+ipcMain.on("aeris:export", (e, prefs) => {
+  try {
+    const file = path.join(app.getPath("userData"), "aeris-export.json");
+    fs.writeFileSync(file, JSON.stringify({ version: app.getVersion(), savedAt: Date.now(), state, profiles, prefs }, null, 1));
+  } catch {}
+});
 ipcMain.on("profile:switch", (e, id) => switchProfile(id));
 ipcMain.on("profile:add", (e, data) => addProfile(data || {}));
 ipcMain.on("profile:update", (e, data) => updateProfile(data || {}));

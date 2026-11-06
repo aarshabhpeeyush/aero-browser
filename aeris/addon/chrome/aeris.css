@@ -1,0 +1,99 @@
+/* The Aero look for Aeris's frame: glossy tab bar, rounded glass tabs, a pill address bar and round
+   orb buttons. background.js puts the active theme's colours in front of this as variables:
+   --aeris-frame-a/-b (tab bar top/bottom), --aeris-accent, --aeris-text, --aeris-text-shadow,
+   --aeris-gloss (0–1), --aeris-radius, --aeris-toolbar, --aeris-field, --aeris-field-text, --aeris-dark (0/1).
+   Colours that Firefox handles itself (popups, sidebar, menus) come from the theme API in background.js. */
+
+/* ---- Tab bar: a glossy gradient with a shine on its top half ---- */
+#navigator-toolbox {
+  background: linear-gradient(180deg, var(--aeris-frame-a), var(--aeris-frame-b)) !important;
+  border-bottom: none !important;
+}
+#TabsToolbar {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, calc(0.55 * var(--aeris-gloss))) 0%,
+      rgba(255, 255, 255, calc(0.12 * var(--aeris-gloss))) 50%, transparent 51%) !important;
+}
+#TabsToolbar,
+#TabsToolbar .tab-label,
+#TabsToolbar toolbarbutton {
+  color: var(--aeris-text) !important;
+}
+#TabsToolbar .tab-label { text-shadow: var(--aeris-text-shadow) !important; }
+
+/* ---- Tabs: rounded glass ---- */
+.tabbrowser-tab .tab-background {
+  border-radius: var(--aeris-radius) var(--aeris-radius) 0 0 !important;
+  margin-block: 4px 0 !important;
+  border: 1px solid rgba(255, 255, 255, calc(0.35 * var(--aeris-gloss) + 0.1)) !important;
+  border-bottom: none !important;
+  background: rgba(255, 255, 255, calc(0.18 * var(--aeris-gloss) + 0.06)) !important;
+  box-shadow: none !important;
+}
+.tabbrowser-tab:hover .tab-background:not([selected]) {
+  background: rgba(255, 255, 255, calc(0.3 * var(--aeris-gloss) + 0.1)) !important;
+}
+.tabbrowser-tab .tab-background:is([selected], [multiselected]) {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, calc(0.7 * var(--aeris-gloss))) 0%,
+      rgba(255, 255, 255, calc(0.15 * var(--aeris-gloss))) 50%, transparent 51%),
+    var(--aeris-toolbar) !important;
+  border-color: rgba(255, 255, 255, calc(0.6 * var(--aeris-gloss) + 0.15)) !important;
+}
+.tabbrowser-tab[selected] .tab-label {
+  color: var(--aeris-toolbar-text) !important;
+  text-shadow: none !important;
+}
+.tabbrowser-tab[selected] .tab-close-button { color: var(--aeris-toolbar-text) !important; }
+.tab-loading-burst, .tab-throbber { color: var(--aeris-accent) !important; }
+
+/* ---- Toolbar and bookmarks bar: glass in the theme's toolbar colour ---- */
+#nav-bar,
+#PersonalToolbar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, calc(0.35 * var(--aeris-gloss))), transparent 60%),
+    var(--aeris-toolbar) !important;
+  color: var(--aeris-toolbar-text) !important;
+  border-top: none !important;
+  box-shadow: none !important;
+}
+#nav-bar { border-bottom: 1px solid rgba(0, 0, 0, calc(0.1 + 0.25 * var(--aeris-dark))) !important; }
+
+/* ---- Back button: a round glossy orb in the accent colour ---- */
+#back-button > .toolbarbutton-icon {
+  border-radius: 50% !important;
+  padding: 6px !important;
+  width: 32px !important;
+  height: 32px !important;
+  color: #fff !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, calc(0.75 * var(--aeris-gloss) + 0.1)) 0%,
+      rgba(255, 255, 255, calc(0.15 * var(--aeris-gloss))) 48%, transparent 52%),
+    radial-gradient(circle at 50% 110%, color-mix(in srgb, var(--aeris-accent) 60%, white), var(--aeris-accent) 70%) !important;
+  border: 1px solid color-mix(in srgb, var(--aeris-accent) 70%, black) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) !important;
+}
+#back-button[disabled] > .toolbarbutton-icon { opacity: 0.55 !important; }
+#forward-button > .toolbarbutton-icon { border-radius: 50% !important; }
+
+/* ---- Address bar: a soft pill with an inset shadow ---- */
+#urlbar-background,
+#searchbar {
+  border-radius: 999px !important;
+  background-color: var(--aeris-field) !important;
+  border: 1px solid color-mix(in srgb, var(--aeris-accent) 45%, transparent) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.12) !important;
+}
+#urlbar[focused] > #urlbar-background {
+  outline: 2px solid color-mix(in srgb, var(--aeris-accent) 70%, white) !important;
+  outline-offset: -1px !important;
+}
+#urlbar[open] > #urlbar-background { border-radius: 18px !important; }
+#urlbar-input, .searchbar-textbox { color: var(--aeris-field-text) !important; }
+
+/* ---- Menus and panels: rounder, glassier ---- */
+panel, menupopup { --panel-border-radius: 14px !important; }
+
+/* ---- The Aeris button (opens Settings and themes) ---- */
+#aeris-core_aeris_app-browser-action .toolbarbutton-icon { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3)); }

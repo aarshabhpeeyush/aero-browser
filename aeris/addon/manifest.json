@@ -1,0 +1,48 @@
+{
+  "manifest_version": 2,
+  "name": "Aeris Core",
+  "description": "Aero's themes, New Tab, Aero Originals, settings and updates, built into Aeris.",
+  "version": "1.0.0",
+  "hidden": true,
+  "browser_specific_settings": {
+    "gecko": { "id": "aeris-core@aeris.app" }
+  },
+  "icons": { "48": "icons/aeris-48.png", "128": "icons/aeris-128.png" },
+  "permissions": [
+    "<all_urls>",
+    "alarms",
+    "bookmarks",
+    "search",
+    "storage",
+    "tabs",
+    "theme",
+    "unlimitedStorage",
+    "webRequest",
+    "webRequestBlocking"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_title": "Aeris settings and themes",
+    "default_icon": { "16": "icons/aeris-16.png", "32": "icons/aeris-32.png" },
+    "default_area": "navbar"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content/site.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "experiment_apis": {
+    "aeris": {
+      "schema": "api/schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "script": "api/parent.js",
+        "paths": [["aeris"]]
+      }
+    }
+  }
+}

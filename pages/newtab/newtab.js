@@ -278,7 +278,7 @@ SETUP.search = el => {
 
 // ----- Shortcut dock -----
 function faviconUrl(url) {
-  if (typeof chrome !== "undefined" && chrome.runtime?.id) {
+  if (location.protocol === "chrome-extension:") {
     return `chrome-extension://${chrome.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(url)}&size=64`;
   }
   return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`;

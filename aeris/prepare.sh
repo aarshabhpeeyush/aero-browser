@@ -10,6 +10,8 @@ cp -r "$src/browser/branding/unofficial" "$src/browser/branding/aeris"
 python3 "$here/tools/brand.py" "$src/browser/branding/aeris" "$here/../build/icon.png"
 
 cp "$here/mozconfig" "$src/mozconfig"
+python3 "$here/tools/addon.py" "$src"
+cat "$here/prefs.js" >> "$src/browser/branding/aeris/pref/firefox-branding.js"
 
 if [ -d "$here/overlay" ]; then cp -r "$here/overlay/." "$src/"; fi
 for p in "$here"/patches/*.patch; do

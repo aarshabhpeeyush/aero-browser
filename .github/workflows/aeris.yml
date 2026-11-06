@@ -59,17 +59,34 @@ jobs:
         working-directory: /mnt/aeris/src
         run: ./mach build
 
+      - name: Add uBlock Origin
+        run: |
+          mkdir -p /mnt/aeris/src/obj-aeris/dist/bin/distribution/extensions
+          curl -fsSL https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi             -o "/mnt/aeris/src/obj-aeris/dist/bin/distribution/extensions/uBlock0@raymondhill.net.xpi"
+
       - name: Package
         working-directory: /mnt/aeris/src
         run: |
+          sudo apt-get install -y -q p7zip-full
           ./mach package
-          ls -la obj-aeris/dist/
+          ./mach build installer
+          ls -la obj-aeris/dist/ obj-aeris/dist/install/sea/
           sccache --show-stats || true
+
+      - name: Aeris setup
+        run: |
+          version=$(cat aeris/version.txt)
+          python3 -c "from PIL import Image; Image.open('build/icon.png').save('/mnt/aeris/aeris.ico', sizes=[(16,16),(32,32),(48,48),(256,256)])"
+          inner=$(ls /mnt/aeris/src/obj-aeris/dist/install/sea/*.installer.exe | head -1)
+          mkdir -p /mnt/aeris/out
+          /mnt/mozbuild/nsis/bin/makensis -V2 -DVERSION="$version" -DINNER="$inner" -DICON=/mnt/aeris/aeris.ico             -DOUT="/mnt/aeris/out/Aeris-Setup-$version.exe" aeris/installer/aeris-setup.nsi
+          cp /mnt/aeris/src/obj-aeris/dist/aeris-*.win64.zip /mnt/aeris/out/
+          ls -la /mnt/aeris/out
 
       - uses: actions/upload-artifact@v4
         with:
           name: aeris-win64
-          path: /mnt/aeris/src/obj-aeris/dist/aeris-*.win64.zip
+          path: /mnt/aeris/out/*
           retention-days: 14
 
       - name: Keep the build log if something broke

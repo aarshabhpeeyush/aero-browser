@@ -51,7 +51,10 @@ function loadPrefs() {
   catch { return { ...DEFAULTS }; }
 }
 let prefs = loadPrefs();
-const savePrefs = () => localStorage.setItem("aero-browser", JSON.stringify(prefs));
+const savePrefs = () => {
+  localStorage.setItem("aero-browser", JSON.stringify(prefs));
+  api.send("aeris:export", prefs); // keeps a copy Aeris (the Firefox-based Aero) can bring over
+};
 
 // Live state from the engine, used while drawing (declared early because drawing starts early).
 let blockedCounts = {}; // tab id -> ads/trackers blocked on its current page
@@ -62,6 +65,7 @@ let saverOn = false; // battery saver active
 // Inside Aero Browser, window.aero talks to main.js. Opened as a plain web page
 // (for previewing the design), a pretend engine is used instead.
 const api = window.aero || makePretendEngine();
+api.send("aeris:export", prefs);
 
 // ================= Sounds =================
 
