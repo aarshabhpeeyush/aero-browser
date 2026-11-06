@@ -51,7 +51,7 @@ jobs:
         working-directory: /mnt/aeris/src
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q msitools
+          sudo apt-get install -y -q msitools libc6-i386 lib32gcc-s1 lib32stdc++6
           ./mach --no-interactive bootstrap --application-choice browser
           rustup target add x86_64-pc-windows-msvc
 
