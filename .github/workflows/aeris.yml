@@ -13,7 +13,8 @@ jobs:
       MOZBUILD_STATE_PATH: /mnt/mozbuild
       SCCACHE_GHA_ENABLED: "true"
       SCCACHE_CACHE_SIZE: 9G
-      MOZ_PARALLEL_BUILD: 4
+      MOZ_PARALLEL_BUILD: 3
+      CARGO_BUILD_JOBS: 2
     steps:
       - uses: actions/checkout@v4
 
@@ -26,7 +27,7 @@ jobs:
         run: |
           sudo mkdir -p /mnt/aeris /mnt/mozbuild
           sudo chown -R "$USER" /mnt/aeris /mnt/mozbuild
-          sudo fallocate -l 12G /mnt/swapfile
+          sudo fallocate -l 24G /mnt/swapfile
           sudo chmod 600 /mnt/swapfile
           sudo mkswap /mnt/swapfile
           sudo swapon /mnt/swapfile
@@ -57,7 +58,8 @@ jobs:
 
       - name: Build
         working-directory: /mnt/aeris/src
-        run: ./mach build
+        # Lower priority, so GitHub's own runner program never gets starved and drops the job.
+        run: nice -n 10 ./mach build
 
       - name: Add uBlock Origin
         run: |
