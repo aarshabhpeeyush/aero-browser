@@ -71,18 +71,27 @@ jobs:
         run: |
           sudo apt-get install -y -q p7zip-full
           ./mach package
-          ./mach build installer
-          ls -la obj-aeris/dist/ obj-aeris/dist/install/sea/
+          ls -la obj-aeris/dist/
+          mkdir -p /mnt/aeris/firefox
+          cp obj-aeris/dist/aeris-*.win64.installer.exe obj-aeris/dist/aeris-*.win64.zip /mnt/aeris/firefox/
           sccache --show-stats || true
+
+      - name: Keep the finished browser
+        uses: actions/upload-artifact@v4
+        with:
+          name: aeris-browser
+          path: /mnt/aeris/firefox/*
+          retention-days: 14
 
       - name: Aeris setup
         run: |
           version=$(cat aeris/version.txt)
           python3 -c "from PIL import Image; Image.open('build/icon.png').save('/mnt/aeris/aeris.ico', sizes=[(16,16),(32,32),(48,48),(256,256)])"
-          inner=$(ls /mnt/aeris/src/obj-aeris/dist/install/sea/*.installer.exe | head -1)
+          inner=$(ls /mnt/aeris/firefox/*.installer.exe | head -1)
           mkdir -p /mnt/aeris/out
-          /mnt/mozbuild/nsis/bin/makensis -V2 -DVERSION="$version" -DINNER="$inner" -DICON=/mnt/aeris/aeris.ico             -DOUT="/mnt/aeris/out/Aeris-Setup-$version.exe" aeris/installer/aeris-setup.nsi
-          cp /mnt/aeris/src/obj-aeris/dist/aeris-*.win64.zip /mnt/aeris/out/
+          makensis=$(command -v makensis || ls /mnt/mozbuild/nsis*/bin/makensis | head -1)
+          echo "makensis: $makensis"
+          "$makensis" -V2 -DVERSION="$version" -DINNER="$inner" -DICON=/mnt/aeris/aeris.ico             -DOUT="/mnt/aeris/out/Aeris-Setup-$version.exe" aeris/installer/aeris-setup.nsi
           ls -la /mnt/aeris/out
 
       - uses: actions/upload-artifact@v4
