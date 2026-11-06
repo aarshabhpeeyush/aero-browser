@@ -1,0 +1,17 @@
+/* Focus mode (like Orion's focus mode and Zen's compact mode): the tab bar and toolbar slide away so
+   the page fills the window, and slide back when you point at the top edge or use them. */
+#navigator-toolbox {
+  position: fixed !important;
+  top: 0;
+  inset-inline: 0;
+  z-index: 100 !important;
+  transform: translateY(calc(-100% + 6px));
+  opacity: 0;
+  transition: transform 0.25s ease 0.5s, opacity 0.2s ease 0.5s !important;
+  box-shadow: 0 4px 18px rgba(0, 30, 70, 0.35) !important;
+}
+#navigator-toolbox:is(:hover, :focus-within, :has([open="true"], [open=""], [panelopen="true"], [focused])) {
+  transform: none;
+  opacity: 1;
+  transition-delay: 0s !important;
+}

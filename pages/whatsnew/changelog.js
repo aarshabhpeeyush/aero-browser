@@ -6,7 +6,11 @@ const CHANGELOG = [
     title: "Aero is now Aeris",
     items: [
       { icon: "🦊", title: "A real browser, built on Firefox", text: "Aeris is Aero rebuilt on top of Firefox, so it's a full browser of its own. Google sign-in works like in any normal browser, and you get Firefox's speed, security updates and privacy protection." },
-      { icon: "🎨", title: "All your themes", text: "Aqua Glass, Bubble Pop, DORFic, Frutiger Metro, Luna XP, Neon Gamer, Retro 2000, Woodland Hut and Dark Mode restyle Aeris, the New Tab and websites like Google and YouTube. Pick one with the Aeris button on the toolbar." },
+      { icon: "🎨", title: "All your themes, the full Aero look", text: "Aero's 8 colour themes plus Aqua Glass, Bubble Pop, DORFic, Frutiger Metro, Luna XP, Neon Gamer, Retro 2000, Woodland Hut and Dark Mode restyle everything: tabs, orb buttons, the address bar, the New Tab and websites like Google and YouTube." },
+      { icon: "✨", title: "Aero's Customize panel", text: "The Aeris button opens a side panel just like Aero's: themes, accent colour, shine, tabs on the top, left or right, tab shape, size, search engine, ad blocking and bubbly sounds. Changes show up straight away." },
+      { icon: "📝", title: "Notes", text: "Write notes right next to any website, and right-click text on a page → Clip to Aeris Notes to save it with a link back." },
+      { icon: "🗂️", title: "Apps, spaces and split view", text: "Keep Discord, Spotify or WhatsApp open in the side panel, keep School, Games and Music tabs apart in spaces, and see two pages side by side with split view." },
+      { icon: "⛶", title: "Focus mode and more", text: "Hide the bars until you point at the top (Alt+Shift+F), nap tabs you aren't using, save all your tabs for later, hide annoying things on websites, and get a reminder to take a break." },
       { icon: "📦", title: "Your stuff came with you", text: "Your bookmarks, apps, theme, settings and saved passwords moved over from Aero automatically. Coming from Chrome or Edge? Firefox settings can import from them too." },
       { icon: "🧩", title: "Aero Originals and Firefox add-ons", text: "Beat Lab, School Assist and Desktop GIFs install in one click from Aeris settings, and thousands more add-ons come from addons.mozilla.org. uBlock Origin blocks ads straight away." },
       { icon: "🔄", title: "Updates on their own", text: "Like Aero, Aeris downloads new versions quietly and installs them when you close it." }

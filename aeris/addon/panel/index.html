@@ -11,15 +11,18 @@
 <body>
   <aside id="customize" class="panel">
     <div class="switcher choice">
-      <button data-show="customize">✨ Customize</button>
-      <button data-show="notes">📝 Notes</button>
+      <button data-show="customize" title="Customize">✨</button>
+      <button data-show="notes" title="Notes">📝</button>
+      <button data-show="apps" title="Apps">🧩</button>
+      <button data-show="spaces" title="Spaces">🗂️</button>
     </div>
 
     <div id="customizeView">
       <header><h2>Customize</h2></header>
       <nav class="jumps">
         <a href="#look">Theme</a><a href="#layout">Layout</a><a href="#browsing">Browsing</a>
-        <a href="#extras">Tab tools</a><a href="#addons">Add-ons</a><a href="#bookmarks">Bookmarks</a><a href="#about">About</a>
+        <a href="#extras">Tab tools</a><a href="#performance">Performance</a><a href="#tweaks">Hidden things</a>
+        <a href="#addons">Add-ons</a><a href="#bookmarks">Bookmarks</a><a href="#about">About</a>
       </nav>
 
       <section id="look">
@@ -72,7 +75,41 @@
         <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.groups.enabled"> Tab groups with names and colours</label>
         <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.hoverPreview.enabled"> Preview a tab when you point at it</label>
         <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.notes.enabled"> Tab notes (right-click a tab → Add note)</label>
+        <label class="toggle"><input type="checkbox" data-pref="focus"> Focus mode: hide the bars until you point at the top (Alt+Shift+F, or the ⛶ button in the address bar)</label>
+        <label class="toggle"><input type="checkbox" data-button="panic-button"> 🔥 Forget button: wipes the last few minutes of history and cookies</label>
+        <label class="toggle"><input type="checkbox" data-button="screenshot-button"> 📸 Screenshot button: capture any part of a page</label>
+        <h3>Save for later</h3>
+        <p class="hint">Put all the tabs you have open away in one go, and open them again whenever you like (like Edge's collections).</p>
+        <div class="row wrap">
+          <button id="saveTabs" class="gel tiny">Save all tabs for later</button>
+          <label class="toggle"><input type="checkbox" id="saveClose" checked> and close them</label>
+        </div>
+        <div id="collections"></div>
+      </section>
+
+      <section id="performance">
+        <h3>Performance</h3>
+        <div class="meter">
+          <div class="row"><b>Memory</b><span style="flex:1"></span><span id="ramNow">…</span></div>
+          <canvas id="ramGraph" width="300" height="56"></canvas>
+          <p class="hint" id="sleeping"></p>
+        </div>
         <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.unloadOnLowMemory"> Put unused tabs to sleep when memory runs low 💤</label>
+        <div class="choice" data-pref="napAfter" data-num>
+          <span>Nap tabs I haven't looked at for</span>
+          <button data-value="0">Never</button><button data-value="10">10 min</button><button data-value="30">30 min</button><button data-value="60">1 hour</button>
+        </div>
+        <p class="hint">Napping tabs use almost no memory or battery. They wake up when you click them. Tabs playing sound never nap.</p>
+        <div class="choice" data-pref="breakEvery" data-num>
+          <span>Remind me to take a break every</span>
+          <button data-value="0">Off</button><button data-value="30">30 min</button><button data-value="60">1 hour</button><button data-value="90">90 min</button>
+        </div>
+      </section>
+
+      <section id="tweaks">
+        <h3>Hidden on websites</h3>
+        <p class="hint">Right-click anything on a website and pick <b>Hide this on the website</b> to get rid of it for good (like Orion's tweaks and Arc's boosts).</p>
+        <div id="zapList"></div>
       </section>
 
       <section id="addons">
@@ -108,6 +145,7 @@
           <button id="checkUpdates" class="gel tiny">Check for updates</button>
           <button id="restartUpdate" class="gel tiny" hidden>Restart to update</button>
           <button id="whatsNew" class="gel tiny">What's new</button>
+          <button id="tour" class="gel tiny">Take the tour again</button>
           <button id="ffSettings" class="gel tiny">All Firefox settings</button>
         </div>
       </section>
@@ -128,8 +166,42 @@
         <button id="deleteNote" class="gel tiny red">Delete</button>
       </div>
     </div>
+
+    <div id="appsView" hidden>
+      <header>
+        <h2 id="appTitle">Apps</h2>
+        <span class="row" id="appTools" hidden>
+          <button id="appReload" class="gel tiny" title="Reload">⟳</button>
+          <button id="appTab" class="gel tiny" title="Open in a tab">↗</button>
+          <button id="appBack" class="gel tiny">All apps</button>
+        </span>
+      </header>
+      <div id="appPicker">
+        <p class="hint">Keep your chats and music open right here next to any website (like Vivaldi's and Edge's side panel). Sign in once inside the panel.</p>
+        <div id="appGrid"></div>
+        <h3>Add an app</h3>
+        <div class="row"><input id="appName" placeholder="Name"><input id="appUrl" placeholder="https://…"></div>
+        <button id="appAdd" class="gel tiny">Add</button>
+      </div>
+      <iframe id="appFrame" hidden sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-storage-access-by-user-activation" allow="autoplay; clipboard-read; clipboard-write; microphone; camera; fullscreen"></iframe>
+    </div>
+
+    <div id="spacesView" hidden>
+      <header>
+        <h2>Spaces</h2>
+        <button id="spaceAdd" class="gel tiny">+ New space</button>
+      </header>
+      <p class="hint">A space is its own set of tabs, like School, Games or Music (like SigmaOS and Zen). Switching hides the other spaces' tabs. Right-click a tab → <b>Move to space</b>.</p>
+      <div class="row" id="spaceNew" hidden><input id="spaceName" placeholder="School, Games, Music…" maxlength="30"><button id="spaceCreate" class="gel tiny">Create</button></div>
+      <div id="spaceList"></div>
+      <h3>This tab</h3>
+      <label class="row">Move it to <select id="spaceMove"></select></label>
+    </div>
   </aside>
   <script src="panel.js"></script>
   <script src="notes.js"></script>
+  <script src="apps.js"></script>
+  <script src="spaces.js"></script>
+  <script src="extras.js"></script>
 </body>
 </html>

@@ -22,7 +22,10 @@
       { "name": "makeDefaultBrowser", "type": "function", "async": true, "description": "Opens Windows' default-apps settings with Aeris picked (Windows asks you to confirm).", "parameters": [] },
       { "name": "setAddonEnabled", "type": "function", "async": true, "parameters": [{ "name": "id", "type": "string" }, { "name": "enabled", "type": "boolean" }] },
       { "name": "openImportWizard", "type": "function", "async": true, "description": "Firefox's 'bring your bookmarks and passwords from another browser' window.", "parameters": [] },
-      { "name": "openLibrary", "type": "function", "async": true, "description": "The bookmarks library (to import or export bookmarks as a file).", "parameters": [] }
+      { "name": "openLibrary", "type": "function", "async": true, "description": "The bookmarks library (to import or export bookmarks as a file).", "parameters": [] },
+      { "name": "memoryUsage", "type": "function", "async": true, "description": "How much memory (MB) all of Aeris's processes use together.", "parameters": [] },
+      { "name": "toolbarButtons", "type": "function", "async": true, "description": "Which of these Firefox toolbar buttons are on the toolbar.", "parameters": [{ "name": "ids", "type": "array", "items": { "type": "string" } }] },
+      { "name": "setToolbarButton", "type": "function", "async": true, "description": "Put one of Firefox's own buttons (Forget, Screenshot) on the toolbar, or take it off.", "parameters": [{ "name": "id", "type": "string" }, { "name": "show", "type": "boolean" }] }
     ]
   }
 ]

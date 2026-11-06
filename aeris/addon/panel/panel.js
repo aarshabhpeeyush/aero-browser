@@ -5,13 +5,31 @@
 const $ = sel => document.querySelector(sel);
 const store = browser.storage.local;
 const UBLOCK = "uBlock0@raymondhill.net";
-const LOOK_DEFAULTS = { theme: null, colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", restyle: true, hideAi: true, sounds: true };
+const LOOK_DEFAULTS = { theme: null, colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", restyle: true, hideAi: true, sounds: true, focus: false, napAfter: 0, breakEvery: 0 };
 
 let colorThemes = {};
 let customThemes = [];
 let prefs = { ...LOOK_DEFAULTS };
 
 const change = (key, value) => store.set({ [key]: value });
+
+// Pop-up boxes don't work in a side panel, so a risky button asks "Sure?" and needs a second click.
+function confirmClick(button, action) {
+  button.addEventListener("click", async e => {
+    e.stopPropagation();
+    if (!button.dataset.armed) {
+      button.dataset.armed = button.textContent;
+      button.textContent = "Sure?";
+      setTimeout(() => {
+        if (button.dataset.armed) button.textContent = button.dataset.armed;
+        delete button.dataset.armed;
+      }, 3000);
+      return;
+    }
+    delete button.dataset.armed;
+    await action();
+  });
+}
 
 // ================= Look of this panel (follows your theme, like Aero's panel) =================
 
@@ -67,7 +85,8 @@ $("#gloss").addEventListener("input", e => change("gloss", +e.target.value));
 // ================= Layout and browsing =================
 
 document.querySelectorAll(".choice[data-pref]").forEach(group => {
-  group.querySelectorAll("button").forEach(b => b.addEventListener("click", () => change(group.dataset.pref, b.dataset.value)));
+  const num = group.hasAttribute("data-num");
+  group.querySelectorAll("button").forEach(b => b.addEventListener("click", () => change(group.dataset.pref, num ? +b.dataset.value : b.dataset.value)));
 });
 document.querySelectorAll("input[type=checkbox][data-pref]").forEach(box => {
   box.addEventListener("change", () => change(box.dataset.pref, box.checked));
@@ -118,7 +137,7 @@ function drawChoices() {
   document.querySelectorAll("#themes button").forEach(b => b.classList.toggle("on", b.dataset.theme === prefs.colorTheme));
   document.querySelectorAll("#customThemes .theme-row").forEach(r => r.classList.toggle("on", r.dataset.theme === (prefs.theme ?? "")));
   document.querySelectorAll(".choice[data-pref]").forEach(group => {
-    group.querySelectorAll("button").forEach(b => b.classList.toggle("on", prefs[group.dataset.pref] === b.dataset.value));
+    group.querySelectorAll("button").forEach(b => b.classList.toggle("on", String(prefs[group.dataset.pref]) === b.dataset.value));
   });
   document.querySelectorAll("input[type=checkbox][data-pref]").forEach(box => (box.checked = !!prefs[box.dataset.pref]));
   const c = colorThemes[prefs.colorTheme];
@@ -187,6 +206,7 @@ $("#checkUpdates").addEventListener("click", async () => {
   drawAbout();
 });
 $("#restartUpdate").addEventListener("click", () => browser.aeris.restartToUpdate());
+$("#tour").addEventListener("click", () => browser.tabs.create({ url: browser.runtime.getURL("welcome/index.html") }));
 $("#whatsNew").addEventListener("click", async () => {
   const { aeris } = await browser.aeris.appInfo();
   browser.tabs.create({ url: browser.runtime.getURL(`whatsnew/index.html?app=Aeris&v=${aeris}`) });
@@ -196,8 +216,7 @@ $("#whatsNew").addEventListener("click", async () => {
 
 document.querySelectorAll(".switcher button").forEach(b => b.addEventListener("click", () => showView(b.dataset.show)));
 function showView(name) {
-  $("#customizeView").hidden = name !== "customize";
-  $("#notesView").hidden = name !== "notes";
+  for (const view of ["customize", "notes", "apps", "spaces"]) $(`#${view}View`).hidden = name !== view;
   document.querySelectorAll(".switcher button").forEach(b => b.classList.toggle("on", b.dataset.show === name));
   store.set({ panelView: name });
 }

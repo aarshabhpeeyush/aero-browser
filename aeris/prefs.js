@@ -37,5 +37,5 @@ pref("xpinstall.signatures.required", false);
 // Let people (and themes) restyle Aeris with userChrome.css, like Aero's custom themes.
 pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 
-// Offer to be your default browser, like Aero.
-pref("browser.shell.checkDefaultBrowser", true);
+// The welcome tour asks once whether Aeris should be your default browser; after that it never nags.
+pref("browser.shell.checkDefaultBrowser", false);

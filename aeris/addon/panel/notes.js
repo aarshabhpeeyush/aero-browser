@@ -71,9 +71,9 @@ $("#newNote").addEventListener("click", async () => {
   $("#noteText").focus();
 });
 
-$("#deleteNote").addEventListener("click", async () => {
+confirmClick($("#deleteNote"), async () => {
   const n = notes.find(x => x.id === currentId);
-  if (!n || !confirm(`Delete "${noteTitle(n)}"?`)) return;
+  if (!n) return;
   notes = notes.filter(x => x.id !== currentId);
   await notesStore.set({ notes });
   openNote(notes.sort((a, b) => b.updated - a.updated)[0]?.id ?? null);

@@ -105,8 +105,55 @@ function hideAi() {
   });
 }
 
-browser.storage.local.get({ paper: null, hideAi: false }).then(s => {
+browser.storage.local.get({ paper: null, hideAi: true }).then(s => {
   const paper = paperFor(s.paper, location.hostname);
   if (paper) paintPaper(paper);
   if (s.hideAi && /(^|\.)google\.[a-z.]+$/.test(location.hostname)) hideAi();
+});
+
+// ================= Things you hid on this website =================
+// Right-click → "Hide this on the website" (like Orion's tweaks and Arc's boosts). What you hid is
+// remembered per website and stays hidden; the Aeris panel lists it so you can bring it back.
+
+const site = location.hostname.replace(/^www\./, "");
+const zapStyle = document.createElement("style");
+
+function selectorFor(el) {
+  const parts = [];
+  while (el && el.nodeType === 1 && el !== document.documentElement && parts.length < 6) {
+    if (el.id && !/\d{3,}/.test(el.id)) {
+      parts.unshift("#" + CSS.escape(el.id));
+      break;
+    }
+    let part = el.localName;
+    const classes = [...el.classList].filter(c => !/\d{3,}|^(is-|has-)?(active|hover|focus|open|selected)$/.test(c)).slice(0, 2);
+    if (classes.length) part += "." + classes.map(c => CSS.escape(c)).join(".");
+    const same = el.parentElement ? [...el.parentElement.children].filter(c => c.localName === el.localName) : [];
+    if (same.length > 1) part += `:nth-of-type(${same.indexOf(el) + 1})`;
+    parts.unshift(part);
+    el = el.parentElement;
+  }
+  return parts.join(" > ");
+}
+
+function showZaps(zaps) {
+  const list = zaps[site] || [];
+  zapStyle.textContent = list.length ? `${list.join(",\n")} { display: none !important; }` : "";
+  if (list.length && !zapStyle.isConnected) (document.head || document.documentElement).append(zapStyle);
+}
+
+browser.storage.local.get({ zaps: {} }).then(s => showZaps(s.zaps));
+browser.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.zaps) showZaps(changes.zaps.newValue || {});
+});
+
+browser.runtime.onMessage.addListener(async msg => {
+  if (msg?.type !== "zap") return;
+  const el = browser.menus.getTargetElement(msg.targetElementId);
+  if (!el) return;
+  const selector = selectorFor(el);
+  const { zaps } = await browser.storage.local.get({ zaps: {} });
+  zaps[site] = [...new Set([...(zaps[site] || []), selector])];
+  el.style.setProperty("display", "none", "important");
+  await browser.storage.local.set({ zaps });
 });

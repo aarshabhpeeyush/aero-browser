@@ -4,16 +4,24 @@
   "description": "Aero's themes, New Tab, Aero Originals, settings and updates, built into Aeris.",
   "version": "1.0.0",
   "browser_specific_settings": {
-    "gecko": { "id": "aeris-core@aeris.app" }
+    "gecko": {
+      "id": "aeris-core@aeris.app"
+    }
   },
-  "icons": { "48": "icons/aeris-48.png", "128": "icons/aeris-128.png" },
+  "icons": {
+    "48": "icons/aeris-48.png",
+    "128": "icons/aeris-128.png"
+  },
   "permissions": [
     "<all_urls>",
     "alarms",
     "bookmarks",
     "menus",
+    "notifications",
     "search",
+    "sessions",
     "storage",
+    "tabHide",
     "tabs",
     "theme",
     "unlimitedStorage",
@@ -24,21 +32,35 @@
   "sidebar_action": {
     "default_title": "Aeris",
     "default_panel": "panel/index.html",
-    "default_icon": { "16": "icons/aeris-16.png", "32": "icons/aeris-32.png" },
+    "default_icon": {
+      "16": "icons/aeris-16.png",
+      "32": "icons/aeris-32.png"
+    },
     "open_at_install": false
   },
   "background": {
-    "scripts": ["background.js"]
+    "scripts": [
+      "background.js",
+      "features.js"
+    ]
   },
   "browser_action": {
-    "default_title": "Customize Aeris (themes, layout, notes)",
-    "default_icon": { "16": "icons/aeris-16.png", "32": "icons/aeris-32.png" },
+    "default_title": "Customize Aeris (themes, layout, notes, apps, spaces)",
+    "default_icon": {
+      "16": "icons/aeris-16.png",
+      "32": "icons/aeris-32.png"
+    },
     "default_area": "navbar"
   },
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["content/site.js"],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content/site.js"
+      ],
       "run_at": "document_start"
     }
   ],
@@ -46,10 +68,40 @@
     "aeris": {
       "schema": "api/schema.json",
       "parent": {
-        "scopes": ["addon_parent"],
+        "scopes": [
+          "addon_parent"
+        ],
         "script": "api/parent.js",
-        "paths": [["aeris"]]
+        "paths": [
+          [
+            "aeris"
+          ]
+        ]
       }
+    }
+  },
+  "page_action": {
+    "default_icon": {
+      "16": "icons/focus.svg",
+      "32": "icons/focus.svg"
+    },
+    "default_title": "Focus mode: hide the bars (Alt+Shift+F)",
+    "show_matches": [
+      "<all_urls>"
+    ]
+  },
+  "commands": {
+    "focus-mode": {
+      "suggested_key": {
+        "default": "Alt+Shift+F"
+      },
+      "description": "Focus mode: hide the bars until you point at the top"
+    },
+    "_execute_sidebar_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+A"
+      },
+      "description": "Open or close the Aeris panel"
     }
   }
 }

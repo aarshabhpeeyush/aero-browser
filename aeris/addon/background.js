@@ -18,7 +18,7 @@ const COLOR_THEMES = {
 // Customize choices, the same as Aero's: a colour theme, accent (null = the theme's), shine, tabs
 // top/left/right, tab shape, window buttons, size and bubbly sounds. "theme" is the custom theme
 // (one of Aero's theme folders, like Woodland Hut) laid on top, or null for none.
-const LOOK = { colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", sounds: true };
+const LOOK = { colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", sounds: true, focus: false };
 const DEFAULTS = { theme: null, hideAi: true, restyle: true, imported: false, lastVersion: null, update: null, ...LOOK };
 
 let THEMES = []; // the custom themes (from themes/index.json)
@@ -125,6 +125,7 @@ async function buildChromeCss(s, theme) {
     s.tabShape === "pill" ? await css("chrome/shape-pill.css") : s.tabShape === "square" ? await css("chrome/shape-square.css") : "",
     s.winButtons === "glossy" ? await css("chrome/buttons-glossy.css") : "",
     s.size === "compact" ? await css("chrome/size-compact.css") : "",
+    s.focus ? await css("chrome/focus.css") : "",
     // An accent you picked yourself still wins over the custom theme's.
     theme && s.accent ? `:root { --accent: ${s.accent} !important; }` : ""
   ];
@@ -202,6 +203,13 @@ async function importFromAero() {
         const folder = await browser.bookmarks.create({ parentId: toolbar, title: "Apps" });
         for (const a of apps) await browser.bookmarks.create({ parentId: folder.id, title: a.name || a.url, url: a.url });
         result.apps = apps.length;
+      }
+      // Aero's apps also go in the side panel's Apps, like Aero's apps sidebar
+      if (data.prefs?.apps?.length) {
+        const { apps: panelApps } = await browser.storage.local.get({ apps: null });
+        const have = new Set((panelApps || []).map(a => a.url));
+        const merged = [...(panelApps || []), ...data.prefs.apps.filter(a => a.url && !have.has(a.url)).map(a => ({ id: a.id || crypto.randomUUID(), name: a.name || a.url, url: a.url }))];
+        await browser.storage.local.set({ apps: merged });
       }
       const theme = data.state?.activeTheme;
       // Aero hides Google's AI answers unless you switched that off.
@@ -360,9 +368,14 @@ browser.alarms.onAlarm.addListener(a => a.name === "update" && checkForUpdate())
     if (!s.lastVersion) {
       for (const tab of await browser.tabs.query({ url: "about:home" })) browser.tabs.update(tab.id, { url: browser.runtime.getURL("newtab/index.html") });
     }
-    const { importResult } = await browser.storage.local.get("importResult");
-    const from = s.lastVersion || (importResult?.found ? "Aero" : null);
-    browser.tabs.create({ url: browser.runtime.getURL(`whatsnew/index.html?app=Aeris&v=${version}${from ? "&from=" + encodeURIComponent(from) : ""}`) });
+    // Updates show What's New; the first start shows the welcome tour instead (below).
+    if (s.lastVersion) browser.tabs.create({ url: browser.runtime.getURL(`whatsnew/index.html?app=Aeris&v=${version}&from=${encodeURIComponent(s.lastVersion)}`) });
+  }
+  // The welcome tour, once (also for people who started Aeris before the tour existed).
+  const { toured } = await browser.storage.local.get({ toured: false });
+  if (!toured) {
+    await browser.storage.local.set({ toured: true });
+    browser.tabs.create({ url: browser.runtime.getURL("welcome/index.html") });
   }
 
   browser.alarms.create("update", { delayInMinutes: 1, periodInMinutes: 360 });

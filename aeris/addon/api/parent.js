@@ -9,6 +9,7 @@ const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
   AddonManager: "resource://gre/modules/AddonManager.sys.mjs",
+  CustomizableUI: "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs",
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
   MigrationUtils: "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
   OSCrypto: "resource://gre/modules/OSCrypto_win.sys.mjs",
@@ -28,8 +29,11 @@ const PREFS = {
   "browser.tabs.groups.enabled": "bool",
   "browser.tabs.hoverPreview.enabled": "bool",
   "browser.tabs.notes.enabled": "bool",
-  "browser.tabs.unloadOnLowMemory": "bool"
+  "browser.tabs.unloadOnLowMemory": "bool",
+  "browser.shell.checkDefaultBrowser": "bool"
 };
+// Firefox's own toolbar buttons Customize can add: Forget (clears recent history) and Screenshot.
+const TOOLBAR_BUTTONS = ["panic-button", "screenshot-button"];
 const prefGet = { bool: "getBoolPref", string: "getStringPref", int: "getIntPref" };
 const prefSet = { bool: "setBoolPref", string: "setStringPref", int: "setIntPref" };
 const browserWindow = () => Services.wm.getMostRecentWindow("navigator:browser");
@@ -241,6 +245,24 @@ this.aeris = class extends ExtensionAPI {
 
         async openLibrary() {
           browserWindow()?.PlacesCommandHook.showPlacesOrganizer("BookmarksToolbar");
+        },
+
+        async memoryUsage() {
+          const info = await ChromeUtils.requestProcInfo();
+          const bytes = info.memory + info.children.reduce((sum, c) => sum + c.memory, 0);
+          return Math.round(bytes / 1048576);
+        },
+
+        async toolbarButtons(ids) {
+          const out = {};
+          for (const id of ids) if (TOOLBAR_BUTTONS.includes(id)) out[id] = !!lazy.CustomizableUI.getPlacementOfWidget(id);
+          return out;
+        },
+
+        async setToolbarButton(id, show) {
+          if (!TOOLBAR_BUTTONS.includes(id)) throw new Error(`Customize can't move ${id}.`);
+          if (show) lazy.CustomizableUI.addWidgetToArea(id, lazy.CustomizableUI.AREA_NAVBAR);
+          else lazy.CustomizableUI.removeWidgetFromArea(id);
         }
       }
     };
