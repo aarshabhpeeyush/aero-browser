@@ -1,6 +1,26 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "1.0.0",
+    date: "November 2026",
+    title: "Aero is now Aeris",
+    items: [
+      { icon: "🦊", title: "A real browser, built on Firefox", text: "Aeris is Aero rebuilt on top of Firefox, so it's a full browser of its own. Google sign-in works like in any normal browser, and you get Firefox's speed, security updates and privacy protection." },
+      { icon: "🎨", title: "All your themes", text: "Aqua Glass, Bubble Pop, DORFic, Frutiger Metro, Luna XP, Neon Gamer, Retro 2000, Woodland Hut and Dark Mode restyle Aeris, the New Tab and websites like Google and YouTube. Pick one with the Aeris button on the toolbar." },
+      { icon: "📦", title: "Your stuff came with you", text: "Your bookmarks, apps, theme, settings and saved passwords moved over from Aero automatically. Coming from Chrome or Edge? Firefox settings can import from them too." },
+      { icon: "🧩", title: "Aero Originals and Firefox add-ons", text: "Beat Lab, School Assist and Desktop GIFs install in one click from Aeris settings, and thousands more add-ons come from addons.mozilla.org. uBlock Origin blocks ads straight away." },
+      { icon: "🔄", title: "Updates on their own", text: "Like Aero, Aeris downloads new versions quietly and installs them when you close it." }
+    ]
+  },
+  {
+    version: "0.6.5",
+    date: "November 2026",
+    title: "Getting ready for Aeris",
+    items: [
+      { icon: "📦", title: "Ready to move", text: "Aero now keeps a copy of your bookmarks, apps and settings for Aeris, the new Firefox-based Aero, so everything comes with you when you switch." }
+    ]
+  },
+  {
     version: "0.6.4",
     date: "November 2026",
     title: "Honest sign-in",

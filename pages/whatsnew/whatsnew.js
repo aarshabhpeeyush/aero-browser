@@ -1,13 +1,16 @@
 const params = new URLSearchParams(location.search);
 const current = params.get("v") || CHANGELOG[0].version;
 const from = params.get("from");
+const app = params.get("app") || "Aero Browser"; // Aeris opens this page too
+// Only this version and older ones (Aero and Aeris share this list).
+const notNewer = v => { const a = v.split(".").map(Number), b = current.split(".").map(Number); for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) < (b[i] || 0); return true; };
 const $ = sel => document.querySelector(sel);
 
 const entry = CHANGELOG.find(c => c.version === current) || CHANGELOG[0];
 
 if (!from) {
   $("#kicker").textContent = "Welcome to";
-  $("#headline").textContent = "Aero Browser " + current;
+  $("#headline").textContent = app + " " + current;
 } else {
   $("#kicker").textContent = `Updated from ${from} to ${current}`;
   $("#headline").textContent = entry.title;
@@ -26,7 +29,7 @@ function card(item) {
 
 entry.items.forEach(item => $("#latest").append(card(item)));
 
-for (const c of CHANGELOG.filter(c => c !== entry)) {
+for (const c of CHANGELOG.filter(c => c !== entry && notNewer(c.version))) {
   const block = document.createElement("div");
   block.className = "old-version";
   block.innerHTML = `<h3></h3><ul></ul>`;

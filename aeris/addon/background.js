@@ -233,7 +233,9 @@ browser.alarms.onAlarm.addListener(a => a.name === "update" && checkForUpdate())
   const { aeris: version } = await browser.aeris.appInfo();
   if (s.lastVersion !== version) {
     await browser.storage.local.set({ lastVersion: version });
-    browser.tabs.create({ url: browser.runtime.getURL(`whatsnew/index.html?v=${version}`) });
+    const { importResult } = await browser.storage.local.get("importResult");
+    const from = s.lastVersion || (importResult?.found ? "Aero" : null);
+    browser.tabs.create({ url: browser.runtime.getURL(`whatsnew/index.html?app=Aeris&v=${version}${from ? "&from=" + encodeURIComponent(from) : ""}`) });
   }
 
   browser.alarms.create("update", { delayInMinutes: 1, periodInMinutes: 360 });
