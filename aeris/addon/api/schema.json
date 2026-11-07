@@ -3,30 +3,312 @@
     "namespace": "aeris",
     "description": "The few things Aeris Core needs that normal extensions can't do.",
     "functions": [
-      { "name": "setChromeStyle", "type": "function", "async": true, "description": "Restyle the browser frame (tabs, toolbar) with this CSS, replacing the last one. Empty clears it.", "parameters": [{ "name": "css", "type": "string" }] },
-      { "name": "setNewTabPage", "type": "function", "async": true, "description": "Use this page for new tabs and the home page.", "parameters": [{ "name": "url", "type": "string" }] },
-      { "name": "appInfo", "type": "function", "async": true, "description": "Aeris and Firefox version numbers.", "parameters": [] },
-      { "name": "readAeroExport", "type": "function", "async": true, "description": "The bookmarks, apps and settings Aero saved for Aeris, or null.", "parameters": [] },
-      { "name": "importAeroPasswords", "type": "function", "async": true, "description": "Moves Aero's saved passwords into Aeris's password manager. Returns how many were added.", "parameters": [] },
-      { "name": "installAddon", "type": "function", "async": true, "description": "Install an add-on bundled inside Aeris Core (a path inside this extension) or one from addons.mozilla.org (its download address).", "parameters": [{ "name": "path", "type": "string" }] },
-      { "name": "openBrowserPage", "type": "function", "async": true, "description": "Open one of Firefox's own pages (settings, add-ons, passwords) in a new tab.", "parameters": [{ "name": "url", "type": "string" }] },
-      { "name": "removeAddon", "type": "function", "async": true, "parameters": [{ "name": "id", "type": "string" }] },
-      { "name": "addonInfo", "type": "function", "async": true, "description": "Whether these add-ons are installed, their version, and the address of their app page.", "parameters": [{ "name": "ids", "type": "array", "items": { "type": "string" } }, { "name": "page", "type": "string", "optional": true }] },
-      { "name": "downloadUpdate", "type": "function", "async": true, "description": "Download a newer Aeris installer from GitHub; it installs quietly when you close Aeris.", "parameters": [{ "name": "url", "type": "string" }, { "name": "version", "type": "string" }] },
-      { "name": "restartToUpdate", "type": "function", "async": true, "parameters": [] },
-      { "name": "getPrefs", "type": "function", "async": true, "description": "Read some of Firefox's settings (only the ones Customize uses).", "parameters": [{ "name": "names", "type": "array", "items": { "type": "string" } }] },
-      { "name": "setPrefs", "type": "function", "async": true, "description": "Change some of Firefox's settings (only the ones Customize uses).", "parameters": [{ "name": "prefs", "type": "object", "additionalProperties": { "type": "any" } }] },
-      { "name": "searchEngines", "type": "function", "async": true, "description": "The search engines, and which one is used.", "parameters": [] },
-      { "name": "setSearchEngine", "type": "function", "async": true, "parameters": [{ "name": "name", "type": "string" }] },
-      { "name": "isDefaultBrowser", "type": "function", "async": true, "parameters": [] },
-      { "name": "makeDefaultBrowser", "type": "function", "async": true, "description": "Opens Windows' default-apps settings with Aeris picked (Windows asks you to confirm).", "parameters": [] },
-      { "name": "setAddonEnabled", "type": "function", "async": true, "parameters": [{ "name": "id", "type": "string" }, { "name": "enabled", "type": "boolean" }] },
-      { "name": "openImportWizard", "type": "function", "async": true, "description": "Firefox's 'bring your bookmarks and passwords from another browser' window.", "parameters": [] },
-      { "name": "openLibrary", "type": "function", "async": true, "description": "The bookmarks library (to import or export bookmarks as a file).", "parameters": [] },
-      { "name": "setTabStacking", "type": "function", "async": true, "description": "Turn tab stacking on or off: a + on each tab opens a new tab under it.", "parameters": [{ "name": "on", "type": "boolean" }] },
-      { "name": "memoryUsage", "type": "function", "async": true, "description": "How much memory (MB) all of Aeris's processes use together.", "parameters": [] },
-      { "name": "toolbarButtons", "type": "function", "async": true, "description": "Which of these Firefox toolbar buttons are on the toolbar.", "parameters": [{ "name": "ids", "type": "array", "items": { "type": "string" } }] },
-      { "name": "setToolbarButton", "type": "function", "async": true, "description": "Put one of Firefox's own buttons (Forget, Screenshot) on the toolbar, or take it off.", "parameters": [{ "name": "id", "type": "string" }, { "name": "show", "type": "boolean" }] }
+      {
+        "name": "setChromeStyle",
+        "type": "function",
+        "async": true,
+        "description": "Restyle the browser frame (tabs, toolbar) with this CSS, replacing the last one. Empty clears it.",
+        "parameters": [
+          {
+            "name": "css",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "setNewTabPage",
+        "type": "function",
+        "async": true,
+        "description": "Use this page for new tabs and the home page.",
+        "parameters": [
+          {
+            "name": "url",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "appInfo",
+        "type": "function",
+        "async": true,
+        "description": "Aeris and Firefox version numbers.",
+        "parameters": []
+      },
+      {
+        "name": "readAeroExport",
+        "type": "function",
+        "async": true,
+        "description": "The bookmarks, apps and settings Aero saved for Aeris, or null.",
+        "parameters": []
+      },
+      {
+        "name": "importAeroPasswords",
+        "type": "function",
+        "async": true,
+        "description": "Moves Aero's saved passwords into Aeris's password manager. Returns how many were added.",
+        "parameters": []
+      },
+      {
+        "name": "installAddon",
+        "type": "function",
+        "async": true,
+        "description": "Install an add-on bundled inside Aeris Core (a path inside this extension) or one from addons.mozilla.org (its download address).",
+        "parameters": [
+          {
+            "name": "path",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "openBrowserPage",
+        "type": "function",
+        "async": true,
+        "description": "Open one of Firefox's own pages (settings, add-ons, passwords) in a new tab.",
+        "parameters": [
+          {
+            "name": "url",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "removeAddon",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          {
+            "name": "id",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "addonInfo",
+        "type": "function",
+        "async": true,
+        "description": "Whether these add-ons are installed, their version, and the address of their app page.",
+        "parameters": [
+          {
+            "name": "ids",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "type": "string",
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "downloadUpdate",
+        "type": "function",
+        "async": true,
+        "description": "Download a newer Aeris installer from GitHub; it installs quietly when you close Aeris.",
+        "parameters": [
+          {
+            "name": "url",
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "restartToUpdate",
+        "type": "function",
+        "async": true,
+        "parameters": []
+      },
+      {
+        "name": "getPrefs",
+        "type": "function",
+        "async": true,
+        "description": "Read some of Firefox's settings (only the ones Customize uses).",
+        "parameters": [
+          {
+            "name": "names",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      {
+        "name": "setPrefs",
+        "type": "function",
+        "async": true,
+        "description": "Change some of Firefox's settings (only the ones Customize uses).",
+        "parameters": [
+          {
+            "name": "prefs",
+            "type": "object",
+            "additionalProperties": {
+              "type": "any"
+            }
+          }
+        ]
+      },
+      {
+        "name": "searchEngines",
+        "type": "function",
+        "async": true,
+        "description": "The search engines, and which one is used.",
+        "parameters": []
+      },
+      {
+        "name": "setSearchEngine",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "isDefaultBrowser",
+        "type": "function",
+        "async": true,
+        "parameters": []
+      },
+      {
+        "name": "makeDefaultBrowser",
+        "type": "function",
+        "async": true,
+        "description": "Opens Windows' default-apps settings with Aeris picked (Windows asks you to confirm).",
+        "parameters": []
+      },
+      {
+        "name": "setAddonEnabled",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "enabled",
+            "type": "boolean"
+          }
+        ]
+      },
+      {
+        "name": "openImportWizard",
+        "type": "function",
+        "async": true,
+        "description": "Firefox's 'bring your bookmarks and passwords from another browser' window.",
+        "parameters": []
+      },
+      {
+        "name": "openLibrary",
+        "type": "function",
+        "async": true,
+        "description": "The bookmarks library (to import or export bookmarks as a file).",
+        "parameters": []
+      },
+      {
+        "name": "setTabStacking",
+        "type": "function",
+        "async": true,
+        "description": "Turn tab stacking on or off: a + on each tab opens a new tab under it.",
+        "parameters": [
+          {
+            "name": "on",
+            "type": "boolean"
+          }
+        ]
+      },
+      {
+        "name": "memoryUsage",
+        "type": "function",
+        "async": true,
+        "description": "How much memory (MB) all of Aeris's processes use together.",
+        "parameters": []
+      },
+      {
+        "name": "toolbarButtons",
+        "type": "function",
+        "async": true,
+        "description": "Which of these Firefox toolbar buttons are on the toolbar.",
+        "parameters": [
+          {
+            "name": "ids",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      {
+        "name": "setToolbarButton",
+        "type": "function",
+        "async": true,
+        "description": "Put one of Firefox's own buttons (Forget, Screenshot) on the toolbar, or take it off.",
+        "parameters": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "show",
+            "type": "boolean"
+          }
+        ]
+      },
+      {
+        "name": "openQuickCommands",
+        "type": "function",
+        "async": true,
+        "description": "Open Quick Commands over the page. Extra commands are sent back through onCommand.",
+        "parameters": [
+          {
+            "name": "extras",
+            "type": "array",
+            "optional": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "command": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "openCustomizeToolbar",
+        "type": "function",
+        "async": true,
+        "description": "Firefox's toolbar editor, to move or remove buttons.",
+        "parameters": []
+      }
+    ],
+    "events": [
+      {
+        "name": "onCommand",
+        "type": "function",
+        "description": "A command picked in Quick Commands that Aeris Core carries out.",
+        "parameters": [
+          {
+            "name": "command",
+            "type": "string"
+          }
+        ]
+      }
     ]
   }
 ]

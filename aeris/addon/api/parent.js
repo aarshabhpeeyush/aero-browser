@@ -13,6 +13,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
   MigrationUtils: "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
   OSCrypto: "resource://gre/modules/OSCrypto_win.sys.mjs",
+  PlacesUtils: "resource://gre/modules/PlacesUtils.sys.mjs",
   SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
   SessionStore: "moz-src:///browser/components/sessionstore/SessionStore.sys.mjs",
   ShellService: "moz-src:///browser/components/shell/ShellService.sys.mjs"
@@ -301,6 +302,213 @@ function launchInstaller(args) {
 
 const quitObserver = { observe: () => launchInstaller(["/S"]) };
 
+// ================= Quick Commands (like Vivaldi's, on F2) =================
+// A box that pops up over the page: type to find open tabs, bookmarks and history, do quick maths,
+// search the web, or run commands. Commands for Aeris's own features (themes, spaces, focus mode…)
+// are sent to Aeris Core through aeris.onCommand.
+
+const PALETTE_ID = "aeris-quick-commands";
+
+// Simple maths, without running any code: + - * / % ^ and brackets.
+function quickMaths(text) {
+  if (!/^[\d\s.+\-*/%^()]+$/.test(text) || !/\d/.test(text) || !/[+\-*/%^]/.test(text)) return null;
+  const tokens = text.match(/\d+(\.\d+)?|[+\-*/%^()]/g);
+  let i = 0;
+  const peek = () => tokens[i];
+  const next = () => tokens[i++];
+  function number() {
+    const t = next();
+    if (t === "(") { const v = sum(); if (next() !== ")") throw 0; return v; }
+    if (t === "-") return -number();
+    if (t === "+") return number();
+    const v = parseFloat(t);
+    if (Number.isNaN(v)) throw 0;
+    return v;
+  }
+  function power() { const b = number(); return peek() === "^" ? (next(), b ** power()) : b; }
+  function product() {
+    let v = power();
+    while (["*", "/", "%"].includes(peek())) {
+      const op = next(), r = power();
+      v = op === "*" ? v * r : op === "/" ? v / r : v % r;
+    }
+    return v;
+  }
+  function sum() {
+    let v = product();
+    while (["+", "-"].includes(peek())) v = next() === "+" ? v + product() : v - product();
+    return v;
+  }
+  try {
+    const v = sum();
+    if (i !== tokens.length || !Number.isFinite(v)) return null;
+    return Math.round(v * 1e10) / 1e10;
+  } catch { return null; }
+}
+
+async function historyMatches(text) {
+  const db = await lazy.PlacesUtils.promiseDBConnection();
+  const like = `%${text.replace(/[\\%_]/g, c => "\\" + c)}%`;
+  const rows = await db.executeCached(
+    `SELECT url, title FROM moz_places
+     WHERE hidden = 0 AND (title LIKE :like ESCAPE '\\' OR url LIKE :like ESCAPE '\\')
+     ORDER BY frecency DESC LIMIT 6`, { like });
+  return rows.map(r => ({ url: r.getResultByName("url"), title: r.getResultByName("title") || r.getResultByName("url") }));
+}
+
+function paletteCommands(win, extras) {
+  const { gBrowser } = win;
+  const run = name => () => win.goDoCommand ? win.goDoCommand(name) : null;
+  const send = command => () => Services.obs.notifyObservers(null, "aeris-command", command);
+  const list = [
+    ["New tab", "Ctrl+T", () => win.BrowserCommands.openTab()],
+    ["New window", "Ctrl+N", () => win.OpenBrowserWindow()],
+    ["New private window", "Ctrl+Shift+P", () => win.OpenBrowserWindow({ private: true })],
+    ["Close tab", "Ctrl+W", () => gBrowser.removeTab(gBrowser.selectedTab)],
+    ["Reopen closed tab", "Ctrl+Shift+T", () => lazy.SessionStore.undoCloseTab(win, 0)],
+    ["Duplicate tab", "", () => gBrowser.duplicateTab(gBrowser.selectedTab)],
+    ["Pin or unpin tab", "", () => gBrowser.selectedTab.pinned ? gBrowser.unpinTab(gBrowser.selectedTab) : gBrowser.pinTab(gBrowser.selectedTab)],
+    ["Mute or unmute tab", "", () => gBrowser.selectedTab.toggleMuteAudio()],
+    ["Reload", "F5", () => gBrowser.reload()],
+    ["Bookmark this page", "Ctrl+D", () => win.PlacesCommandHook.bookmarkTabs([gBrowser.selectedTab])],
+    ["Reader view", "F9", () => win.AboutReaderParent?.toggleReaderMode?.({ target: gBrowser.selectedBrowser }) ?? win.ReaderParent?.toggleReaderMode?.({ target: gBrowser.selectedBrowser })],
+    ["Print", "Ctrl+P", () => win.PrintUtils.startPrintWindow(gBrowser.selectedBrowser.browsingContext)],
+    ["Find in page", "Ctrl+F", () => gBrowser.getFindBar().then(f => f.onFindCommand())],
+    ["Zoom in", "Ctrl++", () => win.FullZoom.enlarge()],
+    ["Zoom out", "Ctrl+-", () => win.FullZoom.reduce()],
+    ["Reset zoom", "Ctrl+0", () => win.FullZoom.reset()],
+    ["Full screen", "F11", () => win.BrowserCommands.fullScreen?.() ?? win.BrowserFullScreen?.()],
+    ["Downloads", "Ctrl+J", () => win.DownloadsPanel?.showDownloadsHistory?.() ?? win.openTrustedLinkIn("about:downloads", "tab")],
+    ["History", "Ctrl+H", () => win.SidebarController.toggle("viewHistorySidebar")],
+    ["Bookmarks", "Ctrl+B", () => win.SidebarController.toggle("viewBookmarksSidebar")],
+    ["Saved passwords", "", () => win.openTrustedLinkIn("about:logins", "tab")],
+    ["Add-ons", "Ctrl+Shift+A", () => win.openTrustedLinkIn("about:addons", "tab")],
+    ["All Firefox settings", "", () => win.openTrustedLinkIn("about:preferences", "tab")],
+    ["Customize toolbar", "", () => win.gCustomizeMode.enter()],
+    ["Take a screenshot", "Ctrl+Shift+S", () => Services.obs.notifyObservers(win, "menuitem-screenshot", "QuickActions")],
+    ["Split view", "", () => win.goDoCommand?.("cmd_splitViewAddSplitView") ?? win.gBrowser.addTabSplitView?.([gBrowser.selectedTab])],
+    // Aeris's own (done by Aeris Core)
+    ["Focus mode", "Alt+Shift+F", send("focus")],
+    ["Aeris panel", "Alt+Shift+A", () => win.SidebarController.show("aeris-core_aeris_app-sidebar-action")],
+    ["Notes", "", () => { send("notes")(); win.SidebarController.show("aeris-core_aeris_app-sidebar-action"); }],
+    ["Theme Studio", "", send("studio")],
+    ["Save all tabs for later", "", send("save-tabs")],
+    ["Clip this page to Notes", "", send("clip-page")],
+    ["Aeris Store", "", send("store")]
+  ].map(([title, keys, action]) => ({ kind: "command", title, keys, action }));
+  for (const e of extras || []) list.push({ kind: "command", title: e.title, keys: "", action: send(e.command) });
+  return list;
+}
+
+function openPalette(win, extras) {
+  const doc = win.document;
+  let panel = doc.getElementById(PALETTE_ID);
+  if (panel) panel.remove();
+  const html = tag => doc.createElementNS("http://www.w3.org/1999/xhtml", tag);
+  panel = doc.createXULElement("panel");
+  panel.id = PALETTE_ID;
+  panel.setAttribute("noautofocus", "true");
+  panel.setAttribute("consumeoutsideclicks", "true");
+  const box = html("div");
+  box.className = "aeris-qc";
+  const input = html("input");
+  input.className = "aeris-qc-input";
+  input.placeholder = "Search tabs, bookmarks and history, do maths, or type a command…";
+  const results = html("div");
+  results.className = "aeris-qc-results";
+  box.append(input, results);
+  panel.append(box);
+  doc.getElementById("mainPopupSet").append(panel);
+
+  const { gBrowser } = win;
+  const commands = paletteCommands(win, extras);
+  let items = [];
+  let at = 0;
+  let generation = 0;
+
+  const close = () => panel.hidePopup();
+  const open = (url, where = "current") => {
+    const tab = gBrowser.selectedTab;
+    const blank = !tab.linkedBrowser.currentURI || /^(about:(blank|newtab|home)|moz-extension:.*\/newtab\/)/.test(tab.linkedBrowser.currentURI.spec);
+    win.openTrustedLinkIn(url, blank ? "current" : where === "current" ? "tab" : where);
+  };
+
+  function draw() {
+    results.textContent = "";
+    items.forEach((it, n) => {
+      const row = html("div");
+      row.className = "aeris-qc-row" + (n === at ? " on" : "");
+      const icon = html("span");
+      icon.className = "aeris-qc-kind";
+      icon.textContent = { tab: "🗂", bookmark: "⭐", history: "🕘", command: "⚡", maths: "🧮", search: "🔎" }[it.kind] || "•";
+      const title = html("span");
+      title.className = "aeris-qc-title";
+      title.textContent = it.title;
+      const sub = html("span");
+      sub.className = "aeris-qc-sub";
+      sub.textContent = it.sub || it.keys || "";
+      row.append(icon, title, sub);
+      row.addEventListener("mousemove", () => { if (at !== n) { at = n; draw(); } });
+      row.addEventListener("click", () => runItem(it));
+      results.append(row);
+    });
+  }
+
+  function runItem(it) {
+    close();
+    try { it.action(); } catch (e) { console.error("Aeris Quick Commands:", e); }
+  }
+
+  async function update() {
+    const text = input.value.trim();
+    const mine = ++generation;
+    const q = text.toLowerCase();
+    const found = [];
+    const maths = quickMaths(text);
+    if (maths !== null) found.push({ kind: "maths", title: `= ${maths}`, sub: "Copy the answer", action: () => win.navigator.clipboard.writeText(String(maths)) });
+    const words = q.split(/\s+/).filter(Boolean);
+    const fits = s => words.every(w => s.toLowerCase().includes(w));
+    found.push(...commands.filter(c => !q || fits(c.title)).slice(0, q ? 8 : 12));
+    if (q) {
+      for (const tab of gBrowser.tabs) {
+        const url = tab.linkedBrowser.currentURI?.spec || "";
+        if (fits(tab.label + " " + url)) found.push({ kind: "tab", title: tab.label, sub: "Switch to tab", action: () => { gBrowser.selectedTab = tab; } });
+      }
+      try {
+        const marks = await lazy.PlacesUtils.bookmarks.search(text);
+        for (const b of marks.filter(b => b.url).slice(0, 5)) found.push({ kind: "bookmark", title: b.title || b.url.href, sub: b.url.host, action: () => open(b.url.href) });
+        for (const h of await historyMatches(text)) {
+          if (!found.some(f => f.sub === h.url)) found.push({ kind: "history", title: h.title, sub: h.url, action: () => open(h.url) });
+        }
+      } catch (e) { console.error(e); }
+      const engine = await lazy.SearchService.getDefault();
+      found.push({ kind: "search", title: `Search ${engine.name} for "${text}"`, sub: "", action: () => {
+        const sub = engine.getSubmission(text);
+        open(sub.uri.spec);
+      } });
+    }
+    if (mine !== generation) return;
+    items = found;
+    at = 0;
+    draw();
+  }
+
+  input.addEventListener("input", update);
+  input.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown") { at = Math.min(items.length - 1, at + 1); draw(); e.preventDefault(); }
+    else if (e.key === "ArrowUp") { at = Math.max(0, at - 1); draw(); e.preventDefault(); }
+    else if (e.key === "Enter") { if (items[at]) runItem(items[at]); e.preventDefault(); }
+    else if (e.key === "Escape") close();
+  });
+  panel.addEventListener("popuphidden", () => panel.remove(), { once: true });
+
+  const r = win.document.documentElement.getBoundingClientRect();
+  const width = Math.min(640, r.width - 40);
+  panel.openPopupAtScreen(win.screenX + (win.outerWidth - width) / 2, win.screenY + 90, false);
+  panel.addEventListener("popupshown", () => input.focus(), { once: true });
+  update();
+}
+
 this.aeris = class extends ExtensionAPI {
   onShutdown(isAppShutdown) {
     if (!isAppShutdown) {
@@ -445,6 +653,26 @@ this.aeris = class extends ExtensionAPI {
           for (const id of ids) if (TOOLBAR_BUTTONS.includes(id)) out[id] = !!lazy.CustomizableUI.getPlacementOfWidget(id);
           return out;
         },
+
+        async openQuickCommands(extras) {
+          const win = browserWindow();
+          if (win) openPalette(win, extras);
+        },
+
+        async openCustomizeToolbar() {
+          browserWindow()?.gCustomizeMode.enter();
+        },
+
+        // Commands from Quick Commands for Aeris Core to carry out
+        onCommand: new ExtensionCommon.EventManager({
+          context,
+          name: "aeris.onCommand",
+          register: fire => {
+            const observer = (subject, topic, command) => fire.async(command);
+            Services.obs.addObserver(observer, "aeris-command");
+            return () => Services.obs.removeObserver(observer, "aeris-command");
+          }
+        }).api(),
 
         async setTabStacking(on) {
           setTabStacking(on);

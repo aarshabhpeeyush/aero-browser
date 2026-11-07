@@ -5,7 +5,7 @@
 const $ = sel => document.querySelector(sel);
 const store = browser.storage.local;
 const UBLOCK = "uBlock0@raymondhill.net";
-const LOOK_DEFAULTS = { theme: null, colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", restyle: true, hideAi: true, sounds: true, focus: false, napAfter: 0, breakEvery: 0, stacking: true };
+const LOOK_DEFAULTS = { theme: null, colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", restyle: true, hideAi: true, sounds: true, focus: false, napAfter: 0, breakEvery: 0, stacking: true, gestures: true };
 
 let colorThemes = {};
 let customThemes = [];

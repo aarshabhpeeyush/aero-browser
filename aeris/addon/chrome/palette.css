@@ -1,0 +1,63 @@
+/* Quick Commands (F2): a glassy search box over the page, in your accent colour. */
+#aeris-quick-commands {
+  --panel-background: transparent;
+  --panel-border-color: transparent;
+  --panel-padding: 0;
+  --panel-shadow: none;
+  appearance: none;
+  background: transparent;
+  border: none;
+}
+.aeris-qc {
+  width: 640px;
+  max-width: calc(100vw - 40px);
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(236, 246, 255, 0.95));
+  box-shadow: 0 18px 50px rgba(0, 30, 70, 0.35), 0 0 0 1px color-mix(in srgb, var(--accent, #1e9be8) 35%, transparent);
+  color: #10233a;
+  font: 14px "Segoe UI", system-ui, sans-serif;
+}
+.aeris-qc-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent, #1e9be8) 50%, #fff);
+  background: #fff;
+  color: #10233a;
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+  box-shadow: inset 0 2px 4px rgba(0, 40, 90, 0.12);
+}
+.aeris-qc-input:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #1e9be8) 35%, transparent), inset 0 2px 4px rgba(0, 40, 90, 0.12); }
+.aeris-qc-results { margin-top: 8px; max-height: 420px; overflow-y: auto; }
+.aeris-qc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.aeris-qc-row.on {
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 51%),
+    var(--accent, #1e9be8);
+}
+.aeris-qc-kind { width: 20px; text-align: center; flex: none; }
+.aeris-qc-title { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.aeris-qc-sub { flex: none; max-width: 45%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; color: #5a7590; }
+.aeris-qc-row.on .aeris-qc-sub { color: rgba(255, 255, 255, 0.85); }
+
+/* Under dark looks (and Minimal in dark mode), a dark box */
+:root[lwt-popup="dark"] .aeris-qc, :root[lwtheme-brighttext] .aeris-qc {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: linear-gradient(180deg, rgba(30, 36, 50, 0.98), rgba(20, 24, 36, 0.97));
+  color: #eef3f8;
+}
+:root[lwt-popup="dark"] .aeris-qc-input, :root[lwtheme-brighttext] .aeris-qc-input { background: #10141e; color: #eef3f8; border-color: rgba(255, 255, 255, 0.2); }
+:root[lwt-popup="dark"] .aeris-qc-sub, :root[lwtheme-brighttext] .aeris-qc-sub { color: #9fb0c4; }

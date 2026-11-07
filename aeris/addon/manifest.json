@@ -42,7 +42,8 @@
     "scripts": [
       "studio-css.js",
       "background.js",
-      "features.js"
+      "features.js",
+      "vivaldi.js"
     ]
   },
   "browser_action": {
@@ -60,7 +61,8 @@
         "https://*/*"
       ],
       "js": [
-        "content/site.js"
+        "content/site.js",
+        "content/gestures.js"
       ],
       "run_at": "document_start"
     }
@@ -103,6 +105,12 @@
         "default": "Alt+Shift+A"
       },
       "description": "Open or close the Aeris panel"
+    },
+    "quick-commands": {
+      "suggested_key": {
+        "default": "F2"
+      },
+      "description": "Quick Commands: search tabs, bookmarks and history, or run a command"
     }
   }
 }

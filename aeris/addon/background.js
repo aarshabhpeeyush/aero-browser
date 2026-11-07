@@ -110,7 +110,7 @@ function themeApiColors(v, theme) {
 async function buildChromeCss(s, theme) {
   if (s.colorTheme === "minimal") {
     return [
-      await css("chrome/stacking.css"),
+      (await css("chrome/stacking.css")) + (await css("chrome/palette.css")),
       await css("chrome/minimal.css"),
       s.accent ? `:root { --accent: ${s.accent} !important; }` : "",
       s.size === "compact" ? await css("chrome/size-compact.css") : "",
@@ -120,7 +120,7 @@ async function buildChromeCss(s, theme) {
   const c = COLOR_THEMES[s.colorTheme] || COLOR_THEMES.frost;
   const side = s.bars === "left" || s.bars === "right";
   const parts = [
-    await css("chrome/stacking.css"),
+    (await css("chrome/stacking.css")) + (await css("chrome/palette.css")),
     await css("chrome/aeris.css"),
     `:root {
   --frame-a: ${c.a};
@@ -181,7 +181,7 @@ async function applyThemeNow() {
   if (s.colorTheme === "firefox") {
     // "Firefox's own look"
     await browser.theme.reset();
-    await browser.aeris.setChromeStyle(await css("chrome/stacking.css"));
+    await browser.aeris.setChromeStyle((await css("chrome/stacking.css")) + (await css("chrome/palette.css")));
   } else if (s.colorTheme === "studio") {
     // Your own look, made in the Theme Studio
     await browser.theme.update(studioApiColors(s.studio || {}));

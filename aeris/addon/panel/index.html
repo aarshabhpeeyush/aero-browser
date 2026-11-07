@@ -21,7 +21,7 @@
       <header><h2>Customize</h2></header>
       <nav class="jumps">
         <a href="#look">Theme</a><a href="#layout">Layout</a><a href="#browsing">Browsing</a>
-        <a href="#extras">Tab tools</a><a href="#performance">Performance</a><a href="#tweaks">Hidden things</a>
+        <a href="#extras">Tab tools</a><a href="#page">This page</a><a href="#performance">Performance</a><a href="#tweaks">Hidden things</a>
         <a href="#addons">Add-ons</a><a href="#bookmarks">Bookmarks</a><a href="#about">About</a>
       </nav>
 
@@ -37,6 +37,16 @@
       <section>
         <h3>Custom themes</h3>
         <div id="customThemes"></div>
+        <h3>🌗 Theme schedule</h3>
+        <label class="toggle"><input type="checkbox" id="schOn"> Change my look between day and night</label>
+        <div id="schBox">
+          <div class="choice" id="schMode">
+            <button data-value="time">By time</button><button data-value="system">Like Windows (light / dark)</button>
+          </div>
+          <div class="row" id="schTimes">Day from <input type="time" id="schDay"> night from <input type="time" id="schNight"></div>
+          <div class="row wrap">☀️ Day: <b id="schDayName">—</b> <button class="gel tiny" id="schSetDay">Use my look now</button></div>
+          <div class="row wrap">🌙 Night: <b id="schNightName">—</b> <button class="gel tiny" id="schSetNight">Use my look now</button></div>
+        </div>
         <p class="hint">Custom themes go on top of the colours above and restyle everything: the tabs, buttons, address bar, this panel, the New Tab and websites like YouTube and Google.</p>
       </section>
 
@@ -77,6 +87,12 @@
         <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.groups.enabled"> Tab groups with names and colours</label>
         <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.hoverPreview.enabled"> Preview a tab when you point at it</label>
         <label class="toggle"><input type="checkbox" data-ffpref="browser.tabs.notes.enabled"> Tab notes (right-click a tab → Add note)</label>
+        <div class="row wrap">
+          <button id="quickCommands" class="gel tiny">⚡ Quick Commands (F2)</button>
+          <button id="customizeToolbar" class="gel tiny">🧰 Customize toolbar</button>
+        </div>
+        <label class="toggle"><input type="checkbox" data-pref="gestures"> Mouse gestures: hold the right mouse button and draw</label>
+        <p class="hint" id="gestureList"></p>
         <label class="toggle"><input type="checkbox" data-pref="stacking"> Tab stacking: the + next to a tab's ✕ opens a new tab under it, so you can find your way back</label>
         <label class="toggle"><input type="checkbox" data-pref="focus"> Focus mode: hide the bars until you point at the top (Alt+Shift+F, or the ⛶ button in the address bar)</label>
         <label class="toggle"><input type="checkbox" data-button="panic-button"> 🔥 Forget button: wipes the last few minutes of history and cookies</label>
@@ -88,6 +104,12 @@
           <label class="toggle"><input type="checkbox" id="saveClose" checked> and close them</label>
         </div>
         <div id="collections"></div>
+      </section>
+
+      <section id="page">
+        <h3>This page</h3>
+        <p class="hint">Change how the page you're on looks (like Vivaldi's page actions). It stays this way while you browse in this tab.</p>
+        <div class="filters" id="filters"></div>
       </section>
 
       <section id="performance">
@@ -206,5 +228,6 @@
   <script src="apps.js"></script>
   <script src="spaces.js"></script>
   <script src="extras.js"></script>
+  <script src="vivaldi.js"></script>
 </body>
 </html>
