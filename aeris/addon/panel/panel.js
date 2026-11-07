@@ -52,6 +52,7 @@ function drawThemes() {
   const box = $("#themes");
   box.innerHTML = "";
   const extras = [
+    ["studio", { name: "Your own look", a: "#ff9ad5", b: "#7fd0ff", title: "The look you made in the Theme Studio" }],
     ["minimal", { name: "Minimal", a: "#fafafa", b: "#e9e9ed", dark: true, title: "A plain, modern look: no gloss or orbs, light or dark like Windows" }],
     ["firefox", { name: "Firefox look", a: "#f0f0f4", b: "#f9f9fb", dark: true, title: "No Aero look: Firefox's normal colours" }]
   ];
@@ -210,6 +211,13 @@ $("#checkUpdates").addEventListener("click", async () => {
   drawAbout();
 });
 $("#restartUpdate").addEventListener("click", () => browser.aeris.restartToUpdate());
+$("#openStudio").addEventListener("click", () => openPage("studio/index.html"));
+async function openPage(path) {
+  const url = browser.runtime.getURL(path);
+  const [tab] = await browser.tabs.query({ url });
+  if (tab) browser.tabs.update(tab.id, { active: true });
+  else browser.tabs.create({ url });
+}
 $("#tour").addEventListener("click", () => browser.tabs.create({ url: browser.runtime.getURL("welcome/index.html") }));
 $("#whatsNew").addEventListener("click", async () => {
   const { aeris } = await browser.aeris.appInfo();

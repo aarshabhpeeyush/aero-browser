@@ -19,7 +19,7 @@ const COLOR_THEMES = {
 // top/left/right, tab shape, window buttons, size and bubbly sounds. "theme" is the custom theme
 // (one of Aero's theme folders, like Woodland Hut) laid on top, or null for none.
 const LOOK = { colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", sounds: true, focus: false };
-const DEFAULTS = { theme: null, hideAi: true, restyle: true, stacking: true, imported: false, lastVersion: null, update: null, ...LOOK };
+const DEFAULTS = { theme: null, studio: null, hideAi: true, restyle: true, stacking: true, imported: false, lastVersion: null, update: null, ...LOOK };
 
 let THEMES = []; // the custom themes (from themes/index.json)
 let registered = []; // website stylesheets for the active theme
@@ -130,7 +130,7 @@ async function buildChromeCss(s, theme) {
   --accent: ${s.accent || c.accent};
   --gloss: ${s.gloss / 100};
 }`,
-    theme ? await css(`themes/${theme.id}/chrome.css`) : "",
+    s.colorTheme === "studio" ? studioCss(s.studio || {}) : theme ? await css(`themes/${theme.id}/chrome.css`) : "",
     side ? (await css("chrome/side.css")) + (theme ? await css(`themes/${theme.id}/chrome-side.css`) : "") : "",
     s.tabShape === "pill" ? await css("chrome/shape-pill.css") : s.tabShape === "square" ? await css("chrome/shape-square.css") : "",
     s.winButtons === "glossy" ? await css("chrome/buttons-glossy.css") : "",
@@ -177,11 +177,15 @@ async function applyThemeNow() {
   const theme = THEMES.find(t => t.id === s.theme) || null;
 
   // The browser frame first, so the change shows up straight away
-  const plain = s.colorTheme === "firefox" || s.colorTheme === "minimal";
+  const plain = s.colorTheme === "firefox" || s.colorTheme === "minimal" || s.colorTheme === "studio";
   if (s.colorTheme === "firefox") {
     // "Firefox's own look"
     await browser.theme.reset();
     await browser.aeris.setChromeStyle(await css("chrome/stacking.css"));
+  } else if (s.colorTheme === "studio") {
+    // Your own look, made in the Theme Studio
+    await browser.theme.update(studioApiColors(s.studio || {}));
+    await browser.aeris.setChromeStyle(await buildChromeCss(s, null));
   } else if (s.colorTheme === "minimal") {
     // Minimal: Firefox's own colours (light or dark, like Windows), with a few clean touches
     await browser.theme.reset();
@@ -332,7 +336,7 @@ browser.menus.onClicked.addListener(async (info, tab) => {
 browser.storage.onChanged.addListener(async (changes, area) => {
   if (area !== "local") return;
   const keys = Object.keys(changes);
-  if (keys.some(k => k === "theme" || k === "restyle" || k in LOOK)) applyTheme();
+  if (keys.some(k => k === "theme" || k === "restyle" || k === "studio" || k in LOOK)) applyTheme();
   if (keys.some(k => k === "bars" || k === "size")) applyLayout(await settings());
   if (changes.stacking) browser.aeris.setTabStacking(changes.stacking.newValue !== false);
 });

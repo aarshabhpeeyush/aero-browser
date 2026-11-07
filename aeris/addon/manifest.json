@@ -40,6 +40,7 @@
   },
   "background": {
     "scripts": [
+      "studio-css.js",
       "background.js",
       "features.js"
     ]

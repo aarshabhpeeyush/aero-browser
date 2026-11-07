@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Theme Studio — Aeris</title>
+  <link rel="icon" href="../icons/aeris-32.png">
+  <link rel="stylesheet" href="../panel/panel.css">
+  <link rel="stylesheet" href="studio.css">
+  <style id="prefVars"></style>
+</head>
+<body>
+  <main class="panel" id="customize">
+    <header class="top">
+      <div>
+        <h2>🎨 Theme Studio</h2>
+        <p class="hint">Make your own look, no code needed. Aeris changes as you go: watch the tabs and toolbar above.</p>
+      </div>
+      <div class="row wrap">
+        <label class="row">Name <input id="name" maxlength="30"></label>
+        <label class="row">Start from <select id="startFrom"><option value="">Pick a theme…</option></select></label>
+        <button id="save" class="gel tiny">Save to My looks</button>
+        <button id="undo" class="gel tiny" hidden>Back to my old look</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section>
+        <h3>Tab bar</h3>
+        <label class="row">Top colour <input type="color" data-key="frameA"></label>
+        <label class="row">Bottom colour <input type="color" data-key="frameB"></label>
+        <label class="row">Tab titles and buttons <input type="color" data-key="frameText"></label>
+        <label class="row">Picture behind the tabs <input type="file" id="image" accept="image/*"></label>
+        <div class="row" id="imageRow" hidden>
+          <img id="imagePreview" alt="">
+          <div class="choice" data-key="imageFit"><button data-value="cover">Fill</button><button data-value="tile">Tile</button></div>
+          <button id="imageRemove" class="gel tiny red">Remove</button>
+        </div>
+        <label class="row" id="imageOpacityRow" hidden>See-through <input type="range" min="10" max="100" data-key="imageOpacity"></label>
+        <label class="toggle"><input type="checkbox" id="sideSame"> Side tab bar uses the same colours</label>
+        <label class="row" id="sideRow">Side tab bar <input type="color" data-key="side"></label>
+      </section>
+
+      <section>
+        <h3>Tabs</h3>
+        <label class="row">Open tab <input type="color" data-key="tabSelected"></label>
+        <label class="row">Open tab's text <input type="color" data-key="tabSelectedText"></label>
+        <label class="row">Other tabs' glass <input type="range" min="0" max="60" data-key="tabGlass"></label>
+        <label class="row">Roundness <input type="range" min="0" max="20" data-key="tabRadius"></label>
+        <label class="toggle"><input type="checkbox" data-key="tabBorders"> Glass edges on tabs</label>
+        <label class="toggle"><input type="checkbox" data-key="glow"> Glow around the open tab</label>
+      </section>
+
+      <section>
+        <h3>Toolbar</h3>
+        <label class="row">Top colour <input type="color" data-key="toolbarA"></label>
+        <label class="row">Bottom colour <input type="color" data-key="toolbarB"></label>
+        <label class="row">Icons <input type="color" data-key="toolbarText"></label>
+        <div class="choice" data-key="buttons">
+          <span>Back, forward and reload buttons</span>
+          <button data-value="orbs">Aero orbs</button><button data-value="flat">Flat</button><button data-value="outline">Outlined</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Address bar</h3>
+        <label class="row">Colour <input type="color" data-key="urlbar"></label>
+        <label class="row">Text <input type="color" data-key="urlbarText"></label>
+        <label class="row">Roundness <input type="range" min="0" max="24" data-key="urlbarRadiusSlider"></label>
+      </section>
+
+      <section>
+        <h3>Bookmarks bar</h3>
+        <label class="row">Colour <input type="color" data-key="bookmarks"></label>
+        <label class="row">Text <input type="color" data-key="bookmarksText"></label>
+      </section>
+
+      <section>
+        <h3>Accent and shine</h3>
+        <label class="row">Accent colour <input type="color" data-key="accent"></label>
+        <label class="row">Shine <input type="range" min="0" max="100" data-key="gloss"></label>
+        <p class="hint">The accent colours highlights, loading bars and Aero's orb buttons. Shine is Aero's glossy top half.</p>
+      </section>
+
+      <section>
+        <h3>Text</h3>
+        <label class="row">Font
+          <select data-key="font">
+            <option value="">Segoe UI (Aero)</option>
+            <option value="rounded">Segoe UI Variable</option>
+            <option value="tahoma">Tahoma</option>
+            <option value="verdana">Verdana</option>
+            <option value="trebuchet">Trebuchet MS</option>
+            <option value="georgia">Georgia</option>
+            <option value="palatino">Palatino (storybook)</option>
+            <option value="comic">Comic Sans</option>
+            <option value="bahnschrift">Bahnschrift</option>
+            <option value="consolas">Consolas (code)</option>
+            <option value="impact">Impact</option>
+          </select>
+        </label>
+        <label class="row">Size <input type="range" min="11" max="16" data-key="fontSizeSlider"> <span id="fontSizeText"></span></label>
+      </section>
+
+      <section class="wide">
+        <h3>My looks</h3>
+        <div id="looks"></div>
+        <div class="row wrap">
+          <button id="export" class="gel tiny">Share this look as a file</button>
+          <label class="gel tiny file">Open a look file… <input type="file" id="import" accept=".json,application/json"></label>
+        </div>
+        <p class="hint" id="looksHint"></p>
+      </section>
+    </div>
+  </main>
+  <script src="../studio-css.js"></script>
+  <script src="studio.js"></script>
+</body>
+</html>
