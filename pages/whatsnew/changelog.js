@@ -1,6 +1,19 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "1.1.0",
+    date: "November 2026",
+    title: "Make Aeris truly yours",
+    items: [
+      { icon: "🎨", title: "Theme Studio", text: "Make your own look without any code: colours for every part of the browser, tab and button shapes, shine, glow, fonts and even a picture behind your tabs. Save your looks and share them as files." },
+      { icon: "🗂️", title: "Tab stacking", text: "Click the + next to a tab's ✕ to open a new tab under it. Close it and you're straight back where you came from." },
+      { icon: "⚡", title: "Quick Commands (F2)", text: "Find any open tab, bookmark or page from your history, do quick maths, or run a command like \"Theme: Sunset\" or \"Reopen closed tab\", all from one box." },
+      { icon: "🖱️", title: "Mouse gestures", text: "Hold the right mouse button and draw: ← back, → forward, ↓ new tab, ↓→ close tab, ↑ reopen a closed tab and more." },
+      { icon: "🌗", title: "Minimal look, page filters and a theme schedule", text: "A plain, modern Minimal theme; grayscale, dark, sepia and other filters for any page; and a day look and night look that switch on their own." },
+      { icon: "🛠️", title: "Fixes", text: "Theme changes show up instantly, YouTube's top bar matches your theme again, and Mozilla's add-ons site works properly." }
+    ]
+  },
+  {
     version: "1.0.0",
     date: "November 2026",
     title: "Aero is now Aeris",
