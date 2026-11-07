@@ -90,6 +90,31 @@ async function set(changes) {
   await store.set(changes);
 }
 
+// ================= Favourite sites =================
+
+const FAVOURITES = [
+  ["YouTube", "https://www.youtube.com/"], ["Google", "https://www.google.com/"], ["Gmail", "https://mail.google.com/"],
+  ["Discord", "https://discord.com/app"], ["Spotify", "https://open.spotify.com/"], ["Roblox", "https://www.roblox.com/home"],
+  ["WhatsApp", "https://web.whatsapp.com/"], ["Wikipedia", "https://www.wikipedia.org/"]
+];
+for (const [name, url] of FAVOURITES) {
+  const label = document.createElement("label");
+  label.innerHTML = "<img alt=''><span></span><input type='checkbox'>";
+  label.querySelector("img").src = new URL("/favicon.ico", url).href;
+  label.querySelector("img").addEventListener("error", e => (e.target.style.visibility = "hidden"));
+  label.querySelector("span").textContent = name;
+  label.querySelector("input").value = url;
+  $("#favs").append(label);
+}
+$("#pinFavs").addEventListener("click", async () => {
+  const urls = [...document.querySelectorAll("#favs input:checked")].map(i => i.value);
+  const open = await browser.tabs.query({ pinned: true });
+  for (const url of urls) {
+    if (!open.some(t => t.url.startsWith(url))) await browser.tabs.create({ url, pinned: true, active: false });
+  }
+  show(at + 1);
+});
+
 // ================= Bringing things over, default browser =================
 
 $("#importAero").addEventListener("click", async () => {

@@ -40,8 +40,20 @@ const PREFS = {
   "browser.tabs.hoverPreview.enabled": "bool",
   "browser.tabs.notes.enabled": "bool",
   "browser.tabs.unloadOnLowMemory": "bool",
-  "browser.shell.checkDefaultBrowser": "bool"
+  "browser.shell.checkDefaultBrowser": "bool",
+  "extensions.unifiedExtensions.button.always_visible": "bool"
 };
+// Firefox's own pages (Settings, Add-ons…) in Aero style: one sheet, registered once for the whole app.
+// Its rules only match those pages (they're wrapped in @-moz-document), and it isn't swapped on every
+// theme change, so websites aren't slowed down.
+const sheetService = Cc["@mozilla.org/content/style-sheet-service;1"].getService(Ci.nsIStyleSheetService);
+let pagesSheet = null;
+function setPagesStyle(css) {
+  if (pagesSheet && sheetService.sheetRegistered(pagesSheet, sheetService.USER_SHEET)) sheetService.unregisterSheet(pagesSheet, sheetService.USER_SHEET);
+  pagesSheet = css ? Services.io.newURI("data:text/css;charset=utf-8," + encodeURIComponent(css)) : null;
+  if (pagesSheet) sheetService.loadAndRegisterSheet(pagesSheet, sheetService.USER_SHEET);
+}
+
 // Firefox's own toolbar buttons Customize can add: Forget (clears recent history) and Screenshot.
 const TOOLBAR_BUTTONS = ["panic-button", "screenshot-button"];
 const prefGet = { bool: "getBoolPref", string: "getStringPref", int: "getIntPref" };
@@ -393,6 +405,7 @@ function paletteCommands(win, extras) {
     ["Notes", "", () => { send("notes")(); win.SidebarController.show("aeris-core_aeris_app-sidebar-action"); }],
     ["Theme Studio", "", send("studio")],
     ["Save all tabs for later", "", send("save-tabs")],
+    ["Copy this page's link", "Ctrl+Shift+C", send("copy-link")],
     ["Clip this page to Notes", "", send("clip-page")],
     ["Aeris Store", "", send("store")]
   ].map(([title, keys, action]) => ({ kind: "command", title, keys, action }));
@@ -514,6 +527,7 @@ this.aeris = class extends ExtensionAPI {
     if (!isAppShutdown) {
       setChromeStyle("");
       setTabStacking(false);
+      setPagesStyle("");
     }
   }
 
@@ -673,6 +687,10 @@ this.aeris = class extends ExtensionAPI {
             return () => Services.obs.removeObserver(observer, "aeris-command");
           }
         }).api(),
+
+        async setPagesStyle(css) {
+          setPagesStyle(css);
+        },
 
         async setTabStacking(on) {
           setTabStacking(on);

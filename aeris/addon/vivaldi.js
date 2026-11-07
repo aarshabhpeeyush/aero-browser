@@ -22,7 +22,17 @@ async function quickCommandExtras() {
 }
 browser.commands.onCommand.addListener(async name => {
   if (name === "quick-commands") browser.aeris.openQuickCommands(await quickCommandExtras());
+  if (name === "copy-link") copyLink();
 });
+
+// Copy the page's link (Ctrl+Shift+C, like Zen), with a little "Link copied" bubble on the page
+async function copyLink() {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.url) return;
+  await navigator.clipboard.writeText(tab.url);
+  browser.tabs.sendMessage(tab.id, { type: "toast", text: "🔗 Link copied" }).catch(() => {});
+  Sound.pop();
+}
 
 browser.aeris.onCommand.addListener(async command => {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
@@ -32,6 +42,7 @@ browser.aeris.onCommand.addListener(async command => {
   if (kind === "studio") return browser.tabs.create({ url: browser.runtime.getURL("studio/index.html") });
   if (kind === "store") return browser.tabs.create({ url: browser.runtime.getURL("settings/index.html") });
   if (kind === "save-tabs") return saveAllTabsForLater(true);
+  if (kind === "copy-link") return copyLink();
   if (kind === "clip-page" && tab && /^https?:/.test(tab.url)) return addToNotes(`${tab.title}\n${tab.url}\n`);
   if (kind === "theme") return browser.storage.local.set({ colorTheme: arg, accent: null });
   if (kind === "custom") {

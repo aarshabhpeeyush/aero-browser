@@ -21,7 +21,7 @@
 
       <section class="step" data-step="colours" data-label="Colours" hidden>
         <div class="glass">
-          <p class="kicker">Step 1 of 5</p>
+          <p class="kicker">Step 1 of 6</p>
           <h2>Pick your colours</h2>
           <p>Click one: Aeris changes straight away.</p>
           <div class="swatches" id="swatches"></div>
@@ -34,12 +34,13 @@
 
       <section class="step" data-step="layout" data-label="Layout" hidden>
         <div class="glass">
-          <p class="kicker">Step 2 of 5</p>
+          <p class="kicker">Step 2 of 6</p>
           <h2>Where should your tabs go?</h2>
           <div class="layouts" data-pref="bars">
             <button data-value="top"><span class="mini top"><i></i><b></b></span>Top</button>
             <button data-value="left"><span class="mini left"><i></i><b></b></span>Left</button>
             <button data-value="right"><span class="mini right"><i></i><b></b></span>Right</button>
+            <button data-value="compact"><span class="mini compact"><i></i><b></b></span>Compact</button>
           </div>
           <h2 class="space">Tab shape</h2>
           <div class="pills" data-pref="tabShape">
@@ -55,7 +56,7 @@
 
       <section class="step" data-step="extras" data-label="Extras" hidden>
         <div class="glass">
-          <p class="kicker">Step 3 of 5</p>
+          <p class="kicker">Step 3 of 6</p>
           <h2>A few good things to switch on</h2>
           <label class="tick"><input type="checkbox" id="adblock"> <span><b>Block ads and trackers 🛡️</b><small>With uBlock Origin, which comes with Aeris.</small></span></label>
           <label class="tick"><input type="checkbox" data-pref="hideAi"> <span><b>Hide Google's AI Overviews</b><small>Just the normal search results.</small></span></label>
@@ -65,9 +66,19 @@
         </div>
       </section>
 
+      <section class="step" data-step="favourites" data-label="Favourites" hidden>
+        <div class="glass">
+          <p class="kicker">Step 4 of 6</p>
+          <h2>Pin your favourite sites</h2>
+          <p>Pinned sites sit as little icons at the start of your tabs, always one click away (like Zen's essentials).</p>
+          <div class="favs" id="favs"></div>
+          <div class="nav"><button class="gel plain back">← Back</button><button class="gel" id="pinFavs">Pin them →</button></div>
+        </div>
+      </section>
+
       <section class="step" data-step="import" data-label="Your stuff" hidden>
         <div class="glass">
-          <p class="kicker">Step 4 of 5</p>
+          <p class="kicker">Step 5 of 6</p>
           <h2>Bring your stuff</h2>
           <p id="importText">Aeris can bring your bookmarks and saved passwords from Aero, Chrome, Edge and other browsers.</p>
           <div class="buttons">
@@ -80,7 +91,7 @@
 
       <section class="step" data-step="default" data-label="Default" hidden>
         <div class="glass">
-          <p class="kicker">Step 5 of 5</p>
+          <p class="kicker">Step 6 of 6</p>
           <h2>Open links from other apps in Aeris?</h2>
           <p id="defaultText">Make Aeris your default browser, and links from Discord, emails and other apps open here. Aeris asks only this once, and never nags you about it again.</p>
           <div class="buttons">

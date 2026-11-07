@@ -152,6 +152,8 @@ p { margin: 4px 0; }
 .mini.left b { left: 30%; right: 6px; top: 6px; bottom: 6px; }
 .mini.right i { right: 0; top: 0; bottom: 0; width: 26%; }
 .mini.right b { right: 30%; left: 6px; top: 6px; bottom: 6px; }
+.mini.compact i { left: 0; right: 0; top: 0; height: 12px; }
+.mini.compact b { left: 6px; right: 6px; top: 18px; bottom: 6px; }
 
 .pills { display: flex; gap: 8px; margin-top: 8px; }
 .pills button { flex: 1; text-align: center; border-radius: 999px; }
@@ -199,3 +201,13 @@ kbd { padding: 1px 6px; border-radius: 5px; border: 1px solid #9ccbe8; backgroun
     linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 51%),
     linear-gradient(180deg, var(--accent), var(--accent-dark));
 }
+
+/* Favourite sites */
+.favs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+.favs label {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px 6px; border-radius: 14px; border: 1px solid #cfe6f6; background: #fff; cursor: pointer; font-weight: 600;
+}
+.favs label:has(input:checked) { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--accent); }
+.favs img { width: 32px; height: 32px; border-radius: 8px; }
+.favs input { accent-color: var(--accent); }

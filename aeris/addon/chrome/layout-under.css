@@ -1,0 +1,14 @@
+/* Tabs under the address bar (like Helium's "dynamic" layout). */
+#navigator-toolbox { display: flex !important; flex-direction: column !important; }
+#toolbar-menubar { order: 1; }
+#nav-bar { order: 2; -moz-window-dragging: drag; border-top: none !important; }
+#TabsToolbar { order: 3; }
+#PersonalToolbar { order: 4; }
+#notifications-toolbar { order: 5; }
+/* Tabs hang down from the toolbar, like folder tabs turned upside down */
+#TabsToolbar .tabbrowser-tab { padding-block: 0 6px !important; }
+#TabsToolbar .tabbrowser-tab .tab-background {
+  border-radius: 0 0 var(--tab-radius) var(--tab-radius) !important;
+  border-top: 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.55) !important;
+}

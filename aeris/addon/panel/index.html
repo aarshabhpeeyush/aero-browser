@@ -20,7 +20,7 @@
     <div id="customizeView">
       <header><h2>Customize</h2></header>
       <nav class="jumps">
-        <a href="#look">Theme</a><a href="#layout">Layout</a><a href="#browsing">Browsing</a>
+        <a href="#look">Theme</a><a href="#layout">Layout</a><a href="#mods">Aeris Mods</a><a href="#browsing">Browsing</a>
         <a href="#extras">Tab tools</a><a href="#page">This page</a><a href="#performance">Performance</a><a href="#tweaks">Hidden things</a>
         <a href="#addons">Add-ons</a><a href="#bookmarks">Bookmarks</a><a href="#about">About</a>
       </nav>
@@ -54,7 +54,7 @@
         <h3>Layout</h3>
         <div class="choice" data-pref="bars">
           <span>Tabs</span>
-          <button data-value="top">Top</button><button data-value="left">Left</button><button data-value="right">Right</button>
+          <button data-value="top">Top</button><button data-value="compact" title="Tabs and address bar in one row">Compact</button><button data-value="under" title="Tabs under the address bar">Under</button><button data-value="left">Left</button><button data-value="right">Right</button>
         </div>
         <div class="choice" data-pref="tabShape">
           <span>Tab shape</span>
@@ -70,6 +70,21 @@
         </div>
         <label class="toggle"><input type="checkbox" id="bookmarksBar"> Bookmarks bar</label>
         <label class="toggle"><input type="checkbox" data-ffpref="sidebar.expandOnHover"> Side tabs open wider when you point at them</label>
+      </section>
+
+      <section id="mods">
+        <h3>Aeris Mods</h3>
+        <p class="hint">What makes Aeris Aeris, plus little tweaks. Switch any of them on or off.</p>
+        <label class="toggle"><input type="checkbox" data-mod="shell"> Aeris toolbar: the Windows 7 back and forward capsule, the Aeris menu orb, a clean address bar and a glossy loading bar</label>
+        <label class="toggle"><input type="checkbox" data-mod="floating"> Floating page: websites sit in a rounded card inside the frame</label>
+        <label class="toggle"><input type="checkbox" data-mod="glass"> Glass menus: right-click menus, pop-ups and tooltips in Aero glass</label>
+        <label class="toggle"><input type="checkbox" data-mod="motion"> Motion: tabs bubble in, buttons squish, the bookmark star bounces</label>
+        <label class="toggle"><input type="checkbox" data-mod="hoverClose"> Close buttons only on the open tab and the one you point at</label>
+        <label class="toggle"><input type="checkbox" data-mod="centerTitles"> Tab titles in the middle</label>
+        <label class="toggle"><input type="checkbox" data-mod="tabNumbers"> Numbers on tabs</label>
+        <label class="toggle"><input type="checkbox" data-mod="iconBookmarks"> Bookmarks bar shows just icons</label>
+        <label class="toggle"><input type="checkbox" data-mod="bigTabs"> Bigger tabs</label>
+        <label class="toggle"><input type="checkbox" data-mod="roundWindow"> Round window corners</label>
       </section>
 
       <section id="browsing">

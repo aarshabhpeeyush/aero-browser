@@ -19,7 +19,9 @@ const COLOR_THEMES = {
 // top/left/right, tab shape, window buttons, size and bubbly sounds. "theme" is the custom theme
 // (one of Aero's theme folders, like Woodland Hut) laid on top, or null for none.
 const LOOK = { colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", sounds: true, focus: false };
-const DEFAULTS = { theme: null, studio: null, hideAi: true, restyle: true, stacking: true, imported: false, lastVersion: null, update: null, ...LOOK };
+// Aeris Mods: the layers that make Aeris feel like its own browser (on by default) and small tweaks.
+const MODS = { shell: true, floating: true, glass: true, motion: true, hoverClose: false, centerTitles: false, tabNumbers: false, iconBookmarks: false, bigTabs: false, roundWindow: false };
+const DEFAULTS = { theme: null, studio: null, mods: {}, hideAi: true, restyle: true, stacking: true, imported: false, lastVersion: null, update: null, ...LOOK };
 
 let THEMES = []; // the custom themes (from themes/index.json)
 let registered = []; // website stylesheets for the active theme
@@ -136,15 +138,40 @@ async function buildChromeCss(s, theme) {
     s.winButtons === "glossy" ? await css("chrome/buttons-glossy.css") : "",
     s.size === "compact" ? await css("chrome/size-compact.css") : "",
     s.focus ? await css("chrome/focus.css") : "",
+    s.bars === "compact" ? await css("chrome/layout-compact.css") : s.bars === "under" ? await css("chrome/layout-under.css") : "",
+    await modsCss(s, side),
     // An accent you picked yourself still wins over the custom theme's.
     theme && s.accent ? `:root { --accent: ${s.accent} !important; }` : ""
   ];
   return parts.join("\n");
 }
 
+// The Aeris Mods that are on, as CSS: Aeris's own shell, the floating page, glass pop-ups, motion,
+// and the small tweaks from chrome/mods.css (split up by their "/* mod:name */" markers).
+let modBlocks = null;
+async function modsCss(s, side) {
+  const m = { ...MODS, ...(s.mods || {}) };
+  if (!modBlocks) {
+    modBlocks = {};
+    const pieces = (await css("chrome/mods.css")).split(/\/\* mod:(\w+) \*\//);
+    for (let i = 1; i < pieces.length; i += 2) modBlocks[pieces[i]] = pieces[i + 1];
+  }
+  return [
+    // Firefox's sidebar button and strip of tool icons only belong with tabs at the side
+    m.shell ? (await css("chrome/shell.css")) + (side ? "" : "\n#sidebar-button, sidebar-main, #sidebar-launcher-splitter { display: none !important; }") : "",
+    m.floating ? await css("chrome/floating.css") : "",
+    m.glass ? await css("chrome/glass.css") : "",
+    m.motion ? await css("chrome/motion.css") : "",
+    ...Object.keys(modBlocks).filter(k => m[k]).map(k => modBlocks[k])
+  ].join("\n");
+}
+
 // Tabs top/left/right and the size are Firefox settings (its own side tabs and density).
 async function applyLayout(s) {
+  const m = { ...MODS, ...(s.mods || {}) };
   await browser.aeris.setPrefs({
+    // Aeris's own shell has no Firefox extensions (puzzle) button unless an add-on needs attention
+    "extensions.unifiedExtensions.button.always_visible": !m.shell,
     "sidebar.verticalTabs": s.bars === "left" || s.bars === "right",
     "sidebar.position_start": s.bars !== "right",
     "browser.uidensity": s.size === "compact" ? 1 : 0
@@ -175,6 +202,13 @@ function applyTheme() {
 async function applyThemeNow() {
   const s = await settings();
   const theme = THEMES.find(t => t.id === s.theme) || null;
+
+  // Firefox's own pages in Aero style, unless you chose a plain look
+  const plainLook = ["firefox", "minimal"].includes(s.colorTheme);
+  if (plainLook !== applyThemeNow.plain) {
+    applyThemeNow.plain = plainLook;
+    browser.aeris.setPagesStyle(plainLook ? "" : await css("chrome/pages.css"));
+  }
 
   // The browser frame first, so the change shows up straight away
   const plain = s.colorTheme === "firefox" || s.colorTheme === "minimal" || s.colorTheme === "studio";
@@ -336,7 +370,8 @@ browser.menus.onClicked.addListener(async (info, tab) => {
 browser.storage.onChanged.addListener(async (changes, area) => {
   if (area !== "local") return;
   const keys = Object.keys(changes);
-  if (keys.some(k => k === "theme" || k === "restyle" || k === "studio" || k in LOOK)) applyTheme();
+  if (keys.some(k => k === "theme" || k === "restyle" || k === "studio" || k === "mods" || k in LOOK)) applyTheme();
+  if (changes.mods) applyLayout(await settings());
   if (keys.some(k => k === "bars" || k === "size")) applyLayout(await settings());
   if (changes.stacking) browser.aeris.setTabStacking(changes.stacking.newValue !== false);
 });

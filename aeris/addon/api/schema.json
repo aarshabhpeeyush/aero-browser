@@ -295,6 +295,18 @@
         "async": true,
         "description": "Firefox's toolbar editor, to move or remove buttons.",
         "parameters": []
+      },
+      {
+        "name": "setPagesStyle",
+        "type": "function",
+        "async": true,
+        "description": "Restyle Firefox's own pages (Settings, Add-ons…) with this CSS; empty turns it off.",
+        "parameters": [
+          {
+            "name": "css",
+            "type": "string"
+          }
+        ]
       }
     ],
     "events": [

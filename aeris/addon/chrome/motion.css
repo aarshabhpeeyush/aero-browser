@@ -1,0 +1,36 @@
+/* Aero motion (like Zen's micro-interactions): tabs bubble in and pop out, buttons squish when pressed,
+   the bookmark star bounces with a glow, menus and the side panel glide in. Off if Windows is set to
+   reduce animations. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Tabs */
+  .tabbrowser-tab[fadein]:not([pinned]) .tab-stack { animation: aeris-bubble-in 0.38s cubic-bezier(0.3, 1.45, 0.6, 1); }
+  .tabbrowser-tab:not([fadein]):not([pinned]) .tab-stack { transform: scale(0.7); opacity: 0; transition: transform 0.16s ease-in, opacity 0.16s ease-in; }
+  @keyframes aeris-bubble-in {
+    0% { transform: scale(0.45) translateY(6px); opacity: 0; }
+    65% { transform: scale(1.06); opacity: 1; }
+    100% { transform: none; }
+  }
+
+  /* Buttons squish when pressed and lift a little when you point at them */
+  toolbarbutton:not([disabled]) :is(.toolbarbutton-icon, .toolbarbutton-badge-stack) { transition: transform 0.12s cubic-bezier(0.3, 1.5, 0.6, 1), filter 0.12s; }
+  toolbarbutton:not([disabled]):hover :is(.toolbarbutton-icon, .toolbarbutton-badge-stack) { transform: translateY(-1px); }
+  toolbarbutton:not([disabled]):active :is(.toolbarbutton-icon, .toolbarbutton-badge-stack) { transform: scale(0.86); }
+
+  /* Bookmark star: a bounce and a golden glow */
+  #star-button[starred] { animation: aeris-star 0.6s cubic-bezier(0.3, 1.6, 0.6, 1); filter: drop-shadow(0 0 4px #ffcc33); }
+  @keyframes aeris-star {
+    0% { transform: scale(0.4) rotate(-90deg); }
+    60% { transform: scale(1.35) rotate(15deg); }
+    100% { transform: none; }
+  }
+
+  /* Menus and the side panel glide in */
+  menupopup[open]::part(content) { animation: aeris-menu-in 0.16s ease-out; }
+  @keyframes aeris-menu-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+  #sidebar-box:not([hidden]) > .sidebar-browser-stack { animation: aeris-slide-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1); }
+  @keyframes aeris-slide-in { from { opacity: 0; transform: translateX(-16px); } }
+
+  /* The address bar breathes when you click into it */
+  #urlbar[focused] .urlbar-background { animation: aeris-focus 0.3s ease-out; }
+  @keyframes aeris-focus { 50% { transform: scale(1.01); } }
+}

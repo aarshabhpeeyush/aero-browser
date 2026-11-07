@@ -97,6 +97,21 @@ document.querySelectorAll("input[type=checkbox][data-pref]").forEach(box => {
   box.addEventListener("change", () => change(box.dataset.pref, box.checked));
 });
 
+// Aeris Mods (stored together as "mods"; the ones you haven't touched keep their defaults)
+const MOD_DEFAULTS = { shell: true, floating: true, glass: true, motion: true };
+const modBoxes = [...document.querySelectorAll("input[data-mod]")];
+async function drawMods() {
+  const { mods } = await store.get({ mods: {} });
+  for (const box of modBoxes) box.checked = !!({ ...MOD_DEFAULTS, ...mods })[box.dataset.mod];
+}
+for (const box of modBoxes) {
+  box.addEventListener("change", async () => {
+    const { mods } = await store.get({ mods: {} });
+    await store.set({ mods: { ...mods, [box.dataset.mod]: box.checked } });
+  });
+}
+drawMods();
+
 // Firefox's own settings
 const ffBoxes = [...document.querySelectorAll("input[data-ffpref]")];
 async function drawFirefoxPrefs() {

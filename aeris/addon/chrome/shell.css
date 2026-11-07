@@ -1,0 +1,57 @@
+/* Aeris's own shell: the parts that make it feel like Aero instead of Firefox with new colours.
+   (Each part can be switched off in Customize → Aeris Mods; background.js only adds the ones on.) */
+
+/* ================= Clean toolbar ================= */
+/* No Firefox account button, no sidebar toggle (unless tabs are at the side), and Aero's Windows 7
+   style back/forward capsule: a big back orb with a small forward orb tucked into a glass pill. */
+#fxa-toolbar-menu-button { display: none !important; }
+#nav-bar #forward-button {
+  margin-inline-start: -12px !important;
+  padding-inline: 12px 4px !important;
+  border-radius: 0 999px 999px 0 !important;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0.3) 51%, rgba(255,255,255,0.75) 100%) !important;
+  box-shadow: inset 0 1px 0 #fff, 0 1px 3px rgba(0, 40, 90, 0.2) !important;
+  border: 1px solid color-mix(in srgb, var(--accent), #fff 40%) !important;
+  border-inline-start: none !important;
+  height: 30px;
+  align-self: center;
+}
+#nav-bar #forward-button > .toolbarbutton-icon { width: 24px !important; height: 24px !important; padding: 5px !important; }
+#nav-bar #back-button { position: relative; z-index: 1; }
+
+/* The Firefox menu button becomes the Aeris menu: a glossy orb */
+#PanelUI-menu-button .toolbarbutton-badge-stack {
+  border-radius: 50% !important;
+  color: #fff !important;
+  fill: #fff !important;
+  border: 1px solid var(--accent-dark) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.15) 48%, rgba(255,255,255,0) 52%),
+    radial-gradient(circle at 50% 110%, color-mix(in srgb, var(--accent), #fff 55%) 0%, var(--accent) 55%, var(--accent-dark) 100%) !important;
+  box-shadow: 0 2px 5px rgba(0, 40, 90, 0.3) !important;
+}
+#PanelUI-menu-button .toolbarbutton-icon { fill: #fff !important; }
+
+/* Address bar: no "Extension (Aeris Core)" label, and the search-engine chip only while typing */
+#identity-icon-label { display: none !important; }
+#urlbar:not([focused]) .searchmode-switcher { display: none !important; }
+
+/* Aero's glossy loading bar under the toolbar */
+#nav-bar { position: relative; }
+#nav-bar::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 3px;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgba(255,255,255,0.9) 50%, transparent) 0 0 / 40% 100% no-repeat,
+    linear-gradient(90deg, color-mix(in srgb, var(--accent), #fff 40%), var(--accent));
+  transition: opacity 0.3s;
+}
+:root:has(.tabbrowser-tab[selected][busy]) #nav-bar::after {
+  opacity: 1;
+  animation: aeris-loading 1.1s linear infinite;
+}
+@keyframes aeris-loading { from { background-position: -40% 0, 0 0; } to { background-position: 140% 0, 0 0; } }

@@ -1,0 +1,24 @@
+/* Floating page (like Arc, Zen and Helium): the website sits in a rounded card inside the Aero frame,
+   instead of running edge to edge like in Firefox. */
+#browser {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,calc(var(--gloss) * 0.25)), rgba(255,255,255,0) 40%),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent-light), var(--accent) 22%), color-mix(in srgb, var(--frame-b), var(--frame-a) 35%)) !important;
+}
+#tabbrowser-tabpanels {
+  background: transparent !important;
+}
+#tabbrowser-tabpanels .browserSidebarContainer {
+  margin: 8px 10px 10px !important;
+  border-radius: 14px;
+  overflow: clip;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85), 0 4px 18px rgba(0, 30, 70, 0.3);
+}
+/* Full screen and full-screen videos: edge to edge */
+:root:is([inDOMFullscreen], [sizemode="fullscreen"]) #tabbrowser-tabpanels .browserSidebarContainer { margin: 0 !important; }
+:root:is([inDOMFullscreen], [sizemode="fullscreen"]) #tabbrowser-tabpanels .browserSidebarContainer { border-radius: 0; box-shadow: none; }
+/* The side panel floats too */
+#sidebar-box { background: transparent !important; padding: 6px 0 8px 8px !important; }
+#sidebar-box > .sidebar-browser-stack { border-radius: 12px; overflow: clip; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.75), 0 3px 14px rgba(0, 40, 90, 0.18); }
+#sidebar-header { display: none !important; }
+.sidebar-splitter { opacity: 0 !important; }

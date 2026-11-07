@@ -1,0 +1,60 @@
+/* Firefox's own pages (Settings, Add-ons, Downloads, Passwords, Profiles) in Aero style: a sky-blue
+   glass background, rounded white cards and glossy aqua buttons, instead of Firefox's plain look.
+   Registered once for these pages only (see api/parent.js setPagesStyle). */
+@-moz-document url-prefix("about:preferences"), url-prefix("about:settings"), url-prefix("about:addons"),
+  url-prefix("about:downloads"), url-prefix("about:logins"), url-prefix("about:profiles") {
+  :root {
+    --color-accent-primary: #1e9be8 !important;
+    --color-accent-primary-hover: #1786cc !important;
+    --color-accent-primary-active: #0f6aa6 !important;
+    --button-border-radius: 999px !important;
+    --border-radius-small: 8px !important;
+    --border-radius-medium: 12px !important;
+    --border-radius-large: 16px !important;
+    --in-content-page-background: transparent !important;
+    --background-color-canvas: transparent !important;
+    --focus-outline-color: #1e9be8 !important;
+    font-family: "Segoe UI", "Frutiger", Tahoma, sans-serif !important;
+  }
+  html, body {
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(255, 255, 255, 0.9), transparent 55%),
+      linear-gradient(180deg, #e3f5ff 0%, #c4e7ff 55%, #b3e6c9 100%) fixed !important;
+    color: #0b2a44 !important;
+  }
+  /* Cards and boxes: white glass */
+  .card, addon-card .card, moz-card, groupbox, .subcategory, .sticky-container, #categories,
+  .main-content > .pane-container, setting-group, .login-list, login-item {
+    background-color: rgba(255, 255, 255, 0.82) !important;
+    border: 1px solid rgba(255, 255, 255, 0.95) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 2px 10px rgba(0, 60, 120, 0.12) !important;
+  }
+  groupbox { padding: 12px 18px !important; margin-bottom: 14px !important; }
+  /* Category list on the left: glossy pill for the page you're on */
+  .category[selected], button.category[selected], richlistitem.category[selected] {
+    color: #fff !important;
+    border-radius: 999px !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0) 51%),
+      linear-gradient(180deg, #34b4ff, #0a7fd6) !important;
+  }
+  .category:not([selected]):hover { border-radius: 999px !important; background-color: rgba(255, 255, 255, 0.7) !important; }
+  /* Buttons: glossy aqua gel for the main ones, soft glass for the rest */
+  button.primary, moz-button[type~="primary"]::part(button), .button-primary {
+    color: #fff !important;
+    border: 1px solid #0a6fbd !important;
+    border-radius: 999px !important;
+    text-shadow: 0 1px 2px rgba(0, 40, 90, 0.5);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 51%),
+      linear-gradient(180deg, #34b4ff, #0a7fd6) !important;
+  }
+  button:not(.primary, .ghost-button, .category, .close-icon, [type="icon"]) {
+    border-radius: 999px !important;
+  }
+  input:is([type="text"], [type="search"], [type="number"], :not([type])), select, menulist, search-textbox, .search-textbox {
+    border-radius: 999px !important;
+  }
+  h1, .main-heading, .header-name { color: #06406d !important; }
+}

@@ -27,7 +27,8 @@
     "unlimitedStorage",
     "webNavigation",
     "webRequest",
-    "webRequestBlocking"
+    "webRequestBlocking",
+    "clipboardWrite"
   ],
   "sidebar_action": {
     "default_title": "Aeris",
@@ -111,6 +112,12 @@
         "default": "F2"
       },
       "description": "Quick Commands: search tabs, bookmarks and history, or run a command"
+    },
+    "copy-link": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+C"
+      },
+      "description": "Copy this page's link"
     }
   }
 }

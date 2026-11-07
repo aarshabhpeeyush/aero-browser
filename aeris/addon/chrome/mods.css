@@ -1,0 +1,30 @@
+/* Aeris Mods (like Zen's mod library): small one-click tweaks. Each block is added only when its mod is
+   on; background.js picks them out by the marker comments. */
+
+/* mod:hoverClose */
+.tabbrowser-tab:not([selected]):not(:hover) .tab-close-button { visibility: collapse !important; }
+
+/* mod:centerTitles */
+.tabbrowser-tab .tab-label-container { align-items: center !important; }
+.tabbrowser-tab .tab-label { text-align: center !important; }
+
+/* mod:tabNumbers */
+#tabbrowser-arrowscrollbox { counter-reset: aeris-tab; }
+.tabbrowser-tab:not([hidden]) { counter-increment: aeris-tab; }
+.tabbrowser-tab .tab-content::after {
+  content: counter(aeris-tab);
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.7;
+  margin-inline-start: 4px;
+}
+
+/* mod:iconBookmarks */
+#PersonalToolbar toolbarbutton.bookmark-item:not([container]) .toolbarbutton-text { display: none !important; }
+
+/* mod:bigTabs */
+.tabbrowser-tab { min-height: 44px !important; }
+#TabsToolbar .tab-label { font-size: 1.08em !important; }
+
+/* mod:roundWindow */
+:root:not([sizemode="maximized"], [sizemode="fullscreen"]) #navigator-toolbox { border-radius: 10px 10px 0 0; overflow: clip; }

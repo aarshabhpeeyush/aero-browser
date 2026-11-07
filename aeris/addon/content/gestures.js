@@ -61,6 +61,11 @@
     browser.runtime.sendMessage({ type: "gesture", gesture: g }).catch(() => {});
   }, true);
 
+  // Little messages from Aeris Core (like "Link copied") use the same bubble
+  browser.runtime.onMessage.addListener(msg => {
+    if (msg?.type === "toast") show(msg.text);
+  });
+
   addEventListener("contextmenu", e => {
     if (!swallowMenu) return;
     e.preventDefault();
