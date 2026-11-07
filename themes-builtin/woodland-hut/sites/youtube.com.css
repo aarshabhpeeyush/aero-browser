@@ -1,6 +1,6 @@
 /* Woodland Hut for YouTube: a wooden beam for the top bar and thumbnails framed like little paintings */
 
-#masthead-container #background, #masthead-container {
+#masthead-container #background, #masthead-container, #frosted-glass {
   background:
     repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0 2px, transparent 2px 9px),
     linear-gradient(180deg, #6b4423, #4a2e17) !important;

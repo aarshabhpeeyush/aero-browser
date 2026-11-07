@@ -1,6 +1,6 @@
 /* Neon Gamer for YouTube (looks best with YouTube's own dark theme: profile picture → Appearance → Dark) */
 
-#masthead-container #background, #masthead-container {
+#masthead-container #background, #masthead-container, #frosted-glass {
   background: #07070c !important;
   border-bottom: 1px solid #ff1f5a;
   box-shadow: 0 2px 16px rgba(255, 31, 90, 0.45);

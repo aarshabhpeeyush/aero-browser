@@ -1,6 +1,6 @@
 /* DORFic for YouTube: an orange glass top bar and thumbnails with glossy orange frames */
 
-#masthead-container #background, #masthead-container {
+#masthead-container #background, #masthead-container, #frosted-glass {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 50%),
     linear-gradient(180deg, #ff9a3d, #f26508) !important;

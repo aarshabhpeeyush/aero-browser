@@ -1,7 +1,7 @@
 /* Aqua Glass for YouTube */
 
 /* Glassy sky-blue top bar */
-#masthead-container #background, #masthead-container, ytd-masthead {
+#masthead-container #background, #masthead-container, ytd-masthead, #frosted-glass {
   background:
     linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 51%),
     linear-gradient(180deg, #7fd4ff, #2aa7ec) !important;

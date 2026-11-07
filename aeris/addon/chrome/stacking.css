@@ -1,0 +1,33 @@
+/* Tab stacking: the + next to a tab's close button opens a new tab under it. Children are indented
+   when tabs are at the side, and marked with a little arrow when tabs are on top. */
+.aeris-stack-button {
+  display: none;
+  width: 20px;
+  height: 20px;
+  padding: 4px;
+  margin-inline: 1px;
+  border-radius: 50%;
+  list-style-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M5 1h2v4h4v2H7v4H5V7H1V5h4z' fill='context-fill'/%3E%3C/svg%3E");
+  -moz-context-properties: fill;
+  fill: currentColor;
+  opacity: 0.85;
+}
+:root[aeris-stacking] .tabbrowser-tab:not([pinned]):is(:hover, [selected]) .aeris-stack-button { display: flex; }
+.aeris-stack-button:hover { opacity: 1; background-color: rgba(127, 127, 127, 0.3); }
+
+/* Side tabs: each level steps in, with a soft line showing which tab it belongs to */
+sidebar-main .tabbrowser-tab[aeris-depth] {
+  margin-inline-start: calc(var(--aeris-depth) * 14px) !important;
+  width: calc(100% - var(--aeris-depth) * 14px) !important;
+}
+sidebar-main .tabbrowser-tab[aeris-depth] .tab-background {
+  border-inline-start: 2px solid color-mix(in srgb, var(--accent, #1e9be8) 70%, transparent) !important;
+}
+
+/* Tabs on top: a little arrow in front of a child's title */
+#TabsToolbar .tabbrowser-tab[aeris-depth] .tab-content::before {
+  content: "↳";
+  margin-inline-end: 3px;
+  font-weight: 700;
+  opacity: 0.8;
+}

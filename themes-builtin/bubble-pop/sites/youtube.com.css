@@ -2,7 +2,7 @@
    Tip: on YouTube press F12, then click the arrow tool and pick something to see its name. */
 
 /* Pink top bar */
-#masthead-container, ytd-masthead #container.ytd-masthead {
+#masthead-container, ytd-masthead #container.ytd-masthead, #frosted-glass {
   background: linear-gradient(180deg, #ffe3f3, #ffc2e6) !important;
 }
 

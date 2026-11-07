@@ -41,7 +41,8 @@ async function draw() {
   const { colors, custom } = await browser.runtime.sendMessage({ type: "themes" });
   prefs = { ...(await store.get({ colorTheme: "frost", theme: null, bars: "top", tabShape: "rounded", size: "comfy", hideAi: true, sounds: true, restyle: true })), colors };
 
-  for (const [id, t] of Object.entries(colors)) {
+  const plain = { minimal: { name: "Minimal", a: "#fafafa", b: "#e9e9ed", dark: true } };
+  for (const [id, t] of Object.entries({ ...colors, ...plain })) {
     const b = document.createElement("button");
     b.dataset.value = id;
     b.textContent = t.name;

@@ -5,7 +5,7 @@
 const $ = sel => document.querySelector(sel);
 const store = browser.storage.local;
 const UBLOCK = "uBlock0@raymondhill.net";
-const LOOK_DEFAULTS = { theme: null, colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", restyle: true, hideAi: true, sounds: true, focus: false, napAfter: 0, breakEvery: 0 };
+const LOOK_DEFAULTS = { theme: null, colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", restyle: true, hideAi: true, sounds: true, focus: false, napAfter: 0, breakEvery: 0, stacking: true };
 
 let colorThemes = {};
 let customThemes = [];
@@ -51,14 +51,18 @@ function paintPanel() {
 function drawThemes() {
   const box = $("#themes");
   box.innerHTML = "";
-  for (const [id, t] of [...Object.entries(colorThemes), ["firefox", { name: "Firefox look", a: "#f0f0f4", b: "#f9f9fb", dark: true }]]) {
+  const extras = [
+    ["minimal", { name: "Minimal", a: "#fafafa", b: "#e9e9ed", dark: true, title: "A plain, modern look: no gloss or orbs, light or dark like Windows" }],
+    ["firefox", { name: "Firefox look", a: "#f0f0f4", b: "#f9f9fb", dark: true, title: "No Aero look: Firefox's normal colours" }]
+  ];
+  for (const [id, t] of [...Object.entries(colorThemes), ...extras]) {
     const b = document.createElement("button");
     b.dataset.theme = id;
     b.textContent = t.name;
     if (t.dark) b.style.color = "#1d3550";
     if (t.dark) b.style.textShadow = "0 1px 0 rgba(255,255,255,0.7)";
     b.style.background = `linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 51%), linear-gradient(180deg, ${t.a}, ${t.b})`;
-    b.title = id === "firefox" ? "No Aero look: Firefox's normal colours" : t.name;
+    b.title = t.title || t.name;
     b.addEventListener("click", () => store.set({ colorTheme: id, accent: null }));
     box.append(b);
   }

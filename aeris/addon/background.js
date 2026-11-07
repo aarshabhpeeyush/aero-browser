@@ -19,7 +19,7 @@ const COLOR_THEMES = {
 // top/left/right, tab shape, window buttons, size and bubbly sounds. "theme" is the custom theme
 // (one of Aero's theme folders, like Woodland Hut) laid on top, or null for none.
 const LOOK = { colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabShape: "rounded", winButtons: "simple", size: "comfy", sounds: true, focus: false };
-const DEFAULTS = { theme: null, hideAi: true, restyle: true, imported: false, lastVersion: null, update: null, ...LOOK };
+const DEFAULTS = { theme: null, hideAi: true, restyle: true, stacking: true, imported: false, lastVersion: null, update: null, ...LOOK };
 
 let THEMES = []; // the custom themes (from themes/index.json)
 let registered = []; // website stylesheets for the active theme
@@ -108,9 +108,19 @@ function themeApiColors(v, theme) {
 // The frame's CSS, in Aero's order: the Aero look, your colour theme, accent and shine, the custom
 // theme on top (so it can change anything), then the layout choices.
 async function buildChromeCss(s, theme) {
+  if (s.colorTheme === "minimal") {
+    return [
+      await css("chrome/stacking.css"),
+      await css("chrome/minimal.css"),
+      s.accent ? `:root { --accent: ${s.accent} !important; }` : "",
+      s.size === "compact" ? await css("chrome/size-compact.css") : "",
+      s.focus ? await css("chrome/focus.css") : ""
+    ].join("\n");
+  }
   const c = COLOR_THEMES[s.colorTheme] || COLOR_THEMES.frost;
   const side = s.bars === "left" || s.bars === "right";
   const parts = [
+    await css("chrome/stacking.css"),
     await css("chrome/aeris.css"),
     `:root {
   --frame-a: ${c.a};
@@ -141,45 +151,62 @@ async function applyLayout(s) {
   });
 }
 
-async function applyTheme() {
+// Theme changes run one at a time; a change made while one is running is applied straight after.
+let applying = null;
+let applyAgain = false;
+function applyTheme() {
+  if (applying) {
+    applyAgain = true;
+    return applying;
+  }
+  applying = (async () => {
+    try {
+      do {
+        applyAgain = false;
+        await applyThemeNow();
+      } while (applyAgain);
+    } finally {
+      applying = null;
+    }
+  })();
+  return applying;
+}
+
+async function applyThemeNow() {
   const s = await settings();
   const theme = THEMES.find(t => t.id === s.theme) || null;
 
-  for (const r of registered) r.unregister();
-  registered = [];
-
-  // Fixes that make websites look right in Aeris, plus Aero's gentle restyle if switched on.
-  registered.push(await browser.contentScripts.register({ matches: ["http://*/*", "https://*/*"], css: [{ file: "content/site-fixes.css" }], runAt: "document_start" }));
-  if (s.restyle) registered.push(await browser.contentScripts.register({ matches: ["http://*/*", "https://*/*"], css: [{ file: "content/aero-sites.css" }], runAt: "document_start" }));
-
+  // The browser frame first, so the change shows up straight away
+  const plain = s.colorTheme === "firefox" || s.colorTheme === "minimal";
   if (s.colorTheme === "firefox") {
     // "Firefox's own look"
     await browser.theme.reset();
-    await browser.aeris.setChromeStyle("");
-    await browser.storage.local.set({ paper: null });
-    return;
+    await browser.aeris.setChromeStyle(await css("chrome/stacking.css"));
+  } else if (s.colorTheme === "minimal") {
+    // Minimal: Firefox's own colours (light or dark, like Windows), with a few clean touches
+    await browser.theme.reset();
+    await browser.aeris.setChromeStyle(await buildChromeCss(s, null));
+  } else {
+    await browser.theme.update(themeApiColors(activeColors(s, theme), theme));
+    await browser.aeris.setChromeStyle(await buildChromeCss(s, theme));
   }
 
-  await browser.theme.update(themeApiColors(activeColors(s, theme), theme));
-  await browser.aeris.setChromeStyle(await buildChromeCss(s, theme));
-  if (!theme) {
-    await browser.storage.local.set({ paper: null });
-    return;
+  // Then the website styles: fixes that make sites look right in Aeris, Aero's gentle restyle if
+  // it's on, and the theme's own styles (websites.css for every site, sites/<domain>.css for one).
+  const all = ["http://*/*", "https://*/*"];
+  const wanted = [{ matches: all, css: [{ file: "content/site-fixes.css" }], runAt: "document_start" }];
+  if (s.restyle && s.colorTheme !== "minimal") wanted.push({ matches: all, css: [{ file: "content/aero-sites.css" }], runAt: "document_start" });
+  const custom = plain ? null : theme;
+  if (custom?.websitesCss) wanted.push({ matches: all, css: [{ file: `themes/${custom.id}/websites.css` }], runAt: "document_start" });
+  for (const domain of custom?.sites || []) {
+    wanted.push({ matches: [`*://${domain}/*`, `*://*.${domain}/*`], css: [{ file: `themes/${custom.id}/sites/${domain}.css` }], runAt: "document_start" });
   }
+  const old = registered;
+  registered = await Promise.all(wanted.map(w => browser.contentScripts.register(w)));
+  for (const r of old) r.unregister();
 
-  // The theme's own website styles: websites.css for every site, sites/<domain>.css for one site.
-  if (theme.websitesCss) {
-    registered.push(await browser.contentScripts.register({ matches: ["http://*/*", "https://*/*"], css: [{ file: `themes/${theme.id}/websites.css` }], runAt: "document_start" }));
-  }
-  for (const domain of theme.sites) {
-    registered.push(await browser.contentScripts.register({
-      matches: [`*://${domain}/*`, `*://*.${domain}/*`],
-      css: [{ file: `themes/${theme.id}/sites/${domain}.css` }],
-      runAt: "document_start"
-    }));
-  }
   // site.js paints sites' plain white boxes in the theme's paper colour.
-  await browser.storage.local.set({ paper: theme.paper || null });
+  await browser.storage.local.set({ paper: custom?.paper || null });
 }
 
 // ================= Moving in from Aero =================
@@ -307,6 +334,7 @@ browser.storage.onChanged.addListener(async (changes, area) => {
   const keys = Object.keys(changes);
   if (keys.some(k => k === "theme" || k === "restyle" || k in LOOK)) applyTheme();
   if (keys.some(k => k === "bars" || k === "size")) applyLayout(await settings());
+  if (changes.stacking) browser.aeris.setTabStacking(changes.stacking.newValue !== false);
 });
 
 // ================= Bubbly sounds (Aero's, made with the Web Audio API) =================
@@ -358,6 +386,7 @@ browser.alarms.onAlarm.addListener(a => a.name === "update" && checkForUpdate())
 
   const s = await settings();
   Sound.on = s.sounds;
+  browser.aeris.setTabStacking(s.stacking);
   if (!s.imported) await importFromAero();
   await applyTheme();
 

@@ -1,6 +1,6 @@
 /* Frutiger Metro for YouTube: a sunburst top bar and sticker-style thumbnails */
 
-#masthead-container #background, #masthead-container {
+#masthead-container #background, #masthead-container, #frosted-glass {
   background:
     radial-gradient(circle, rgba(255, 255, 255, 0.45) 1.4px, transparent 1.8px) 0 0 / 9px 9px,
     repeating-conic-gradient(from 0deg at 20% 140%, rgba(255, 255, 255, 0.2) 0 6deg, transparent 6deg 14deg),

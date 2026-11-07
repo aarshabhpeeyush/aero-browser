@@ -14,8 +14,17 @@ ChromeUtils.defineESModuleGetters(lazy, {
   MigrationUtils: "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
   OSCrypto: "resource://gre/modules/OSCrypto_win.sys.mjs",
   SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+  SessionStore: "moz-src:///browser/components/sessionstore/SessionStore.sys.mjs",
   ShellService: "moz-src:///browser/components/shell/ShellService.sys.mjs"
 });
+
+// Websites see Aeris as the Firefox it's built on (like LibreWolf, Floorp and Zen do), so sites such as
+// addons.mozilla.org work normally. Builds set this too; doing it here covers copies built before that.
+{
+  const major = Services.appinfo.platformVersion.split(".")[0];
+  Services.prefs.getDefaultBranch("").setStringPref("general.useragent.override",
+    `Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:${major}.0) Gecko/20100101 Firefox/${major}.0`);
+}
 
 // The Firefox settings Customize may read and change, and their type.
 const PREFS = {
@@ -38,7 +47,6 @@ const prefGet = { bool: "getBoolPref", string: "getStringPref", int: "getIntPref
 const prefSet = { bool: "setBoolPref", string: "setStringPref", int: "setIntPref" };
 const browserWindow = () => Services.wm.getMostRecentWindow("navigator:browser");
 
-const sss = Cc["@mozilla.org/content/style-sheet-service;1"].getService(Ci.nsIStyleSheetService);
 const UPDATE_PREFIX = "https://github.com/aarshabhpeeyush/aero-browser/releases/download/";
 const AMO_PREFIX = "https://addons.mozilla.org/firefox/downloads/";
 const BROWSER_PAGES = /^about:(preferences|addons|logins)([#?].*)?$/;
@@ -48,14 +56,190 @@ let pendingInstaller = null; // a downloaded update waiting for Aeris to close
 
 const aeroFolder = () => PathUtils.join(Services.dirsvc.get("AppData", Ci.nsIFile).path, "Aero Browser");
 
+// The frame's style goes only into browser windows (not the whole app), so changing theme doesn't make
+// Firefox re-check every open website, which made changes slow to show up with heavy sites open.
+const isBrowserWindow = win => win.document.documentElement.getAttribute("windowtype") === "navigator:browser";
+function styleWindow(win, oldSheet) {
+  const utils = win.windowUtils;
+  if (oldSheet) {
+    try { utils.removeSheet(oldSheet, utils.USER_SHEET); } catch {}
+  }
+  if (chromeSheet) utils.loadSheet(chromeSheet, utils.USER_SHEET);
+}
+const windowWatcher = {
+  observe(win, topic) {
+    if (topic !== "domwindowopened") return;
+    win.addEventListener("load", () => {
+      if (!isBrowserWindow(win)) return;
+      if (chromeSheet) styleWindow(win, null);
+      if (stacking) stackWindow(win);
+    }, { once: true });
+  }
+};
+let watching = false;
+function watchWindows() {
+  const want = !!chromeSheet || stacking;
+  if (want && !watching) Services.ww.registerNotification(windowWatcher);
+  if (!want && watching) Services.ww.unregisterNotification(windowWatcher);
+  watching = want;
+}
+
+// ================= Tab stacking =================
+// Each tab gets a "+" next to its close button. It opens a new tab *under* that tab (its child), so you
+// can always see which tab you came from; closing the child takes you back to it. Children can have
+// children too. Tabs opened the normal way stay flat. The family tree is saved with the session.
+
+let stacking = false;
+const MAX_DEPTH = 5;
+const stackListeners = new WeakMap(); // window -> its listeners, to remove them again
+
+function tabId(tab) {
+  let id = tab.getAttribute("aeris-id");
+  if (!id) {
+    id = lazy.SessionStore.getCustomTabValue(tab, "aerisId") || Services.uuid.generateUUID().toString().slice(1, 37);
+    tab.setAttribute("aeris-id", id);
+    lazy.SessionStore.setCustomTabValue(tab, "aerisId", id);
+  }
+  return id;
+}
+function setParent(tab, parentId) {
+  if (parentId) {
+    tab.setAttribute("aeris-parent", parentId);
+    lazy.SessionStore.setCustomTabValue(tab, "aerisParent", parentId);
+  } else {
+    tab.removeAttribute("aeris-parent");
+    lazy.SessionStore.deleteCustomTabValue(tab, "aerisParent");
+  }
+}
+
+// Work out each tab's depth from the family tree. A child only counts while it sits right after its
+// parent's family; one dragged away becomes a normal tab again.
+function layoutStacks(win) {
+  const chain = [];
+  for (const tab of win.gBrowser.tabs) {
+    const id = tabId(tab);
+    const parent = tab.getAttribute("aeris-parent");
+    const at = parent ? chain.lastIndexOf(parent) : -1;
+    if (parent && at < 0) setParent(tab, null);
+    chain.length = at + 1;
+    const depth = Math.min(chain.length, MAX_DEPTH);
+    if (depth) {
+      tab.setAttribute("aeris-depth", depth);
+      tab.style.setProperty("--aeris-depth", depth);
+    } else {
+      tab.removeAttribute("aeris-depth");
+      tab.style.removeProperty("--aeris-depth");
+    }
+    chain.push(id);
+  }
+}
+
+function openChild(win, parentTab) {
+  const { gBrowser } = win;
+  const tabs = [...gBrowser.tabs];
+  const depth = +(parentTab.getAttribute("aeris-depth") || 0);
+  // After the parent's own children (and theirs)
+  let index = tabs.indexOf(parentTab) + 1;
+  while (index < tabs.length && +(tabs[index].getAttribute("aeris-depth") || 0) > depth) index++;
+  const child = gBrowser.addTab(win.BROWSER_NEW_TAB_URL, {
+    tabIndex: index, // (called "index" before Firefox 135)
+    index,
+    ownerTab: parentTab,
+    triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
+  });
+  setParent(child, tabId(parentTab));
+  gBrowser.selectedTab = child;
+  layoutStacks(win);
+  win.gURLBar?.select();
+}
+
+function addStackButton(win, tab) {
+  if (tab.querySelector(".aeris-stack-button")) return;
+  const close = tab.querySelector(".tab-close-button");
+  if (!close) return;
+  const button = win.document.createXULElement("image");
+  button.className = "aeris-stack-button";
+  button.setAttribute("role", "button");
+  button.setAttribute("tooltiptext", "Open a tab under this one");
+  button.addEventListener("mousedown", e => e.button === 0 && e.stopPropagation());
+  button.addEventListener("click", e => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    e.preventDefault();
+    openChild(win, tab);
+  });
+  close.before(button);
+}
+
+function stackWindow(win) {
+  if (stackListeners.has(win)) return;
+  const { gBrowser } = win;
+  win.document.documentElement.setAttribute("aeris-stacking", "true");
+  const later = () => win.setTimeout(() => layoutStacks(win), 0);
+  const on = {
+    TabOpen: e => addStackButton(win, e.target),
+    // A closing tab's children move up to its own parent, so the family stays together
+    TabClose: e => {
+      const tab = e.target;
+      const id = tab.getAttribute("aeris-id");
+      const up = tab.getAttribute("aeris-parent");
+      if (id) for (const t of gBrowser.tabs) if (t.getAttribute("aeris-parent") === id) setParent(t, up);
+      // Closing a child takes you back to the tab it came from (Firefox forgets that once you switch tabs)
+      const parentTab = up && [...gBrowser.tabs].find(t => t.getAttribute("aeris-id") === up);
+      if (tab.selected && parentTab && !parentTab.closing) tab.owner = parentTab;
+      later();
+    },
+    TabMove: later,
+    // Firefox forgets which tab a tab came from once you switch tabs, so remind it each time
+    TabSelect: e => {
+      const up = e.target.getAttribute("aeris-parent");
+      const parentTab = up && [...gBrowser.tabs].find(t => t.getAttribute("aeris-id") === up);
+      if (parentTab) e.target.owner = parentTab;
+    },
+    SSTabRestoring: e => {
+      const tab = e.target;
+      tab.removeAttribute("aeris-id");
+      tabId(tab);
+      const parent = lazy.SessionStore.getCustomTabValue(tab, "aerisParent");
+      if (parent) tab.setAttribute("aeris-parent", parent);
+      later();
+    }
+  };
+  for (const [type, fn] of Object.entries(on)) gBrowser.tabContainer.addEventListener(type, fn);
+  stackListeners.set(win, on);
+  for (const tab of gBrowser.tabs) {
+    addStackButton(win, tab);
+    const parent = lazy.SessionStore.getCustomTabValue(tab, "aerisParent");
+    if (parent) tab.setAttribute("aeris-parent", parent);
+  }
+  layoutStacks(win);
+}
+
+function unstackWindow(win) {
+  const on = stackListeners.get(win);
+  if (!on) return;
+  for (const [type, fn] of Object.entries(on)) win.gBrowser.tabContainer.removeEventListener(type, fn);
+  stackListeners.delete(win);
+  win.document.documentElement.removeAttribute("aeris-stacking");
+  for (const b of win.document.querySelectorAll(".aeris-stack-button")) b.remove();
+  for (const tab of win.gBrowser.tabs) {
+    tab.removeAttribute("aeris-depth");
+    tab.style.removeProperty("--aeris-depth");
+  }
+}
+
+function setTabStacking(on) {
+  stacking = on;
+  for (const win of Services.wm.getEnumerator("navigator:browser")) (on ? stackWindow : unstackWindow)(win);
+  watchWindows();
+}
+
 function setChromeStyle(css) {
-  if (chromeSheet && sss.sheetRegistered(chromeSheet, sss.USER_SHEET)) sss.unregisterSheet(chromeSheet, sss.USER_SHEET);
-  chromeSheet = null;
-  if (!css) return;
-  // Only the browser window itself, never websites.
-  const wrapped = `@-moz-document url("chrome://browser/content/browser.xhtml") {\n${css}\n}`;
-  chromeSheet = Services.io.newURI("data:text/css;charset=utf-8," + encodeURIComponent(wrapped));
-  sss.loadAndRegisterSheet(chromeSheet, sss.USER_SHEET);
+  const oldSheet = chromeSheet;
+  chromeSheet = css ? Services.io.newURI("data:text/css;charset=utf-8," + encodeURIComponent(css)) : null;
+  for (const win of Services.wm.getEnumerator("navigator:browser")) styleWindow(win, oldSheet);
+  // New windows get the style when they open
+  watchWindows();
 }
 
 // Aero kept passwords in <AppData>/Aero Browser/passwords/<profile>.vault, locked with Windows'
@@ -119,7 +303,10 @@ const quitObserver = { observe: () => launchInstaller(["/S"]) };
 
 this.aeris = class extends ExtensionAPI {
   onShutdown(isAppShutdown) {
-    if (!isAppShutdown) setChromeStyle("");
+    if (!isAppShutdown) {
+      setChromeStyle("");
+      setTabStacking(false);
+    }
   }
 
   getAPI(context) {
@@ -257,6 +444,10 @@ this.aeris = class extends ExtensionAPI {
           const out = {};
           for (const id of ids) if (TOOLBAR_BUTTONS.includes(id)) out[id] = !!lazy.CustomizableUI.getPlacementOfWidget(id);
           return out;
+        },
+
+        async setTabStacking(on) {
+          setTabStacking(on);
         },
 
         async setToolbarButton(id, show) {
