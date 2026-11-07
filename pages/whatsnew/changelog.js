@@ -1,6 +1,19 @@
 // Every version's highlights. Add the newest version at the TOP before building an update.
 const CHANGELOG = [
   {
+    version: "1.2.0",
+    date: "November 2026",
+    title: "Aeris, not Firefox",
+    items: [
+      { icon: "🫧", title: "Aeris's own toolbar", text: "Windows 7's back and forward capsule, the Aeris menu orb, a clean address bar and a glossy loading bar. Firefox's extra buttons are gone." },
+      { icon: "🪟", title: "Floating pages and glass everywhere", text: "Websites sit in a rounded card inside the Aero frame, and right-click menus, pop-ups and tooltips are Aero glass too." },
+      { icon: "✨", title: "Motion", text: "Tabs bubble in and pop out, buttons squish when you press them, and the bookmark star bounces." },
+      { icon: "📐", title: "New layouts and Aeris Mods", text: "Compact (tabs and address bar in one row) and tabs under the address bar, plus Aeris Mods: switch each part on or off and add little tweaks." },
+      { icon: "🐧", title: "Aeris for Linux", text: "Aeris now runs on Linux too, as an AppImage or a .tar.xz." },
+      { icon: "🔗", title: "And more", text: "Ctrl+Shift+C copies a page's link, Settings and Add-ons look like Aero, and the welcome tour helps you pin your favourite sites." }
+    ]
+  },
+  {
     version: "1.1.0",
     date: "November 2026",
     title: "Make Aeris truly yours",
