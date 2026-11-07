@@ -1,0 +1,109 @@
+# Builds Aeris for Linux (x86-64) on GitHub's computers: a .tar.xz and an AppImage.
+# Start it from the Actions tab, or with: gh workflow run aeris-linux.yml
+name: Build Aeris for Linux
+
+on:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      MOZBUILD_STATE_PATH: /mnt/mozbuild
+      SCCACHE_GHA_ENABLED: "true"
+      SCCACHE_CACHE_SIZE: 9G
+      MOZ_PARALLEL_BUILD: 3
+      CARGO_BUILD_JOBS: 2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make room
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+
+      - name: Workspace and swap on the big drive
+        run: |
+          sudo mkdir -p /mnt/aeris /mnt/mozbuild
+          sudo chown -R "$USER" /mnt/aeris /mnt/mozbuild
+          sudo fallocate -l 24G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          df -h / /mnt
+          free -h
+
+      - name: Download Firefox source
+        run: |
+          version=$(cat aeris/firefox-version.txt)
+          curl -fsSL "https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz" \
+            | tar -xJ -C /mnt/aeris
+          mv "/mnt/aeris/firefox-$version" /mnt/aeris/src
+
+      - name: Turn it into Aeris
+        run: |
+          pip install --quiet pillow
+          bash aeris/prepare.sh /mnt/aeris/src linux
+
+      - uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Get build tools
+        working-directory: /mnt/aeris/src
+        run: ./mach --no-interactive bootstrap --application-choice browser
+
+      - name: Build
+        working-directory: /mnt/aeris/src
+        # Lower priority, so GitHub's own runner program never gets starved and drops the job.
+        run: nice -n 10 ./mach build
+
+      - name: Package
+        working-directory: /mnt/aeris/src
+        run: |
+          ./mach package
+          ls -la obj-aeris/dist/
+          sccache --show-stats || true
+
+      - name: Aeris for Linux (with uBlock Origin) and the AppImage
+        run: |
+          version=$(cat aeris/version.txt)
+          mkdir -p /mnt/aeris/app /mnt/aeris/out
+          tar -xf /mnt/aeris/src/obj-aeris/dist/aeris-*.linux-x86_64.tar.* -C /mnt/aeris/app
+          # uBlock Origin comes with Aeris (Firefox adds it to each new profile from here)
+          mkdir -p /mnt/aeris/app/aeris/distribution/extensions
+          curl -fsSL https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi \
+            -o "/mnt/aeris/app/aeris/distribution/extensions/uBlock0@raymondhill.net.xpi"
+          python3 -c "from PIL import Image; Image.open('build/icon.png').resize((256, 256)).save('/mnt/aeris/aeris.png')"
+          cp /mnt/aeris/aeris.png /mnt/aeris/app/aeris/browser/chrome/icons/default/default256.png 2>/dev/null || true
+
+          # The download for any Linux: unpack it and run aeris/aeris
+          tar -C /mnt/aeris/app -cJf "/mnt/aeris/out/Aeris-$version-linux-x86_64.tar.xz" aeris
+
+          # The AppImage: one file you can double-click
+          appdir=/mnt/aeris/Aeris.AppDir
+          mkdir -p "$appdir"
+          cp -r /mnt/aeris/app/aeris "$appdir/aeris"
+          cp /mnt/aeris/aeris.png "$appdir/aeris.png"
+          cp aeris/linux/aeris.desktop "$appdir/aeris.desktop"
+          cp aeris/linux/AppRun "$appdir/AppRun"
+          chmod +x "$appdir/AppRun"
+          curl -fsSL -o /mnt/aeris/appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x /mnt/aeris/appimagetool
+          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 /mnt/aeris/appimagetool "$appdir" "/mnt/aeris/out/Aeris-$version-x86_64.AppImage"
+          ls -la /mnt/aeris/out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aeris-linux
+          path: /mnt/aeris/out/*
+          retention-days: 14
+
+      - name: Keep the build log if something broke
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aeris-linux-logs
+          path: |
+            /mnt/aeris/src/obj-aeris/config.log
+            /mnt/aeris/src/obj-aeris/.mozbuild/last_log.json
+          if-no-files-found: ignore

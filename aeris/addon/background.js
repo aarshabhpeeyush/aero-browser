@@ -311,13 +311,21 @@ async function checkForUpdate() {
     const { aeris: current } = await browser.aeris.appInfo();
     const release = await (await fetch(RELEASES, { cache: "no-store" })).json();
     const version = String(release.tag_name || "").replace(/^v/, "");
-    const asset = (release.assets || []).find(a => /^Aeris-Setup-.*\.exe$/i.test(a.name));
+    const { os } = await browser.runtime.getPlatformInfo();
+    // Windows installs updates itself; on Linux, Aeris tells you and links the download
+    const asset = (release.assets || []).find(a => (os === "win" ? /^Aeris-Setup-.*\.exe$/i : /^Aeris-.*-x86_64\.AppImage$/i).test(a.name));
     if (!asset || !newer(version, current)) {
       await browser.storage.local.set({ update: { state: "latest", checked: Date.now() } });
       return;
     }
     const { update } = await settings();
     if (update?.state === "ready" && update.version === version) return;
+    if (os !== "win") {
+      await browser.storage.local.set({ update: { state: "available", version, url: release.html_url } });
+      browser.browserAction.setBadgeText({ text: "↑" });
+      browser.browserAction.setBadgeBackgroundColor({ color: "#2fb52f" });
+      return;
+    }
     await browser.storage.local.set({ update: { state: "downloading", version } });
     await browser.aeris.downloadUpdate(asset.browser_download_url, version);
     await browser.storage.local.set({ update: { state: "ready", version } });

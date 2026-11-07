@@ -216,8 +216,11 @@ async function drawAbout() {
     latest: "You have the newest Aeris.",
     downloading: `Downloading Aeris ${update?.version}…`,
     ready: `Aeris ${update?.version} is ready. It installs when you close Aeris.`,
-    error: `Couldn't check for updates (${update?.error}).`
+    error: `Couldn't check for updates (${update?.error}).`,
+    available: `Aeris ${update?.version} is out! Download it from the Aeris page on GitHub.`
   }[update?.state] || "Aeris updates itself.";
+  $("#getUpdate").hidden = update?.state !== "available";
+  if (update?.url) $("#getUpdate").dataset.url = update.url;
   $("#restartUpdate").hidden = update?.state !== "ready";
 }
 $("#checkUpdates").addEventListener("click", async () => {
@@ -226,6 +229,7 @@ $("#checkUpdates").addEventListener("click", async () => {
   drawAbout();
 });
 $("#restartUpdate").addEventListener("click", () => browser.aeris.restartToUpdate());
+$("#getUpdate").addEventListener("click", e => browser.tabs.create({ url: e.target.dataset.url }));
 $("#openStudio").addEventListener("click", () => openPage("studio/index.html"));
 async function openPage(path) {
   const url = browser.runtime.getURL(path);

@@ -44,7 +44,7 @@ jobs:
       - name: Turn it into Aeris
         run: |
           pip install --quiet pillow
-          bash aeris/prepare.sh /mnt/aeris/src
+          bash aeris/prepare.sh /mnt/aeris/src windows
 
       - uses: mozilla-actions/sccache-action@v0.0.9
 

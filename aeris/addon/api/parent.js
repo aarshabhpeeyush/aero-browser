@@ -24,7 +24,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
 {
   const major = Services.appinfo.platformVersion.split(".")[0];
   Services.prefs.getDefaultBranch("").setStringPref("general.useragent.override",
-    `Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:${major}.0) Gecko/20100101 Firefox/${major}.0`);
+    `Mozilla/5.0 (${Services.appinfo.OS === "WINNT" ? "Windows NT 10.0; Win64; x64" : "X11; Linux x86_64"}; rv:${major}.0) Gecko/20100101 Firefox/${major}.0`);
 }
 
 // The Firefox settings Customize may read and change, and their type.
@@ -67,7 +67,9 @@ const BROWSER_PAGES = /^about:(preferences|addons|logins)([#?].*)?$/;
 let chromeSheet = null; // the theme's restyle of the browser frame
 let pendingInstaller = null; // a downloaded update waiting for Aeris to close
 
-const aeroFolder = () => PathUtils.join(Services.dirsvc.get("AppData", Ci.nsIFile).path, "Aero Browser");
+const aeroFolder = () => Services.appinfo.OS === "WINNT"
+  ? PathUtils.join(Services.dirsvc.get("AppData", Ci.nsIFile).path, "Aero Browser")
+  : PathUtils.join(Services.dirsvc.get("Home", Ci.nsIFile).path, ".config", "Aero Browser");
 
 // The frame's style goes only into browser windows (not the whole app), so changing theme doesn't make
 // Firefox re-check every open website, which made changes slow to show up with heavy sites open.

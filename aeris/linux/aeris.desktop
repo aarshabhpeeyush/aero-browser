@@ -1,0 +1,20 @@
+[Desktop Entry]
+Type=Application
+Name=Aeris
+GenericName=Web Browser
+Comment=Aero's bubbly, glossy look on a real Firefox engine
+Exec=aeris %u
+Icon=aeris
+Terminal=false
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+StartupWMClass=aeris
+Actions=new-window;new-private-window;
+
+[Desktop Action new-window]
+Name=New Window
+Exec=aeris --new-window %u
+
+[Desktop Action new-private-window]
+Name=New Private Window
+Exec=aeris --private-window %u

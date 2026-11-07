@@ -1,0 +1,4 @@
+#!/bin/sh
+# Starts Aeris from inside the AppImage.
+here="$(dirname "$(readlink -f "$0")")"
+exec "$here/aeris/aeris" "$@"
