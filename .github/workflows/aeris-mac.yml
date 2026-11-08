@@ -17,6 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Firefox's build tools don't support the newest Python yet
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Make room
         run: |
           echo "MOZBUILD_STATE_PATH=$RUNNER_TEMP/mozbuild" >> "$GITHUB_ENV"
