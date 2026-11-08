@@ -1,7 +1,7 @@
 // The web version's offline copy: Aquaris itself keeps working without internet
 // (the apps that are websites still need it). A new version replaces the old copy.
-const VERSION = "aquaris-web-2";
-const FILES = ["./", "index.html", "aquaris.js", "apps.js", "aquaris.css", "aqua.css", "skins.css", "icon-256.png", "manifest.webmanifest",
+const VERSION = "aquaris-web-3";
+const FILES = ["./", "index.html", "aquaris.js", "apps.js", "aquaris.css", "aqua.css", "skins.css", "minimal.css", "icon-256.png", "manifest.webmanifest",
   "walls/tide-light.svg", "walls/tide-dark.svg", "walls/dusk.svg", "walls/aqua.svg", "walls/waves.svg", "walls/aero-shine.svg", "walls/woodland.svg", "walls/metro-tiles.svg", "../themes/index.json", "../icons/aeris-128.png"];
 self.addEventListener("install", e => e.waitUntil(caches.open(VERSION).then(c => Promise.allSettled(FILES.map(f => c.add(f)))).then(() => self.skipWaiting())));
 self.addEventListener("activate", e => e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())));

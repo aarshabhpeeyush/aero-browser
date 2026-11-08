@@ -1,0 +1,205 @@
+/* Minimal (2026): the look of the systems people use every day, blended, without the "AI demo" tells
+   (one generic font everywhere, the default web blue, gradients on every button, cards inside
+   cards, the same big radius on everything, glows and bouncy springs).
+
+   From Windows 11 (Fluent 2): content sits on opaque surfaces with a faint tint of the wallpaper
+     ("Mica"), 1px hairline strokes, quiet neutral buttons with a darker bottom edge, compact menus.
+   From macOS Tahoe / iOS 26 (Liquid Glass): glass is only for the floating layer (menu bar, dock,
+     menus, Control Centre), with a bright rim and strong blur; capsule controls; nested corners
+     (a control's radius = its container's radius minus the gap).
+   From GNOME (libadwaita): settings are grouped lists, rows split by hairlines, not floating cards.
+   From Android (Material 3 Expressive): bolder, tighter headings, quick motion that settles
+     without overshooting.
+   The system's own font: Segoe UI Variable on Windows, San Francisco on a Mac, the desktop's on Linux.
+
+   Only when the Minimal style is picked and no Aeris theme is dressing Aquaris (skins.css). */
+
+body[data-theme="minimal"]:not([data-skin]) {
+  --font: system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", "Adwaita Sans", Cantarell, "Noto Sans", sans-serif;
+  --font-display: system-ui, -apple-system, "Segoe UI Variable Display", "Segoe UI", "Adwaita Sans", Cantarell, sans-serif;
+  --spring: cubic-bezier(.2, .8, .2, 1);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --r-win: 14px;
+  --r-ctl: 8px;
+
+  /* Neutral greys (not blue-greys), with a whisper of the wallpaper's colour */
+  --tint: #4f7fb8;
+  --text: #1b1b1f;
+  --muted: #5f6168;
+  --surface: color-mix(in oklab, #f4f4f5, var(--tint) 3%);       /* window (Mica) */
+  --surface-2: #fdfdfd;                                           /* content, fields */
+  --card: rgba(255, 255, 255, 0.72);                              /* grouped lists */
+  --line: rgba(0, 0, 0, 0.075);
+  --line-strong: rgba(0, 0, 0, 0.13);
+  --hover: rgba(0, 0, 0, 0.045);
+  --press: rgba(0, 0, 0, 0.08);
+  --accent: #0f6cbd;
+  --accent-ink: #fff;
+  --glass: rgba(246, 246, 248, calc(0.42 + 0.4 * var(--frost)));
+  --glass-strong: rgba(248, 248, 250, calc(0.6 + 0.3 * var(--frost)));
+  --rim: inset 0 0.5px 0 rgba(255, 255, 255, 0.9), inset 0 0 0 0.5px rgba(255, 255, 255, 0.5);
+  --shadow-1: 0 0 0 0.5px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-2: 0 0 0 0.5px rgba(0, 0, 0, 0.14), 0 4px 12px rgba(0, 0, 0, 0.08), 0 24px 60px rgba(0, 0, 0, 0.18);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+body[data-theme="minimal"][data-mode="dark"]:not([data-skin]) {
+  --tint: #3a5f8f;
+  --text: #ececee;
+  --muted: #9a9ca3;
+  --surface: color-mix(in oklab, #1f1f22, var(--tint) 6%);
+  --surface-2: #2a2a2e;
+  --card: rgba(255, 255, 255, 0.045);
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --hover: rgba(255, 255, 255, 0.06);
+  --press: rgba(255, 255, 255, 0.1);
+  --accent: #4ea1f3;
+  --accent-ink: #06121f;
+  --glass: rgba(30, 30, 34, calc(0.4 + 0.4 * var(--frost)));
+  --glass-strong: rgba(34, 34, 38, calc(0.62 + 0.3 * var(--frost)));
+  --rim: inset 0 0.5px 0 rgba(255, 255, 255, 0.16), inset 0 0 0 0.5px rgba(255, 255, 255, 0.07);
+  --shadow-1: 0 0 0 0.5px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 0 0 0.5px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.35), 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+body[data-theme="minimal"]:not([data-skin]) {
+  font-size: 13px;
+  letter-spacing: -0.003em;
+
+  /* ---------- The floating layer: Liquid Glass ---------- */
+  /* Menu bar: almost clear, like macOS Tahoe; it frosts just enough to read */
+  & #topbar {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--glass), transparent 35%), color-mix(in srgb, var(--glass), transparent 55%));
+    backdrop-filter: blur(28px) saturate(1.8);
+    box-shadow: inset 0 -0.5px 0 var(--line);
+    font-weight: 500;
+  }
+  & #topbar .tb-btn { border-radius: 7px; }
+  & #topbar .tb-appname, & #topbar .tb-menu.tb-appname { font-weight: 650; }
+
+  /* Dock: a glass capsule with a bright rim; no magnifying bounce */
+  & #dock {
+    border-radius: 26px;
+    padding: 6px 8px;
+    background: color-mix(in srgb, var(--glass), transparent 20%);
+    backdrop-filter: blur(30px) saturate(1.9);
+    box-shadow: var(--rim), 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 10px 30px rgba(0, 0, 0, 0.16);
+  }
+  & .dock-item { border-radius: 13px; transition: transform 0.18s var(--ease); }
+  & .dock-item:hover { transform: translateY(-3px); }
+  & .dock-item.running::after { width: 4px; height: 4px; margin-left: -2px; bottom: -4px; border-radius: 50%; background: var(--text); opacity: 0.55; }
+  & .dock-item.front::after { opacity: 0.9; }
+  & .dock-item[data-label]:hover::before { border-radius: 7px; font-size: 12px; font-weight: 500; padding: 4px 9px; background: var(--glass-strong); backdrop-filter: blur(20px); box-shadow: var(--shadow-1); color: var(--text); }
+  & .launcher-icon { border-radius: 13px; background: var(--hover); color: var(--text); box-shadow: none; }
+  & .dock-sep { width: 0.5px; background: var(--line-strong); }
+
+  /* Menus, pop-overs, Spotlight, Control Centre: glass sheets, compact rows */
+  & :is(.menu, .mb-menu, .flyout, .sp-box, #quick) {
+    background: var(--glass-strong);
+    backdrop-filter: blur(36px) saturate(1.8);
+    box-shadow: var(--rim), var(--shadow-2);
+  }
+  & :is(.menu, .mb-menu) { padding: 5px; border-radius: 12px; min-width: 220px; }
+  & :is(.menu, .mb-menu) button { height: 26px; padding: 0 10px; border-radius: 7px; font-size: 13px; display: flex; align-items: center; }
+  & :is(.menu, .mb-menu) button:hover { background: var(--accent); color: var(--accent-ink); }
+  & :is(.menu, .mb-menu) hr { margin: 5px 10px; border: 0; border-top: 0.5px solid var(--line-strong); }
+  & .flyout { border-radius: 18px; }
+  & #quick { padding: 12px; gap: 10px; }
+  & .sp-box { border-radius: 22px; }
+
+  /* ---------- Windows: opaque Mica surfaces, a unified header ---------- */
+  & .win {
+    border-radius: var(--r-win);
+    background: var(--surface);
+    box-shadow: var(--shadow-1);
+    transition: opacity 0.18s var(--ease), transform 0.22s var(--ease), box-shadow 0.18s;
+  }
+  & .win.active { box-shadow: var(--shadow-2); }
+  & .win.max { border-radius: 0; }
+  & .win.opening { transform: scale(0.97) translateY(6px); }
+  & .titlebar { height: 38px; padding-left: 12px; gap: 8px; background: transparent; }
+  & .titlebar .title { font-weight: 600; font-size: 13px; letter-spacing: -0.005em; }
+  & .win:not(.active) .titlebar > :not(.caption) { opacity: 0.5; }
+  & .tool { width: 28px; height: 26px; border-radius: 7px; }
+  & .body { border-top: 0.5px solid var(--line); background: var(--surface-2); }
+  /* Windows-style buttons: tall and quiet, a red close (Fluent) */
+  &:not(.mac-buttons) .caption button { width: 44px; color: var(--text); }
+  &:not(.mac-buttons) .caption .i { width: 14px; height: 14px; }
+  &:not(.mac-buttons) .caption .c-close:hover { background: #c42b1c; color: #fff; }
+
+  /* ---------- Icons: squircles, flat colour, no shine ---------- */
+  & .tile:not(.img):not(.site) {
+    border-radius: 23%;
+    background: linear-gradient(180deg, color-mix(in oklab, var(--c), #fff 6%), color-mix(in oklab, var(--c), #000 6%));
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+  & .tile.site { border-radius: 23%; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.1); }
+  & .tile .glyph { filter: none; }
+  & .icon { border-radius: 9px; }
+  & .icon span { font-weight: 500; text-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.55); }
+  & .icon:hover { background: rgba(255, 255, 255, 0.16); }
+  & .icon.on { background: rgba(255, 255, 255, 0.24); border-color: transparent; box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.5); }
+
+  /* ---------- Controls ---------- */
+  /* Buttons: neutral fill, hairline with a slightly darker bottom edge (Fluent); primary is plain accent */
+  & .btn {
+    height: 30px;
+    padding: 0 14px;
+    border-radius: 8px;
+    font-weight: 500;
+    background: var(--surface-2);
+    box-shadow: inset 0 0 0 0.5px var(--line-strong), inset 0 -1px 0 var(--line), 0 0.5px 1px rgba(0, 0, 0, 0.05);
+  }
+  & .btn:hover { background: color-mix(in srgb, var(--surface-2), var(--text) 4%); }
+  & .btn.primary { background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.18); }
+  & .btn.primary:hover { filter: none; background: color-mix(in oklab, var(--accent), #000 8%); }
+  /* Segmented controls: an inset track with a raised capsule */
+  & .seg { border-radius: 9px; padding: 2px; gap: 0; background: var(--hover); box-shadow: inset 0 0 0 0.5px var(--line); }
+  & .seg button { height: 26px; border-radius: 7px; font-weight: 500; color: var(--muted); }
+  & .seg button.on { color: var(--text); background: var(--surface-2); box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.14), inset 0 0 0 0.5px var(--line); }
+  /* Switches: the familiar pill, accent when on */
+  & .switch input { box-shadow: inset 0 0 0 0.5px var(--line-strong); }
+  /* Fields */
+  & :is(.field input, .page select, .ln-search, .sp-field) { border-radius: 8px; }
+  & .field { font-weight: 500; }
+  & :is(.field input, .page select):focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent), transparent 70%), inset 0 0 0 1px var(--accent); }
+  & :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- Pages (Settings, AquaApps…): grouped lists, not cards ---------- */
+  & .page { background: var(--surface); }
+  & .page h2 { font: 700 26px/1.15 var(--font-display); letter-spacing: -0.022em; margin-bottom: 6px; }
+  & .page h3 { font-size: 13px; font-weight: 600; color: var(--text); margin: 4px 0 8px; }
+  & .page section {
+    margin-top: 22px;
+    padding: 2px 14px;
+    border-radius: 11px;
+    background: var(--card);
+    box-shadow: inset 0 0 0 0.5px var(--line-strong);
+  }
+  & .page section > h3 { margin: 0 -14px; padding: 12px 14px 8px; }
+  & .page section > :is(.row, label.row) { margin: 0 -14px; padding: 10px 14px; min-height: 44px; border-top: 0.5px solid var(--line); }
+  & .page section > .hint { margin: 0 0 10px; }
+  & .hint { font-size: 12px; }
+  /* Style cards and theme swatches: plain previews, names underneath */
+  & .card { border-radius: 0; padding: 4px 0 10px; box-shadow: none; background: none; }
+  & .card i { border-radius: 8px; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15); transition: box-shadow 0.15s; }
+  & .card.on { box-shadow: none; }
+  & .card.on i { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+  & .card b { font-weight: 600; }
+  & .theme-chip { border-radius: 8px; height: 50px; font-weight: 600; text-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.35); box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.18); }
+  & .theme-chip.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+
+  /* ---------- Control Centre: modules on the glass, no boxes in boxes ---------- */
+  & .qs-pill { border-radius: 14px; background: var(--hover); box-shadow: none; }
+  & .qs-cell.on .qs-on { background: var(--accent); color: var(--accent-ink); }
+  & .qs-pill .qs-go { border-left: 0.5px solid var(--line); }
+  & .qs-cap { font-size: 11.5px; color: var(--muted); }
+  & .qs-hr { border-top-width: 0.5px; }
+  & .qs-label { font-weight: 600; color: var(--text); }
+
+  /* ---------- The app page ---------- */
+  & .ln-app { border-radius: 12px; }
+  & .ln-app span { font-weight: 500; }
+  & .ln-app:hover { background: rgba(255, 255, 255, 0.14); }
+}
