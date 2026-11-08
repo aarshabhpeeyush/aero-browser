@@ -86,7 +86,10 @@ const DEFAULTS = {
   aquarisRecent: [],          // apps you opened lately, newest first
   aquarisQuickAccess: null,   // folders pinned in Files' Quick access (null = the usual ones)
   aquarisWeather: null,       // { name, lat, lon } for the Weather app
-  aquarisAwake: []            // apps that should never nap
+  aquarisAwake: [],           // apps that should never nap
+  // Aeris in the iPad app: its Customize options (the same ones as Aeris on a computer)
+  aquarisAeris: { theme: "", accent: "", gloss: 50, bars: "top", tabShape: "rounded", size: "comfy", ntZoom: 85,
+    mods: { shell: true, floating: false, motion: true, hoverClose: false, centerTitles: false, tabNumbers: false, bigTabs: false } }
 };
 let settings = { ...DEFAULTS };
 
@@ -99,7 +102,9 @@ const NEW_TAB_URL = (() => {
 // In the iPad app, Aeris is Aeris's own New Tab page, toolbar and tabs, in an Aquaris window (on the
 // iPad's engine: Apple only allows its own). The theme you picked in Aquaris goes along.
 const aerisNewTab = () => {
-  const id = (typeof settings !== "undefined" && settings.aquarisTheme?.startsWith("t:")) ? settings.aquarisTheme.slice(2) : "";
+  const s = typeof settings !== "undefined" ? settings : {};
+  const pick = s.aquarisAeris?.theme || s.aquarisTheme || "";
+  const id = pick.startsWith("t:") ? pick.slice(2) : "";
   return new URL("../aeris/newtab/index.html", location.href).href + (id ? "#theme=" + id : "");
 };
 const AERIS_APP = inShell ? { id: "aeris", name: "Aeris", about: "The web browser, with Aeris's New Tab and themes", get url() { return aerisNewTab(); }, browser: true, size: [1060, 720] }
@@ -594,7 +599,7 @@ function addBrowserBar(win) {
     <button class="ab-btn" data-a="reload" title="Reload (F5)">${icon("reload")}</button>
     <button class="ab-btn" data-a="home" title="Home">${icon("home")}</button>
     <label class="ab-url"><span class="ab-lock"></span><input spellcheck="false" placeholder="Search Google or type a web address"></label>
-    ${AERIS_PANEL ? `<button class="ab-btn" data-a="customize" title="Customize Aeris: themes, colours and more">${icon("sliders")}</button>` : ""}`);
+    ${AERIS_PANEL || inShell ? `<button class="ab-btn" data-a="customize" title="Customize Aeris: themes, colours and more">${icon("sliders")}</button>` : ""}`);
   win.body.before(tb);
   win.toolbar = tb;
   win.url = tb.querySelector("input");
@@ -605,6 +610,7 @@ function addBrowserBar(win) {
     if (!a) return;
     if (win.napped) wake(win);
     if (!v) return;
+    if (inShell && a === "customize") return toggleAerisCustomize(win);
     if (inShell) {
       const id = v.dataset.shell;
       if (a === "back" || a === "forward") shell.postMessage({ cmd: a, id });
@@ -672,6 +678,8 @@ function addTabs(win) {
   win.toolbar.before(strip);
   win.tabStrip = strip;
   win.tabs = [];
+  win.el.classList.add("aeris-win");
+  applyAerisLook(win);
 }
 function drawTabs(win) {
   if (win.view && !win.tabs.includes(win.view)) win.tabs.push(win.view);   // the first tab (loadApp made it)
@@ -681,15 +689,18 @@ function drawTabs(win) {
   if (strip.dataset.key === key) return;
   strip.dataset.key = key;
   strip.textContent = "";
-  for (const v of win.tabs) {
-    const tab = html("button", "ab-tab" + (v === win.view ? " on" : ""));
+  win.tabs.forEach((v, i) => {
+    const tab = html("div", "ab-tab" + (v === win.view ? " on" : ""));
+    tab.setAttribute("role", "button");
+    tab.append(html("span", "ab-tab-num", String(i + 1)));
     tab.append(html("span", "ab-tab-title", isNewTab(viewUrl(v)) ? "New Tab" : viewTitle(v) || viewUrl(v).replace(/^https?:\/\/(www\.)?/, "") || "New Tab"));
-    const x = html("span", "ab-tab-x", "×");
+    const x = html("button", "ab-tab-x", "×");
     x.title = "Close tab";
+    x.addEventListener("click", e => { e.stopPropagation(); closeTab(win, v); });
     tab.append(x);
-    tab.addEventListener("click", e => (e.target === x ? closeTab(win, v) : switchTab(win, v)));
+    tab.addEventListener("click", () => switchTab(win, v));
     strip.append(tab);
-  }
+  });
   const plus = html("button", "ab-tab-new", "+");
   plus.title = "New tab";
   plus.addEventListener("click", () => newTab(win));
@@ -717,6 +728,110 @@ function closeTab(win, v) {
   if (win.view === v) switchTab(win, win.tabs[Math.max(0, i - 1)]);
   else updateBrowserBar(win);
 }
+
+// ----- Aeris's look and Customize panel (iPad app) -----
+const aerisWins = () => wins.filter(w => w.el.classList.contains("aeris-win"));
+function applyAerisLook(win) {
+  const A = settings.aquarisAeris, el = win.el;
+  for (const c of [...el.classList]) if (/^ab-(bars|shape|size|mod)-/.test(c)) el.classList.remove(c);
+  el.classList.add("ab-bars-" + A.bars, "ab-shape-" + A.tabShape, "ab-size-" + A.size);
+  for (const [k, on] of Object.entries(A.mods)) if (on) el.classList.add("ab-mod-" + k);
+  // Where the tabs go: above or below the address bar, in the same row, or down a side
+  const strip = win.tabStrip, bar = win.toolbar;
+  if (A.bars === "under") bar.after(strip);
+  else if (A.bars === "compact") bar.insertBefore(strip, bar.querySelector(".ab-url"));
+  else if (A.bars === "left" || A.bars === "right") win.body.append(strip);
+  else bar.before(strip);
+  // The theme's colours on Aeris's frame
+  const th = themeById(A.theme);
+  el.style.setProperty("--ab-a", th ? th.a : "");
+  el.style.setProperty("--ab-b", th ? th.b : "");
+  el.classList.toggle("ab-themed", !!th);
+  el.classList.toggle("ab-dark", !!th && !th.light);
+  el.style.setProperty("--ab-accent", A.accent || th?.accent || "var(--accent)");
+  el.style.setProperty("--ab-gloss", String(A.gloss / 100));
+  shellSync();
+}
+async function saveAeris(changes) {
+  const before = settings.aquarisAeris;
+  settings.aquarisAeris = { ...before, ...changes, mods: { ...before.mods, ...changes.mods } };
+  await store.set({ aquarisAeris: settings.aquarisAeris });
+  for (const w of aerisWins()) {
+    applyAerisLook(w);
+    if (changes.theme !== undefined || changes.ntZoom !== undefined) {
+      // New Tab pages that are showing pick up the new theme and widget size
+      for (const v of w.tabs || []) if (isNewTab(viewUrl(v))) { v.dataset.zoom = ""; shell.postMessage({ cmd: "go", id: v.dataset.shell, url: aerisNewTab() }); }
+    }
+    w.custom?.sync();
+  }
+}
+function toggleAerisCustomize(win) {
+  if (!win.custom) {
+    const box = html("aside", "ab-custom");
+    const A = () => settings.aquarisAeris;
+    const choice = (key, items) => `<div class="ab-choice" data-key="${key}">${items.map(([v, label]) => `<button data-v="${v}">${label}</button>`).join("")}</div>`;
+    const MODS = [["shell", "Aeris toolbar: the glossy back and forward capsule"], ["floating", "Floating page: websites sit in a rounded card"], ["motion", "Motion: tabs bubble in, buttons squish"],
+      ["hoverClose", "Close buttons only on the open tab"], ["centerTitles", "Tab titles in the middle"], ["tabNumbers", "Numbers on tabs"], ["bigTabs", "Bigger tabs"]];
+    setHTML(box, `<div class="ab-custom-head"><b>Customize</b><button class="ab-btn" data-a="close" title="Close">${icon("close")}</button></div>
+      <div class="ab-custom-scroll">
+        <h4>Theme</h4><div class="ab-themes"></div>
+        <label class="ab-row">Accent colour <input type="color" class="ab-accent"><button class="btn tiny" data-a="accentReset">Theme colour</button></label>
+        <label class="ab-row">Shine <input type="range" min="0" max="100" class="ab-gloss"></label>
+        <h4>Layout</h4>
+        <span class="ab-label">Tabs</span>${choice("bars", [["top", "Top"], ["compact", "Compact"], ["under", "Under"], ["left", "Left"], ["right", "Right"]])}
+        <span class="ab-label">Tab shape</span>${choice("tabShape", [["rounded", "Rounded"], ["pill", "Bubble"], ["square", "Square"]])}
+        <span class="ab-label">Size</span>${choice("size", [["comfy", "Comfy"], ["compact", "Compact"]])}
+        <h4>Aeris Mods</h4>
+        ${MODS.map(([k, label]) => `<label class="ab-toggle"><input type="checkbox" data-mod="${k}"> ${label}</label>`).join("")}
+        <h4>New Tab</h4>
+        <label class="ab-row">Widget size <input type="range" min="50" max="100" step="5" class="ab-ntzoom"><span class="ab-ntzoom-n"></span></label>
+        <p class="hint">Drag widgets with a finger to move them. The ⚙ on the New Tab has its wallpapers and which widgets show.</p>
+      </div>`);
+    const grid = box.querySelector(".ab-themes");
+    for (const th of [{ id: "", name: "Aeris", a: "#e8f1fa", b: "#cfe0f0" }, ...aerisThemes]) {
+      const b = html("button", "ab-theme");
+      b.dataset.v = th.id;
+      b.style.setProperty("--a", th.a);
+      b.style.setProperty("--b", th.b);
+      b.append(html("span", "ab-theme-swatch"), html("span", "ab-theme-name", th.name));
+      grid.append(b);
+    }
+    box.addEventListener("click", e => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      if (btn.dataset.a === "close") return toggleAerisCustomize(win);
+      if (btn.dataset.a === "accentReset") return saveAeris({ accent: "" });
+      if (btn.classList.contains("ab-theme")) return saveAeris({ theme: btn.dataset.v });
+      const group = btn.closest(".ab-choice");
+      if (group) saveAeris({ [group.dataset.key]: btn.dataset.v });
+    });
+    box.querySelector(".ab-accent").addEventListener("input", e => saveAeris({ accent: e.target.value }));
+    box.querySelector(".ab-gloss").addEventListener("input", e => saveAeris({ gloss: +e.target.value }));
+    box.querySelector(".ab-ntzoom").addEventListener("change", e => saveAeris({ ntZoom: +e.target.value }));
+    box.querySelector(".ab-ntzoom").addEventListener("input", e => (box.querySelector(".ab-ntzoom-n").textContent = e.target.value + "%"));
+    box.addEventListener("change", e => { const k = e.target.dataset.mod; if (k) saveAeris({ mods: { [k]: e.target.checked } }); });
+    win.custom = {
+      box,
+      sync() {
+        const s = A();
+        box.querySelectorAll(".ab-theme").forEach(b => b.classList.toggle("on", b.dataset.v === s.theme));
+        box.querySelectorAll(".ab-choice").forEach(g => g.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === s[g.dataset.key])));
+        box.querySelectorAll("[data-mod]").forEach(c => (c.checked = !!s.mods[c.dataset.mod]));
+        box.querySelector(".ab-accent").value = /^#[0-9a-f]{6}$/i.test(s.accent) ? s.accent : (themeById(s.theme)?.accent || "#2a86e8");
+        box.querySelector(".ab-gloss").value = s.gloss;
+        box.querySelector(".ab-ntzoom").value = s.ntZoom;
+        box.querySelector(".ab-ntzoom-n").textContent = s.ntZoom + "%";
+      }
+    };
+    win.body.append(box);
+    win.custom.sync();
+  }
+  const open = !win.el.classList.contains("ab-custom-open");
+  win.el.classList.toggle("ab-custom-open", open);
+  win.toolbar.querySelector('[data-a="customize"]')?.classList.toggle("on", open);
+  shellSync();
+}
+
 // A web page from elsewhere in Aquaris: a new tab in Aeris (opening Aeris if it isn't open)
 function openInAerisTab(url) {
   const win = wins.find(w => w.app.id === "aeris" && w.kind === "app");
@@ -1023,9 +1138,21 @@ function drawDock() {
     e.preventDefault();
     showMenu(e, [["New Aeris window", () => openAerisWindow()], ...(aw.length ? [null] : []), ...aw.map(w => [aerisTitle(w), () => showAeris(w)]), ...(aw.length ? [null, ["Close Aeris", () => aw.forEach(w => w.close())]] : [])]);
   });
-  bar.append(ab);
+  // In the iPad app, Aeris is a window inside Aquaris: its dock icon shows and switches that window
+  const shellAeris = inShell ? wins.find(w => w.app.id === "aeris" && w.kind === "app") : null;
+  if (inShell) {
+    ab.classList.toggle("running", !!shellAeris);
+    ab.classList.toggle("front", !!shellAeris && isFront(shellAeris));
+    const fresh = ab.cloneNode(true);       // without the computer version's click and menu
+    fresh.addEventListener("click", () => (!shellAeris ? openApp(AERIS_APP) : isFront(shellAeris) ? minimise(shellAeris) : restore(shellAeris)));
+    fresh.addEventListener("contextmenu", e => {
+      e.preventDefault();
+      showMenu(e, shellAeris ? [["New tab", () => { restore(shellAeris); newTab(shellAeris); }], null, ["Close Aeris", () => closeWin(shellAeris)]] : [["Open Aeris", () => openApp(AERIS_APP)]]);
+    });
+    bar.append(fresh);
+  } else bar.append(ab);
   const apps = settings.aquarisPinned.filter(id => id !== "aeris").map(appById).filter(Boolean);
-  for (const w of wins) if ((w.kind === "app" || w.kind === "own") && !apps.includes(w.app)) apps.push(w.app);
+  for (const w of wins) if ((w.kind === "app" || w.kind === "own") && w.app.id !== "aeris" && !apps.includes(w.app)) apps.push(w.app);
   for (const app of apps) {
     const win = wins.find(w => w.app.id === app.id && w.kind !== "native");
     const b = dockItem(app, app.name + (win?.napped ? " (napping)" : ""));
@@ -3649,6 +3776,8 @@ function shellEvent(ev) {
     v.dataset.back = ev.back ? "1" : "";
     v.dataset.forward = ev.forward ? "1" : "";
     v.dataset.loading = ev.loading ? "1" : "";
+    const zoom = isNewTab(v.dataset.url) ? (settings.aquarisAeris?.ntZoom || 100) / 100 : 1;
+    if (v.dataset.zoom !== String(zoom)) { v.dataset.zoom = String(zoom); shell.postMessage({ cmd: "zoom", id: ev.id, value: zoom }); }
     const owner = wins.find(w => w.view === v || w.tabs?.includes(v));
     if (owner && !ev.loading && owner.view === v) cover(owner, null);
     if (owner?.toolbar) updateBrowserBar(owner);
@@ -3823,6 +3952,7 @@ function playIntro() {
   // Settings saved by an older Aquaris get the newer options' defaults
   settings.aquarisLookMore = { ...DEFAULTS.aquarisLookMore, ...settings.aquarisLookMore };
   settings.aquarisNight = { ...DEFAULTS.aquarisNight, ...settings.aquarisNight };
+  settings.aquarisAeris = { ...DEFAULTS.aquarisAeris, ...settings.aquarisAeris, mods: { ...DEFAULTS.aquarisAeris.mods, ...settings.aquarisAeris?.mods } };
   // Spotify was taken out (it needs Google-approved copy-protection Aeris doesn't have): YouTube Music instead
   if (settings.aquarisPinned.includes("spotify")) settings.aquarisPinned = [...new Set(settings.aquarisPinned.map(i => (i === "spotify" ? "ytmusic" : i)))];
   await loadAerisThemes();

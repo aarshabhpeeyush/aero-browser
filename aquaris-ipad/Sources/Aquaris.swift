@@ -99,6 +99,7 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     case "close": apps[id]?.removeFromSuperview(); apps[id] = nil; watching[id] = nil
     case "reload": apps[id]?.reload()
     case "stop": apps[id]?.stopLoading()
+    case "zoom": if let z = (msg["value"] as? NSNumber)?.doubleValue { apps[id]?.pageZoom = CGFloat(z) }
     case "go": if let url = URL(string: msg["url"] as? String ?? "") { apps[id]?.load(URLRequest(url: url)) }
     case "back": apps[id]?.goBack()
     case "forward": apps[id]?.goForward()

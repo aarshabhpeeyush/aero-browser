@@ -1230,3 +1230,82 @@ html:has(body.web), body.web { height: 100dvh; overflow: hidden; }
 .ab-tab-x:hover { background: var(--hover); }
 .ab-tab-new { width: 32px; height: 32px; flex: none; border-radius: 8px; font-size: 20px; color: var(--text); margin-bottom: 0; }
 .ab-tab-new:hover { background: var(--hover); }
+
+/* ===== Aeris in the iPad app: themes, tab layouts, Mods, Customize ===== */
+.aeris-win { --vl: 0px; --vr: 0px; }
+.aeris-win .view { width: auto !important; left: var(--vl); right: var(--vr); }
+.aeris-win.ab-bars-left { --vl: 200px; }
+.aeris-win.ab-bars-right { --vr: 200px; }
+.aeris-win.ab-custom-open { --vr: 300px; }
+.aeris-win.ab-custom-open.ab-bars-right { --vr: 500px; }
+.aeris-win.ab-mod-floating .body { background: var(--ab-b, var(--surface-2)); }
+.aeris-win.ab-mod-floating .view { top: 8px; bottom: 8px; left: calc(var(--vl) + 8px); right: calc(var(--vr) + 8px); height: auto !important; border-radius: 12px; }
+
+/* the frame in the theme's colours, with shine */
+.aeris-win.ab-themed .ab-tabs, .aeris-win.ab-themed .ab-bar { background: linear-gradient(180deg, rgba(255, 255, 255, calc(var(--ab-gloss) * 0.45)), transparent 60%), linear-gradient(180deg, var(--ab-a), var(--ab-b)); }
+.aeris-win.ab-themed.ab-bars-left .ab-tabs, .aeris-win.ab-themed.ab-bars-right .ab-tabs { background: linear-gradient(180deg, var(--ab-a), var(--ab-b)); }
+.aeris-win.ab-dark .ab-tabs, .aeris-win.ab-dark .ab-bar { color: #fff; --text: #fff; --muted: rgba(255, 255, 255, 0.72); --hover: rgba(255, 255, 255, 0.14); }
+.aeris-win.ab-dark .ab-url { background: rgba(0, 0, 0, 0.25); }
+.aeris-win.ab-dark .ab-url input { color: #fff; }
+.aeris-win .ab-url:focus-within { box-shadow: inset 0 0 0 2px var(--ab-accent); }
+.aeris-win .ab-tab.on { box-shadow: inset 0 -2px 0 var(--ab-accent); }
+
+/* tab layouts */
+.ab-tab { cursor: default; }
+.ab-tab-num { display: none; font-size: 11px; opacity: 0.7; }
+.aeris-win.ab-mod-tabNumbers .ab-tab-num { display: inline; }
+.aeris-win.ab-mod-centerTitles .ab-tab-title { text-align: center; }
+.aeris-win.ab-mod-hoverClose .ab-tab:not(.on) .ab-tab-x { display: none; }
+.aeris-win.ab-mod-bigTabs .ab-tabs { height: 46px; }
+.aeris-win.ab-mod-bigTabs .ab-tab { height: 40px; font-size: 14px; }
+.aeris-win.ab-bars-under .ab-tabs { align-items: center; border-bottom: 1px solid var(--line); }
+.aeris-win.ab-bars-under .ab-tab { border-radius: 8px; height: 30px; }
+.aeris-win.ab-bars-compact .ab-tabs { height: auto; flex: 1 1 50%; min-width: 0; padding: 0 4px; background: none !important; align-items: center; }
+.aeris-win.ab-bars-compact .ab-tab { height: 30px; border-radius: 8px; flex-basis: 120px; }
+.aeris-win.ab-bars-compact .ab-url { flex: 1 1 40%; }
+.aeris-win.ab-bars-left .ab-tabs, .aeris-win.ab-bars-right .ab-tabs { position: absolute; top: 0; bottom: 0; width: 200px; height: auto; flex-direction: column; align-items: stretch; gap: 3px; padding: 8px; overflow-y: auto; z-index: 1; }
+.aeris-win.ab-bars-left .ab-tabs { left: 0; border-right: 1px solid var(--line); }
+.aeris-win.ab-bars-right .ab-tabs { right: 0; border-left: 1px solid var(--line); }
+.aeris-win.ab-bars-right.ab-custom-open .ab-tabs { right: 300px; }
+.aeris-win.ab-bars-left .ab-tab, .aeris-win.ab-bars-right .ab-tab { flex: none; max-width: none; height: 36px; border-radius: 8px; }
+.aeris-win.ab-bars-left .ab-tab-new, .aeris-win.ab-bars-right .ab-tab-new { width: 100%; }
+.aeris-win.ab-shape-pill .ab-tab { border-radius: 99px !important; margin-bottom: 3px; }
+.aeris-win.ab-shape-square .ab-tab { border-radius: 0 !important; }
+.aeris-win.ab-size-compact .ab-bar { height: 36px; }
+.aeris-win.ab-size-compact .ab-tabs:not(:is(.ab-bars-left *, .ab-bars-right *)) { height: 32px; }
+.aeris-win.ab-size-compact .ab-tab { height: 27px; font-size: 12px; }
+.aeris-win.ab-size-compact .ab-btn { width: 28px; height: 28px; }
+.ab-tab-x { border: 0; background: none; color: inherit; }
+
+/* the Aeris toolbar mod: the glossy back / forward capsule */
+.aeris-win.ab-mod-shell .ab-btn[data-a="back"], .aeris-win.ab-mod-shell .ab-btn[data-a="forward"] {
+  width: 34px; height: 34px; border-radius: 50%; color: #fff;
+  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.75), transparent 55%), linear-gradient(180deg, color-mix(in srgb, var(--ab-accent) 70%, #fff), var(--ab-accent));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.aeris-win.ab-mod-shell .ab-btn[data-a="forward"] { width: 28px; height: 28px; margin-left: -6px; }
+.aeris-win.ab-mod-shell .ab-btn:disabled[data-a] { opacity: 0.5; }
+
+/* motion */
+@keyframes ab-bubble { from { transform: scale(0.6); opacity: 0; } }
+.aeris-win.ab-mod-motion .ab-tab { animation: ab-bubble 0.22s cubic-bezier(0.3, 1.4, 0.6, 1); }
+.aeris-win.ab-mod-motion .ab-btn:active, .aeris-win.ab-mod-motion .ab-tab:active { transform: scale(0.9); }
+
+/* the Customize panel */
+.ab-custom { position: absolute; top: 0; right: 0; bottom: 0; width: 300px; display: none; flex-direction: column; background: var(--surface); border-left: 1px solid var(--line); z-index: 2; }
+.aeris-win.ab-custom-open .ab-custom { display: flex; }
+.ab-custom-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 6px 16px; }
+.ab-custom-scroll { flex: 1; overflow-y: auto; padding: 0 16px 16px; }
+.ab-custom h4 { margin: 14px 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.ab-themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ab-theme { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; border-radius: 10px; font-size: 11px; color: var(--text); }
+.ab-theme-swatch { width: 100%; height: 34px; border-radius: 8px; background: linear-gradient(135deg, var(--a), var(--b)); box-shadow: inset 0 0 0 1px var(--line); }
+.ab-theme.on { box-shadow: inset 0 0 0 2px var(--ab-accent, var(--accent)); }
+.ab-row { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 13px; }
+.ab-row input[type=range] { flex: 1; }
+.ab-label { display: block; margin: 10px 0 4px; font-size: 12.5px; color: var(--muted); }
+.ab-choice { display: flex; flex-wrap: wrap; gap: 4px; }
+.ab-choice button { padding: 6px 10px; border-radius: 8px; font-size: 12.5px; background: var(--hover); color: var(--text); }
+.ab-choice button.on { background: var(--ab-accent, var(--accent)); color: #fff; }
+.ab-toggle { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0; font-size: 13px; line-height: 1.3; }
+.btn.tiny { padding: 3px 8px; font-size: 11.5px; }

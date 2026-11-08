@@ -29,6 +29,8 @@ assert theme_link in page
 # The theme comes from the address: index.html#theme=<id> (Aquaris passes the Aeris theme you picked)
 page = page.replace(theme_link, '<link id="aeroTheme" rel="stylesheet">\n  <script>{ const id = (location.hash.match(/theme=([\\w-]+)/) || [])[1];'
                     ' if (id) document.getElementById("aeroTheme").href = "../../themes/" + id + "/newtab.css"; }</script>')
+# Fingers: dragging a widget moves it instead of scrolling the page
+page = page.replace("</head>", "<style>.widget, .widget * { touch-action: none; } input, textarea, .list, .queue { touch-action: auto; }</style>\n</head>", 1)
 (newtab / "index.html").write_text(page, encoding="utf-8")
 for folder in sorted((repo / "themes-builtin").iterdir()):
     if folder.is_dir():
