@@ -47,7 +47,8 @@ def translate(css, theme_id):
         for sel in (s.strip() for s in prelude.split(",")):
             sel = re.sub(r"\s+", " ", sel)
             if sel == ":root":
-                out.append(_render(scope, [d for d in decls if d[0].startswith("--")]))
+                vars_ = [(k, v) if k != "--accent" else (k, f"var(--ab-picked, {v})") for k, v in decls if k.startswith("--")]
+                out.append(_render(f"{scope} :is(.ab-tabs, .ab-bar)", vars_))
                 continue
             target = MAP.get(sel)
             if not target:

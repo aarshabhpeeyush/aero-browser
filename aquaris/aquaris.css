@@ -1238,19 +1238,24 @@ html:has(body.web), body.web { height: 100dvh; overflow: hidden; }
 .aeris-win.ab-bars-right { --vr: 200px; }
 .aeris-win.ab-custom-open { --vr: 300px; }
 .aeris-win.ab-custom-open.ab-bars-right { --vr: 500px; }
-.aeris-win.ab-mod-floating .body { background: var(--ab-b, var(--surface-2)); }
+.aeris-win.ab-mod-floating .body { background: var(--ab-frame-b, var(--surface-2)); }
 .aeris-win.ab-mod-floating .view { top: 8px; bottom: 8px; left: calc(var(--vl) + 8px); right: calc(var(--vr) + 8px); height: auto !important; border-radius: 12px; }
 
 /* Aeris's frame, like Aero's (ui/browser.css): everything comes from these variables, which the
    colour themes set, and custom themes add their own styles on top (themes/<id>/ipad-frame.css) */
-.aeris-win {
-  --frame-a: #1f7fd6; --frame-b: #7fd0ff; --accent: #1e9be8; --text: #fff;
-  --text-shadow: 0 1px 2px rgba(0, 40, 90, 0.55); --gloss: 0.7; --tab-radius: 10px; --shine: 1;
+.aeris-win { --shine: 1; }
+.aeris-win :is(.ab-tabs, .ab-bar) {
+  --frame-a: var(--ab-frame-a, #1f7fd6); --frame-b: var(--ab-frame-b, #7fd0ff); --accent: var(--ab-accent, #1e9be8);
+  --text: var(--ab-text, #fff); --text-shadow: var(--ab-text-shadow, 0 1px 2px rgba(0, 40, 90, 0.55));
+  --gloss: 0.7; --tab-radius: 10px;
+}
+.aeris-win :is(.ab-tabs, .ab-bar) {
   --g: calc(var(--gloss) * var(--shine));
   --accent-dark: color-mix(in srgb, var(--accent), #000 35%);
   --accent-light: color-mix(in srgb, var(--accent), #fff 55%);
-  --ab-accent: var(--accent);
 }
+.aeris-win .ab-custom { color: var(--text); }
+.aeris-win .ab-custom .ab-theme-name { color: var(--text); text-shadow: none; }
 .aeris-win .ab-tabs {
   color: var(--text); text-shadow: var(--text-shadow); border-top: 0;
   background:

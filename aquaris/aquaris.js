@@ -747,12 +747,12 @@ function applyAerisLook(win) {
   for (const c of [...el.classList]) if (c.startsWith("th-")) el.classList.remove(c);
   const th = themeById(A.theme);
   const custom = A.theme.startsWith("t:") ? A.theme.slice(2) : "";
-  for (const k of ["--frame-a", "--frame-b", "--accent", "--text", "--text-shadow", "--gloss"]) el.style.removeProperty(k);
-  if (th && !custom) {
-    el.style.setProperty("--frame-a", th.a);
-    el.style.setProperty("--frame-b", th.b);
-    el.style.setProperty("--accent", th.accent);
-    if (th.light) { el.style.setProperty("--text", "#123a5c"); el.style.setProperty("--text-shadow", "0 1px 0 rgba(255, 255, 255, 0.6)"); }
+  for (const k of ["--ab-frame-a", "--ab-frame-b", "--ab-accent", "--ab-text", "--ab-text-shadow"]) el.style.removeProperty(k);
+  if (th) {
+    el.style.setProperty("--ab-frame-a", th.a);
+    el.style.setProperty("--ab-frame-b", th.b);
+    el.style.setProperty("--ab-accent", th.accent);
+    if (th.light && !custom) { el.style.setProperty("--ab-text", "#123a5c"); el.style.setProperty("--ab-text-shadow", "0 1px 0 rgba(255, 255, 255, 0.6)"); }
   }
   if (custom) {
     el.classList.add("th-" + custom);
@@ -764,7 +764,8 @@ function applyAerisLook(win) {
       document.head.append(link);
     }
   }
-  if (A.accent) el.style.setProperty("--accent", A.accent);
+  el.style.removeProperty("--ab-picked");
+  if (A.accent) { el.style.setProperty("--ab-accent", A.accent); el.style.setProperty("--ab-picked", A.accent); }
   // Shine: the theme's own amount, scaled by the slider (50 = as the theme made it)
   el.style.setProperty("--shine", String(A.gloss / 50));
   shellSync();
