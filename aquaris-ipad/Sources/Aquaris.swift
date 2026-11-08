@@ -361,7 +361,7 @@ final class CursorView: UIView {
     arrow.fill()
     UIColor.black.setStroke()
     arrow.lineWidth = 1.5
-    arrow.lineJoin = .round
+    arrow.lineJoinStyle = .round
     arrow.stroke()
   }
 }
