@@ -12,7 +12,6 @@ jobs:
     runs-on: macos-14
     timeout-minutes: 355
     env:
-      MOZBUILD_STATE_PATH: ${{ runner.temp }}/mozbuild
       SCCACHE_GHA_ENABLED: "true"
       SCCACHE_CACHE_SIZE: 9G
     steps:
@@ -20,6 +19,7 @@ jobs:
 
       - name: Make room
         run: |
+          echo "MOZBUILD_STATE_PATH=$RUNNER_TEMP/mozbuild" >> "$GITHUB_ENV"
           # Firefox needs a lot of disk; GitHub's Macs come with several spare copies of Xcode and phone simulators
           df -h /
           current="$(xcode-select -p | sed 's#/Contents/Developer##')"
