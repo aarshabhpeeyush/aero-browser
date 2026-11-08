@@ -1,0 +1,286 @@
+/* Theme skins: picking an Aeris theme dresses the whole of Aquaris to match, not just its colours.
+   Most themes → Frutiger Aero (glossy glass, gel buttons, light and bubbles) in the theme's colours.
+   Woodland Hut → wood: carved beams, parchment, stained-wood icons, an enchanted forest.
+   Frutiger Metro → Metro: flat square tiles, bold type, bright colour with a bit of gloss.
+   body[data-skin] is set by applyLook(); --theme-a / --theme-b / --accent are the theme's colours. */
+
+/* ===================================================================================== */
+/* =================================== FRUTIGER AERO =================================== */
+/* ===================================================================================== */
+
+body[data-skin="aero"] {
+  --font: "Segoe UI", "Frutiger", "Myriad Pro", system-ui, sans-serif;
+  --font-display: "Segoe UI", "Frutiger", system-ui, sans-serif;
+  --r-ctl: 6px;
+  --gloss-top: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.18) 49%, rgba(255, 255, 255, 0) 50%);
+  --gel: var(--gloss-top), radial-gradient(90% 60% at 50% 100%, color-mix(in srgb, var(--accent), #fff 45%) 0%, transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent), #000 18%), var(--accent));
+  --glass-tint: color-mix(in srgb, var(--theme-a), transparent 45%);
+}
+body[data-skin="aero"][data-wall="aero"]::before {
+  background:
+    url("walls/aero-shine.svg") center / cover no-repeat,
+    radial-gradient(ellipse at 80% 0%, rgba(255, 255, 255, 0.45), transparent 55%),
+    radial-gradient(ellipse at 10% 110%, color-mix(in srgb, var(--accent), transparent 30%), transparent 60%),
+    linear-gradient(170deg, var(--theme-a) 0%, color-mix(in srgb, var(--theme-a), var(--theme-b)) 50%, var(--theme-b) 100%);
+}
+/* Top bar: tinted glass with a gloss line, white text with a glow (like Windows 7's Aero frame) */
+body[data-skin="aero"] #topbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 51%), var(--glass-tint);
+  backdrop-filter: blur(18px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 0 rgba(0, 0, 0, 0.25), 0 2px 10px rgba(0, 0, 0, 0.15);
+  color: #fff;
+}
+body[data-skin="aero"] #topbar :is(.tb-btn, .tb-btn *) { color: #fff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.55), 0 1px 2px rgba(0, 0, 0, 0.45); }
+body[data-skin="aero"] #topbar .tb-btn:hover, body[data-skin="aero"] #topbar .tb-btn.open { background: rgba(255, 255, 255, 0.22); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45); }
+
+/* Windows: a glass frame tinted with the theme, glossy title bar, Windows 7 style buttons */
+body[data-skin="aero"] .win {
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 10px 32px rgba(0, 20, 50, 0.35);
+}
+body[data-skin="aero"] .win.active { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 16px 48px rgba(0, 20, 50, 0.5); }
+body[data-skin="aero"] .titlebar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 255, 255, 0) 51%), var(--glass-tint);
+  backdrop-filter: blur(16px) saturate(1.5);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.18);
+  color: #fff;
+}
+body[data-skin="aero"] .titlebar .title { color: #fff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.7), 0 1px 2px rgba(0, 0, 0, 0.5); font-weight: 600; }
+body[data-skin="aero"] .titlebar .tool { color: rgba(255, 255, 255, 0.92); }
+body[data-skin="aero"] .titlebar .tool:hover { background: rgba(255, 255, 255, 0.25); color: #fff; }
+body[data-skin="aero"] .caption { align-self: flex-start; gap: 1px; padding-right: 6px; }
+body[data-skin="aero"] .caption button {
+  width: 30px;
+  height: 20px;
+  color: #fff;
+  border-radius: 0 0 4px 4px;
+  background: var(--gloss-top), rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+body[data-skin="aero"] .caption .c-close { width: 46px; background: var(--gloss-top), radial-gradient(80% 70% at 50% 100%, #ffb38f, transparent 70%), linear-gradient(180deg, #c33a1f, #e8603c); }
+body[data-skin="aero"] .caption button:hover { filter: brightness(1.2); background-color: rgba(255, 255, 255, 0.35); }
+body[data-skin="aero"] .caption .i { width: 12px; height: 12px; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5)); }
+
+/* Glossy app icons: a curved shine over the top */
+body[data-skin="aero"] .tile:not(.img):not(.tiny):not(.site)::after {
+  content: "";
+  position: absolute;
+  inset: 1px 2px 50%;
+  border-radius: 40% 40% 50% 50% / 30% 30% 70% 70%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.05));
+  pointer-events: none;
+}
+body[data-skin="aero"] .tile:not(.img):not(.site) {
+  border-radius: 22%;
+  background:
+    radial-gradient(90% 55% at 50% 100%, color-mix(in srgb, var(--c), #fff 40%) 0%, transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--c), #000 22%), var(--c));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.25), 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+body[data-skin="aero"] .icon span { text-shadow: 0 0 6px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.8); }
+body[data-skin="aero"] .icon:hover { background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.12)); border-color: rgba(255, 255, 255, 0.55); }
+
+/* Dock: a glass shelf with a reflection line */
+body[data-skin="aero"] #dock {
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.05) 51%, rgba(255, 255, 255, 0.25)), var(--glass-tint);
+  backdrop-filter: blur(16px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 20, 50, 0.35);
+}
+body[data-skin="aero"] .dock-item:hover { transform: translateY(-6px) scale(1.1); }
+body[data-skin="aero"] .dock-item.running::after { background: radial-gradient(circle, #fff, color-mix(in srgb, var(--accent), #fff 30%)); box-shadow: 0 0 6px #fff; }
+
+/* Buttons: glossy gel pills; selected things are accent gel */
+body[data-skin="aero"] .btn {
+  border-radius: 6px;
+  background: var(--gloss-top), linear-gradient(180deg, #eef3f8, #d3dde8);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 0 0 1px rgba(0, 30, 70, 0.35);
+  color: #10233a;
+}
+body[data-skin="aero"] :is(.btn.primary, .qs-tile.on, .cal-day.today, .seg button.on, .qs-cell.on .qs-on) {
+  background: var(--gel);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45), 0 0 0 1px color-mix(in srgb, var(--accent), #000 35%);
+}
+body[data-skin="aero"] .seg { border-radius: 7px; background: var(--gloss-top), rgba(255, 255, 255, 0.3); }
+
+/* Menus, flyouts and the app page: frosted glass with a gloss line, gel selection */
+body[data-skin="aero"] :is(.menu, .flyout, .mb-menu, .sp-box, #quick) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 40%), var(--glass-strong);
+  backdrop-filter: blur(22px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.3), 0 14px 40px rgba(0, 20, 50, 0.4);
+}
+body[data-skin="aero"] :is(.menu button:hover, .mb-menu button:hover, .ln-result.on, .sp-row.on) { background: var(--gel); color: #fff; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35); }
+body[data-skin="aero"] .ln-app:hover { background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6); }
+body[data-skin="aero"] #launcher .ln-app span { color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+
+/* ===================================================================================== */
+/* ==================================== WOODLAND HUT =================================== */
+/* ===================================================================================== */
+
+body[data-skin="wood"] {
+  --font: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --font-display: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --text: #3b2614;
+  --muted: #7a5a3a;
+  --surface: #f3e5c6;
+  --surface-2: #fbf2de;
+  --line: rgba(74, 46, 23, 0.22);
+  --line-strong: rgba(74, 46, 23, 0.38);
+  --hover: rgba(120, 80, 30, 0.12);
+  --press: rgba(120, 80, 30, 0.2);
+  --accent: #5f8f3a;
+  --glass: rgba(243, 229, 198, 0.94);
+  --glass-strong: rgba(246, 234, 208, 0.97);
+  --r-ctl: 6px;
+  --grain: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.12) 0 2px, transparent 2px 7px, rgba(255, 220, 170, 0.07) 7px 9px, transparent 9px 17px);
+  --grain-v: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0 2px, transparent 2px 8px, rgba(255, 220, 170, 0.06) 8px 10px, transparent 10px 19px);
+  --beam: linear-gradient(180deg, rgba(255, 210, 140, 0.2) 0%, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.25) 100%), var(--grain), linear-gradient(180deg, #6b4423, #4a2e17);
+  --parchment: radial-gradient(ellipse at 50% 0%, rgba(255, 250, 235, 0.8), transparent 70%), linear-gradient(180deg, #f6ead0, #ecd9b2);
+  --moss: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 51%), linear-gradient(180deg, #75a64b, #4f7a2f);
+  color-scheme: light;
+}
+body[data-skin="wood"][data-wall="wood"]::before { background: url("walls/woodland.svg") center bottom / cover no-repeat, #1d3324; }
+
+/* Top bar: a carved wooden beam */
+body[data-skin="wood"] #topbar { background: var(--beam); backdrop-filter: none; border-bottom: 2px solid #2e1b0c; box-shadow: 0 2px 8px rgba(20, 10, 0, 0.5); }
+body[data-skin="wood"] #topbar :is(.tb-btn, .tb-btn *) { color: #f6e7c8; text-shadow: 0 1px 2px rgba(30, 15, 0, 0.8); }
+body[data-skin="wood"] #topbar .tb-btn:hover, body[data-skin="wood"] #topbar .tb-btn.open { background: rgba(255, 220, 160, 0.18); }
+
+/* Windows: a wooden frame round a parchment page */
+body[data-skin="wood"] .win {
+  border-radius: 8px;
+  background: var(--parchment);
+  border: 3px solid #4a2e17;
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 160, 0.25), 0 10px 30px rgba(20, 10, 0, 0.55);
+}
+body[data-skin="wood"] .titlebar { background: var(--beam); border-bottom: 2px solid #2e1b0c; color: #f6e7c8; }
+body[data-skin="wood"] .titlebar .title { color: #f6e7c8; text-shadow: 0 1px 2px rgba(30, 15, 0, 0.8); letter-spacing: 0.3px; }
+body[data-skin="wood"] .titlebar .tool { color: #f0dcb4; }
+body[data-skin="wood"] .titlebar .tool:hover { background: rgba(255, 220, 160, 0.2); color: #fff; }
+/* Window buttons: little brass knobs */
+body[data-skin="wood"] .caption { align-self: center; gap: 8px; padding-right: 10px; }
+body[data-skin="wood"] .caption button {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: rgba(46, 27, 12, 0.85);
+  background: radial-gradient(circle at 35% 30%, #fff2c0, #d8a83c 45%, #8a5a14);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 -1px 2px rgba(0, 0, 0, 0.3);
+}
+body[data-skin="wood"] .caption .c-close { background: radial-gradient(circle at 35% 30%, #ffd2b8, #c4573a 45%, #6e2414); color: #fff2e0; }
+body[data-skin="wood"] .caption .i { width: 10px; height: 10px; }
+body[data-skin="wood"] .caption button:hover { filter: brightness(1.15); }
+body[data-skin="wood"] :is(.body, .page) { background: var(--parchment); }
+body[data-skin="wood"] .page section { background: rgba(255, 248, 230, 0.6); box-shadow: inset 0 0 0 1px var(--line); border-radius: 6px; }
+
+/* Icons: stained-wood plaques, each stained a little with the app's colour */
+body[data-skin="wood"] .tile:not(.img):not(.site) {
+  border-radius: 18%;
+  background:
+    linear-gradient(180deg, rgba(255, 230, 180, 0.28), rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.25)),
+    linear-gradient(color-mix(in srgb, var(--c), transparent 55%), color-mix(in srgb, var(--c), transparent 55%)),
+    var(--grain),
+    linear-gradient(160deg, #8a5a2e, #5a3519);
+  box-shadow: inset 0 0 0 2px rgba(46, 27, 12, 0.7), inset 0 0 0 3px rgba(255, 220, 160, 0.25), 0 3px 6px rgba(20, 10, 0, 0.5);
+}
+body[data-skin="wood"] .tile:not(.img):not(.site) .glyph { filter: drop-shadow(0 1px 1px rgba(30, 15, 0, 0.8)); }
+body[data-skin="wood"] .tile:not(.img):not(.site) .glyph.ui, body[data-skin="wood"] .tile:not(.img):not(.site) { color: #f6e7c8; }
+body[data-skin="wood"] .icon span { color: #fbf0d8; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
+body[data-skin="wood"] .icon:hover { background: rgba(255, 220, 160, 0.18); }
+body[data-skin="wood"] .icon.on { background: rgba(255, 220, 160, 0.28); border-color: rgba(255, 220, 160, 0.5); }
+
+/* Dock: a wooden shelf */
+body[data-skin="wood"] #dock {
+  border-radius: 8px;
+  background: var(--beam);
+  backdrop-filter: none;
+  border: 2px solid #2e1b0c;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 160, 0.35), 0 6px 0 #2e1b0c, 0 10px 24px rgba(20, 10, 0, 0.6);
+}
+body[data-skin="wood"] .dock-item.running::after { background: #ffd27a; box-shadow: 0 0 6px #ffb347; }
+body[data-skin="wood"] .dock-sep { background: rgba(46, 27, 12, 0.7); }
+
+/* Buttons: wooden; chosen things are moss green */
+body[data-skin="wood"] .btn { border-radius: 6px; background: linear-gradient(180deg, #f6e3bd, #dcc08c); box-shadow: inset 0 0 0 1px rgba(74, 46, 23, 0.55), 0 1px 2px rgba(30, 15, 0, 0.35); color: #3b2614; }
+body[data-skin="wood"] :is(.btn.primary, .qs-tile.on, .cal-day.today, .seg button.on, .qs-cell.on .qs-on) { background: var(--moss); color: #fbf6e6; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.45); box-shadow: inset 0 0 0 1px #3c5e22; }
+body[data-skin="wood"] .seg { background: rgba(120, 80, 30, 0.12); }
+
+/* Menus and panels: parchment with a wooden edge */
+body[data-skin="wood"] :is(.menu, .flyout, .mb-menu, .sp-box, #quick) {
+  background: var(--parchment);
+  backdrop-filter: none;
+  border: 2px solid #4a2e17;
+  box-shadow: 0 12px 30px rgba(20, 10, 0, 0.5);
+}
+body[data-skin="wood"] :is(.menu button:hover, .mb-menu button:hover, .ln-result.on, .sp-row.on) { background: var(--moss); color: #fbf6e6; }
+body[data-skin="wood"] #launcher .ln-app span { color: #fbf0d8; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
+body[data-skin="wood"] #launcher .ln-app:hover { background: rgba(255, 220, 160, 0.18); }
+
+/* ===================================================================================== */
+/* =================================== FRUTIGER METRO ================================== */
+/* ===================================================================================== */
+
+body[data-skin="metro"] {
+  --font: "Segoe UI", "Selawik", "Open Sans", system-ui, sans-serif;
+  --font-display: "Segoe UI Light", "Segoe UI", "Selawik", system-ui, sans-serif;
+  --r-win: 0px;
+  --r-ctl: 0px;
+  --sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 50%, rgba(255, 255, 255, 0) 51%);
+}
+body[data-skin="metro"][data-wall="metro"]::before {
+  background:
+    url("walls/metro-tiles.svg") center / cover no-repeat,
+    radial-gradient(ellipse at 85% 10%, rgba(255, 255, 255, 0.35), transparent 50%),
+    linear-gradient(135deg, var(--theme-a), var(--theme-b));
+}
+body[data-skin="metro"] * { border-radius: 0 !important; }
+body[data-skin="metro"] .dock-item.running::after { border-radius: 0 !important; }
+
+/* Top bar: a flat dark strip */
+body[data-skin="metro"] #topbar { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(10px); box-shadow: none; color: #fff; }
+body[data-skin="metro"] #topbar :is(.tb-btn, .tb-btn *) { color: #fff; }
+body[data-skin="metro"] #topbar .tb-btn:hover, body[data-skin="metro"] #topbar .tb-btn.open { background: var(--accent); }
+
+/* Windows: flat squares with a solid accent title bar */
+body[data-skin="metro"] .win { box-shadow: 0 0 0 1px var(--accent), 0 8px 30px rgba(0, 0, 0, 0.35); }
+body[data-skin="metro"] .win:not(.active) { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(0, 0, 0, 0.25); }
+body[data-skin="metro"] .titlebar { height: 36px; background: var(--sheen), var(--accent); color: #fff; }
+body[data-skin="metro"] .win:not(.active) .titlebar { background: var(--surface); color: var(--text); }
+body[data-skin="metro"] .titlebar .title { color: inherit; font-weight: 400; font-size: 14px; letter-spacing: 0.2px; }
+body[data-skin="metro"] .titlebar :is(.tool, .caption button) { color: inherit; }
+body[data-skin="metro"] .titlebar .tool:hover, body[data-skin="metro"] .caption button:hover { background: rgba(255, 255, 255, 0.2); }
+body[data-skin="metro"] .caption .c-close:hover { background: #e81123; color: #fff; }
+
+/* Icons: flat square tiles with a little gloss */
+body[data-skin="metro"] .tile:not(.img):not(.site) { background: var(--sheen), var(--c); box-shadow: none; }
+body[data-skin="metro"] .tile.site { box-shadow: none; }
+body[data-skin="metro"] .icon span { font-weight: 400; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+body[data-skin="metro"] .icon:hover, body[data-skin="metro"] .icon.on { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.5); }
+
+/* Dock: a flat dark bar; the open app is underlined with the accent */
+body[data-skin="metro"] #dock { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(10px); box-shadow: none; }
+body[data-skin="metro"] .dock-item:hover { transform: none; background: rgba(255, 255, 255, 0.15); }
+body[data-skin="metro"] .dock-item.running::after { width: 60%; margin-left: -30%; height: 3px; background: var(--accent); }
+body[data-skin="metro"] .dock-sep { background: rgba(255, 255, 255, 0.3); }
+
+/* Buttons and choices: flat, solid colour when chosen */
+body[data-skin="metro"] .btn { box-shadow: inset 0 0 0 2px var(--line-strong); background: transparent; }
+body[data-skin="metro"] .btn:hover { background: var(--hover); }
+body[data-skin="metro"] :is(.btn.primary, .qs-tile.on, .cal-day.today, .seg button.on, .qs-cell.on .qs-on) { background: var(--accent); color: #fff; box-shadow: none; }
+
+/* Menus and panels: flat; selection is the accent */
+body[data-skin="metro"] :is(.menu, .flyout, .mb-menu, .sp-box, #quick) { box-shadow: 0 0 0 1px var(--line-strong), 0 10px 30px rgba(0, 0, 0, 0.35); }
+body[data-skin="metro"] :is(.menu button:hover, .mb-menu button:hover, .ln-result.on, .sp-row.on) { background: var(--accent); color: #fff; }
+
+/* The app page is a Start screen: big coloured tiles with the name in the corner */
+body[data-skin="metro"] #launcher .lp-grid { gap: 8px; }
+body[data-skin="metro"] #launcher .ln-app { position: relative; aspect-ratio: 1; padding: 0; justify-content: center; overflow: hidden; }
+body[data-skin="metro"] #launcher .ln-app .tile { position: absolute; inset: 0; width: 100%; height: 100%; --size: 100%; }
+body[data-skin="metro"] #launcher .ln-app .tile .glyph { width: 42%; height: 42%; }
+body[data-skin="metro"] #launcher .ln-app .tile.img img { width: 50%; height: 50%; }
+body[data-skin="metro"] #launcher .ln-app span { position: absolute; left: 8px; right: 8px; bottom: 6px; z-index: 1; text-align: left; color: #fff; font-size: 12px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
+body[data-skin="metro"] #launcher .ln-app:hover { outline: 3px solid rgba(255, 255, 255, 0.7); outline-offset: -3px; background: none; }

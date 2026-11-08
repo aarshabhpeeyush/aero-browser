@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <!-- Woodland Hut: an enchanted forest at dusk, with lantern light, a little hut and fireflies -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d3324"/>
+      <stop offset="0.45" stop-color="#3f5a33"/>
+      <stop offset="0.75" stop-color="#c79a52"/>
+      <stop offset="1" stop-color="#6b4423"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd27a" stop-opacity="0.75"/>
+      <stop offset="0.5" stop-color="#ffb347" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#ffb347" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="fly" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff6b0"/>
+      <stop offset="0.35" stop-color="#ffe066" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#ffe066" stop-opacity="0"/>
+    </radialGradient>
+    <g id="pine">
+      <path d="M0 -300 L70 -170 L40 -170 L110 -40 L70 -40 L140 90 L-140 90 L-70 -40 L-110 -40 L-40 -170 L-70 -170 Z"/>
+      <rect x="-14" y="90" width="28" height="60"/>
+    </g>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <!-- the low sun through the trees -->
+  <circle cx="1180" cy="760" r="420" fill="url(#glow)"/>
+  <!-- far trees -->
+  <g fill="#2c4a2e" opacity="0.75">
+    <use href="#pine" transform="translate(120 760) scale(0.9)"/>
+    <use href="#pine" transform="translate(330 790) scale(0.7)"/>
+    <use href="#pine" transform="translate(520 770) scale(0.85)"/>
+    <use href="#pine" transform="translate(760 800) scale(0.6)"/>
+    <use href="#pine" transform="translate(1500 780) scale(0.8)"/>
+    <use href="#pine" transform="translate(1700 760) scale(0.95)"/>
+    <use href="#pine" transform="translate(1880 790) scale(0.7)"/>
+  </g>
+  <!-- hills and moss -->
+  <path d="M0 900 C 300 820, 600 880, 900 850 S 1500 800, 1920 870 L1920 1080 L0 1080 Z" fill="#33502c"/>
+  <path d="M0 960 C 400 900, 800 980, 1200 940 S 1700 910, 1920 950 L1920 1080 L0 1080 Z" fill="#26401f"/>
+  <!-- the hut, with a lit window -->
+  <g transform="translate(1180 850)">
+    <path d="M-120 0 L0 -110 L120 0 Z" fill="#4a2e17"/>
+    <path d="M-135 4 L0 -122 L135 4" fill="none" stroke="#2e1b0c" stroke-width="10" stroke-linecap="round"/>
+    <rect x="-95" y="0" width="190" height="110" fill="#6b4423"/>
+    <g stroke="#4a2e17" stroke-width="3" opacity="0.6"><path d="M-95 26 H95 M-95 54 H95 M-95 82 H95"/></g>
+    <rect x="-70" y="30" width="44" height="40" rx="4" fill="#ffd27a"/>
+    <path d="M-48 30 V70 M-70 50 H-26" stroke="#4a2e17" stroke-width="4"/>
+    <rect x="20" y="40" width="46" height="70" rx="22" fill="#2e1b0c"/>
+    <circle cx="-48" cy="50" r="70" fill="url(#glow)" opacity="0.6"/>
+    <rect x="50" y="-90" width="22" height="50" fill="#4a2e17"/>
+  </g>
+  <!-- near trees, framing the scene -->
+  <g fill="#162a17">
+    <use href="#pine" transform="translate(60 900) scale(1.8)"/>
+    <use href="#pine" transform="translate(300 980) scale(1.3)"/>
+    <use href="#pine" transform="translate(1790 930) scale(1.7)"/>
+    <use href="#pine" transform="translate(1600 1010) scale(1.1)"/>
+  </g>
+  <!-- fireflies -->
+  <g>
+    <circle cx="520" cy="620" r="14" fill="url(#fly)"/>
+    <circle cx="700" cy="720" r="10" fill="url(#fly)"/>
+    <circle cx="880" cy="560" r="12" fill="url(#fly)"/>
+    <circle cx="1420" cy="640" r="11" fill="url(#fly)"/>
+    <circle cx="1560" cy="560" r="14" fill="url(#fly)"/>
+    <circle cx="980" cy="760" r="9" fill="url(#fly)"/>
+    <circle cx="420" cy="760" r="9" fill="url(#fly)"/>
+    <circle cx="1320" cy="500" r="8" fill="url(#fly)"/>
+  </g>
+</svg>

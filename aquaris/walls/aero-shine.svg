@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <!-- Frutiger Aero light: glossy ribbons of light, bubbles and sparkles. White only, so it sits on
+       top of any theme's colours (the colours come from Aquaris's CSS underneath). -->
+  <defs>
+    <linearGradient id="ribbon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="0.35" stop-color="#fff" stop-opacity="0.55"/>
+      <stop offset="0.7" stop-color="#fff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ribbon2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="bubble" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.04"/>
+      <stop offset="0.72" stop-color="#fff" stop-opacity="0.12"/>
+      <stop offset="0.93" stop-color="#fff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <g id="b">
+      <circle r="1" fill="url(#bubble)"/>
+      <ellipse cx="-0.32" cy="-0.42" rx="0.34" ry="0.18" transform="rotate(-30 -0.32 -0.42)" fill="#fff" fill-opacity="0.75"/>
+      <circle cx="0.4" cy="0.45" r="0.08" fill="#fff" fill-opacity="0.45"/>
+    </g>
+  </defs>
+  <!-- the sun glow -->
+  <circle cx="1500" cy="160" r="520" fill="url(#glow)"/>
+  <!-- ribbons of light sweeping across -->
+  <path d="M-100 760 C 300 600, 700 980, 1100 760 S 1700 560, 2050 700 L 2050 740 C 1700 610, 1500 820, 1100 820 S 300 680, -100 820 Z" fill="url(#ribbon)"/>
+  <path d="M-100 860 C 400 720, 800 1060, 1250 860 S 1800 700, 2050 820 L 2050 840 C 1800 740, 1500 940, 1250 900 S 400 780, -100 890 Z" fill="url(#ribbon2)"/>
+  <path d="M-100 640 C 500 520, 900 820, 1400 640 S 1900 520, 2050 600" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="3"/>
+  <path d="M-100 700 C 450 600, 950 880, 1450 700 S 1900 600, 2050 660" fill="none" stroke="#fff" stroke-opacity="0.3" stroke-width="2"/>
+  <!-- bubbles -->
+  <use href="#b" transform="translate(240 300) scale(70)"/>
+  <use href="#b" transform="translate(420 520) scale(34)"/>
+  <use href="#b" transform="translate(1660 520) scale(90)"/>
+  <use href="#b" transform="translate(1380 880) scale(46)"/>
+  <use href="#b" transform="translate(860 240) scale(22)"/>
+  <use href="#b" transform="translate(620 900) scale(56)"/>
+  <use href="#b" transform="translate(1820 260) scale(28)"/>
+  <use href="#b" transform="translate(1080 470) scale(16)"/>
+  <use href="#b" transform="translate(140 820) scale(24)"/>
+  <!-- sparkles -->
+  <g fill="#fff">
+    <path d="M1290 330 l6 -22 l6 22 l22 6 l-22 6 l-6 22 l-6 -22 l-22 -6 z" fill-opacity="0.8"/>
+    <path d="M560 160 l4 -14 l4 14 l14 4 l-14 4 l-4 14 l-4 -14 l-14 -4 z" fill-opacity="0.7"/>
+    <path d="M1760 760 l4 -14 l4 14 l14 4 l-14 4 l-4 14 l-4 -14 l-14 -4 z" fill-opacity="0.7"/>
+  </g>
+</svg>
