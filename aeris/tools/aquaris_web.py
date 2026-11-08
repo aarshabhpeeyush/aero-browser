@@ -27,14 +27,21 @@ page = (newtab / "index.html").read_text(encoding="utf-8")
 theme_link = '<link id="aeroTheme" rel="stylesheet" href="aero://themes/_active/newtab.css">'
 assert theme_link in page
 # The theme comes from the address: index.html#theme=<id> (Aquaris passes the Aeris theme you picked)
-page = page.replace(theme_link, '<link id="aeroTheme" rel="stylesheet">\n  <script>{ const id = (location.hash.match(/theme=([\\w-]+)/) || [])[1];'
-                    ' if (id) document.getElementById("aeroTheme").href = "../../themes/" + id + "/newtab.css"; }</script>')
+page = page.replace(theme_link, '<link id="aeroTheme" rel="stylesheet">\n  <script>{ const pick = () => { const id = (location.hash.match(/theme=([\\w-]+)/) || [])[1];'
+                    ' const link = document.getElementById("aeroTheme"); if (id) link.href = "../../themes/" + id + "/newtab.css"; else link.removeAttribute("href"); };'
+                    ' pick(); addEventListener("hashchange", pick); }</script>')
 # Fingers: dragging a widget moves it instead of scrolling the page
 page = page.replace("</head>", "<style>.widget, .widget * { touch-action: none; } input, textarea, .list, .queue { touch-action: auto; }</style>\n</head>", 1)
 (newtab / "index.html").write_text(page, encoding="utf-8")
+sys.path.insert(0, str(repo / "aeris" / "tools"))
+import ipad_theme  # noqa: E402
 for folder in sorted((repo / "themes-builtin").iterdir()):
     if folder.is_dir():
         shutil.copytree(folder, out / "themes" / folder.name, dirs_exist_ok=True)
+        # The theme's frame (tab bar, tabs, toolbar, buttons, address bar) for Aeris on the iPad
+        if (folder / "theme.css").exists():
+            (out / "themes" / folder.name / "ipad-frame.css").write_text(
+                ipad_theme.translate((folder / "theme.css").read_text(encoding="utf-8"), folder.name), encoding="utf-8")
 (out / "icons").mkdir(exist_ok=True)
 from PIL import Image
 Image.open(repo / "build" / "icon.png").convert("RGBA").resize((128, 128), Image.LANCZOS).save(out / "icons" / "aeris-128.png")

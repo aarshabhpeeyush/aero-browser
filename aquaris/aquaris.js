@@ -103,7 +103,7 @@ const NEW_TAB_URL = (() => {
 // iPad's engine: Apple only allows its own). The theme you picked in Aquaris goes along.
 const aerisNewTab = () => {
   const s = typeof settings !== "undefined" ? settings : {};
-  const pick = s.aquarisAeris?.theme || s.aquarisTheme || "";
+  const pick = s.aquarisAeris?.theme ? s.aquarisAeris.theme : s.aquarisTheme || "";
   const id = pick.startsWith("t:") ? pick.slice(2) : "";
   return new URL("../aeris/newtab/index.html", location.href).href + (id ? "#theme=" + id : "");
 };
@@ -742,14 +742,31 @@ function applyAerisLook(win) {
   else if (A.bars === "compact") bar.insertBefore(strip, bar.querySelector(".ab-url"));
   else if (A.bars === "left" || A.bars === "right") win.body.append(strip);
   else bar.before(strip);
-  // The theme's colours on Aeris's frame
+  // The theme: Aero's frame driven by its colours, plus a custom theme's own frame styles
+  // (themes/<id>/ipad-frame.css, made from its theme.css like Aeris on a computer)
+  for (const c of [...el.classList]) if (c.startsWith("th-")) el.classList.remove(c);
   const th = themeById(A.theme);
-  el.style.setProperty("--ab-a", th ? th.a : "");
-  el.style.setProperty("--ab-b", th ? th.b : "");
-  el.classList.toggle("ab-themed", !!th);
-  el.classList.toggle("ab-dark", !!th && !th.light);
-  el.style.setProperty("--ab-accent", A.accent || th?.accent || "var(--accent)");
-  el.style.setProperty("--ab-gloss", String(A.gloss / 100));
+  const custom = A.theme.startsWith("t:") ? A.theme.slice(2) : "";
+  for (const k of ["--frame-a", "--frame-b", "--accent", "--text", "--text-shadow", "--gloss"]) el.style.removeProperty(k);
+  if (th && !custom) {
+    el.style.setProperty("--frame-a", th.a);
+    el.style.setProperty("--frame-b", th.b);
+    el.style.setProperty("--accent", th.accent);
+    if (th.light) { el.style.setProperty("--text", "#123a5c"); el.style.setProperty("--text-shadow", "0 1px 0 rgba(255, 255, 255, 0.6)"); }
+  }
+  if (custom) {
+    el.classList.add("th-" + custom);
+    if (!document.querySelector(`link[data-ipad-theme="${custom}"]`)) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = `../themes/${custom}/ipad-frame.css`;
+      link.dataset.ipadTheme = custom;
+      document.head.append(link);
+    }
+  }
+  if (A.accent) el.style.setProperty("--accent", A.accent);
+  // Shine: the theme's own amount, scaled by the slider (50 = as the theme made it)
+  el.style.setProperty("--shine", String(A.gloss / 50));
   shellSync();
 }
 async function saveAeris(changes) {

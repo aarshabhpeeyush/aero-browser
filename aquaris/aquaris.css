@@ -1241,14 +1241,64 @@ html:has(body.web), body.web { height: 100dvh; overflow: hidden; }
 .aeris-win.ab-mod-floating .body { background: var(--ab-b, var(--surface-2)); }
 .aeris-win.ab-mod-floating .view { top: 8px; bottom: 8px; left: calc(var(--vl) + 8px); right: calc(var(--vr) + 8px); height: auto !important; border-radius: 12px; }
 
-/* the frame in the theme's colours, with shine */
-.aeris-win.ab-themed .ab-tabs, .aeris-win.ab-themed .ab-bar { background: linear-gradient(180deg, rgba(255, 255, 255, calc(var(--ab-gloss) * 0.45)), transparent 60%), linear-gradient(180deg, var(--ab-a), var(--ab-b)); }
-.aeris-win.ab-themed.ab-bars-left .ab-tabs, .aeris-win.ab-themed.ab-bars-right .ab-tabs { background: linear-gradient(180deg, var(--ab-a), var(--ab-b)); }
-.aeris-win.ab-dark .ab-tabs, .aeris-win.ab-dark .ab-bar { color: #fff; --text: #fff; --muted: rgba(255, 255, 255, 0.72); --hover: rgba(255, 255, 255, 0.14); }
-.aeris-win.ab-dark .ab-url { background: rgba(0, 0, 0, 0.25); }
-.aeris-win.ab-dark .ab-url input { color: #fff; }
-.aeris-win .ab-url:focus-within { box-shadow: inset 0 0 0 2px var(--ab-accent); }
-.aeris-win .ab-tab.on { box-shadow: inset 0 -2px 0 var(--ab-accent); }
+/* Aeris's frame, like Aero's (ui/browser.css): everything comes from these variables, which the
+   colour themes set, and custom themes add their own styles on top (themes/<id>/ipad-frame.css) */
+.aeris-win {
+  --frame-a: #1f7fd6; --frame-b: #7fd0ff; --accent: #1e9be8; --text: #fff;
+  --text-shadow: 0 1px 2px rgba(0, 40, 90, 0.55); --gloss: 0.7; --tab-radius: 10px; --shine: 1;
+  --g: calc(var(--gloss) * var(--shine));
+  --accent-dark: color-mix(in srgb, var(--accent), #000 35%);
+  --accent-light: color-mix(in srgb, var(--accent), #fff 55%);
+  --ab-accent: var(--accent);
+}
+.aeris-win .ab-tabs {
+  color: var(--text); text-shadow: var(--text-shadow); border-top: 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,calc(var(--g) * 0.55)) 0%, rgba(255,255,255,calc(var(--g) * 0.1)) 50%, rgba(255,255,255,0) 51%),
+    linear-gradient(180deg, var(--frame-a), var(--frame-b));
+}
+.aeris-win:is(.ab-bars-left, .ab-bars-right) .ab-tabs { background: linear-gradient(90deg, var(--frame-a), var(--frame-b)); }
+.aeris-win .ab-tab {
+  color: var(--text); text-shadow: var(--text-shadow);
+  border: 1px solid rgba(255,255,255,0.55); border-bottom: 0;
+  border-radius: var(--tab-radius) var(--tab-radius) 0 0;
+  background: linear-gradient(180deg, rgba(255,255,255,calc(var(--g) * 0.5)) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 51%), rgba(255,255,255,0.18);
+}
+.aeris-win .ab-tab.on {
+  color: #04345c; text-shadow: none; border-color: rgba(255,255,255,0.95);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,calc(var(--g) * 0.9)) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.15) 51%),
+    linear-gradient(180deg, var(--accent-light), color-mix(in srgb, var(--accent-light), #fff 40%));
+  box-shadow: none;
+}
+.aeris-win .ab-tab-x:hover { color: #fff; background: radial-gradient(circle at 50% 30%, #ff8a8a, #d01818); border-radius: 50%; }
+.aeris-win .ab-tab-new { color: var(--text); text-shadow: var(--text-shadow); }
+.aeris-win .ab-bar {
+  border-top: 1px solid rgba(255,255,255,0.95);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent), #fff 30%);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,calc(var(--g) * 0.6)) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.05) 51%),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent-light), #fff 40%), var(--accent-light));
+}
+.aeris-win.ab-bars-compact .ab-bar { background: linear-gradient(180deg, rgba(255,255,255,calc(var(--g) * 0.55)) 0%, rgba(255,255,255,0) 51%), linear-gradient(180deg, var(--frame-a), var(--frame-b)); }
+.aeris-win .ab-bar .ab-btn { color: #0b3d66; }
+.aeris-win .ab-url {
+  border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent), #fff 20%);
+  background: linear-gradient(180deg, #fff, #f2faff); box-shadow: inset 0 2px 4px rgba(0, 50, 110, 0.18);
+}
+.aeris-win .ab-url:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent), transparent 50%), inset 0 2px 4px rgba(0, 50, 110, 0.18); }
+.aeris-win .ab-url input { color: #04345c; }
+/* the Aeris toolbar mod: round glossy "orb" buttons, like Aero's */
+.aeris-win.ab-mod-shell .ab-bar .ab-btn {
+  border: 1px solid var(--accent-dark); border-radius: 50%; color: #fff; text-shadow: 0 1px 2px rgba(0, 40, 90, 0.6);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.15) 48%, rgba(255,255,255,0) 52%),
+    radial-gradient(circle at 50% 110%, color-mix(in srgb, var(--accent), #fff 55%) 0%, var(--accent) 55%, var(--accent-dark) 100%);
+  box-shadow: 0 2px 5px rgba(0, 40, 90, 0.35), inset 0 -2px 5px rgba(255, 255, 255, 0.45);
+}
+.aeris-win.ab-mod-shell .ab-bar .ab-btn[data-a="back"] { width: 36px; height: 36px; }
+.aeris-win.ab-mod-shell .ab-bar .ab-btn:disabled { opacity: 0.45; filter: grayscale(0.6); }
+.aeris-win.ab-mod-shell .ab-bar .ab-btn .i { width: 16px; height: 16px; }
 
 /* tab layouts */
 .ab-tab { cursor: default; }
@@ -1276,15 +1326,6 @@ html:has(body.web), body.web { height: 100dvh; overflow: hidden; }
 .aeris-win.ab-size-compact .ab-tab { height: 27px; font-size: 12px; }
 .aeris-win.ab-size-compact .ab-btn { width: 28px; height: 28px; }
 .ab-tab-x { border: 0; background: none; color: inherit; }
-
-/* the Aeris toolbar mod: the glossy back / forward capsule */
-.aeris-win.ab-mod-shell .ab-btn[data-a="back"], .aeris-win.ab-mod-shell .ab-btn[data-a="forward"] {
-  width: 34px; height: 34px; border-radius: 50%; color: #fff;
-  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.75), transparent 55%), linear-gradient(180deg, color-mix(in srgb, var(--ab-accent) 70%, #fff), var(--ab-accent));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 1px 3px rgba(0, 0, 0, 0.25);
-}
-.aeris-win.ab-mod-shell .ab-btn[data-a="forward"] { width: 28px; height: 28px; margin-left: -6px; }
-.aeris-win.ab-mod-shell .ab-btn:disabled[data-a] { opacity: 0.5; }
 
 /* motion */
 @keyframes ab-bubble { from { transform: scale(0.6); opacity: 0; } }
