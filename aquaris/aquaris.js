@@ -105,7 +105,8 @@ const aerisNewTab = () => {
   const s = typeof settings !== "undefined" ? settings : {};
   const pick = s.aquarisAeris?.theme ? s.aquarisAeris.theme : s.aquarisTheme || "";
   const id = pick.startsWith("t:") ? pick.slice(2) : "";
-  return new URL("../aeris/newtab/index.html", location.href).href + (id ? "#theme=" + id : "");
+  // Widget size goes along too (the New Tab scales its widgets; zooming the whole page made the bubbles smear)
+  return new URL("../aeris/newtab/index.html", location.href).href + "#size=" + (s.aquarisAeris?.ntZoom || 85) + (id ? "&theme=" + id : "");
 };
 const AERIS_APP = inShell ? { id: "aeris", name: "Aeris", about: "The web browser, with Aeris's New Tab and themes", get url() { return aerisNewTab(); }, browser: true, size: [1060, 720] }
   : onWeb ? { id: "aeris", name: "Browser", about: "Opens the web in a new tab", url: "https://www.google.com/", color: "#2a86e8", ui: "globe", size: [1000, 700] }
@@ -778,7 +779,7 @@ async function saveAeris(changes) {
     applyAerisLook(w);
     if (changes.theme !== undefined || changes.ntZoom !== undefined) {
       // New Tab pages that are showing pick up the new theme and widget size
-      for (const v of w.tabs || []) if (isNewTab(viewUrl(v))) { v.dataset.zoom = ""; shell.postMessage({ cmd: "go", id: v.dataset.shell, url: aerisNewTab() }); }
+      for (const v of w.tabs || []) if (isNewTab(viewUrl(v))) shell.postMessage({ cmd: "go", id: v.dataset.shell, url: aerisNewTab() });
     }
     w.custom?.sync();
   }
@@ -3794,8 +3795,6 @@ function shellEvent(ev) {
     v.dataset.back = ev.back ? "1" : "";
     v.dataset.forward = ev.forward ? "1" : "";
     v.dataset.loading = ev.loading ? "1" : "";
-    const zoom = isNewTab(v.dataset.url) ? (settings.aquarisAeris?.ntZoom || 100) / 100 : 1;
-    if (v.dataset.zoom !== String(zoom)) { v.dataset.zoom = String(zoom); shell.postMessage({ cmd: "zoom", id: ev.id, value: zoom }); }
     const owner = wins.find(w => w.view === v || w.tabs?.includes(v));
     if (owner && !ev.loading && owner.view === v) cover(owner, null);
     if (owner?.toolbar) updateBrowserBar(owner);

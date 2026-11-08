@@ -28,10 +28,11 @@ theme_link = '<link id="aeroTheme" rel="stylesheet" href="aero://themes/_active/
 assert theme_link in page
 # The theme comes from the address: index.html#theme=<id> (Aquaris passes the Aeris theme you picked)
 page = page.replace(theme_link, '<link id="aeroTheme" rel="stylesheet">\n  <script>{ const pick = () => { const id = (location.hash.match(/theme=([\\w-]+)/) || [])[1];'
-                    ' const link = document.getElementById("aeroTheme"); if (id) link.href = "../../themes/" + id + "/newtab.css"; else link.removeAttribute("href"); };'
+                    ' const link = document.getElementById("aeroTheme"); if (id) link.href = "../../themes/" + id + "/newtab.css"; else link.removeAttribute("href");'
+                    ' const size = +((location.hash.match(/size=(\d+)/) || [])[1] || 100); document.documentElement.style.setProperty("--wscale", size / 100); };'
                     ' pick(); addEventListener("hashchange", pick); }</script>')
 # Fingers: dragging a widget moves it instead of scrolling the page
-page = page.replace("</head>", "<style>.widget, .widget * { touch-action: none; } input, textarea, .list, .queue { touch-action: auto; }</style>\n</head>", 1)
+page = page.replace("</head>", "<style>.widget, .widget * { touch-action: none; } input, textarea, .list, .queue { touch-action: auto; } .widget { transform: translate(-50%, -50%) scale(var(--wscale, 1)); }</style>\n</head>", 1)
 (newtab / "index.html").write_text(page, encoding="utf-8")
 sys.path.insert(0, str(repo / "aeris" / "tools"))
 import ipad_theme  # noqa: E402
