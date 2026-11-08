@@ -3579,21 +3579,33 @@ function shellEvent(ev) {
 let lastTwoFingers = 0;
 const twoFingersLately = () => performance.now() - lastTwoFingers < 700;
 if (onWeb) {
-  let tap = null, lastClick = 0;
-  document.addEventListener("click", () => (lastClick = performance.now()), true);
+  // A finger lifting off a button presses it straight away (iPadOS doesn't always turn taps into
+  // clicks), and the click iPadOS may send a moment later is ignored, so nothing happens twice.
+  let tap = null, pressed = null;
+  const TAPPABLE = "button, .tb-btn, [role=button], label, a[href], summary, .tile-btn";
   document.addEventListener("pointerdown", e => {
     if (e.pointerType !== "touch" || !e.isPrimary) return void (tap = null);
-    const el = e.target.closest("button, .tb-btn, [role=button], label, a[href]");
-    tap = el && !el.disabled ? { el, x: e.clientX, y: e.clientY, at: performance.now() } : null;
+    // Typing boxes, lists and sliders work as usual
+    if (e.target.closest('input:not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable=""], [contenteditable="true"]')) return void (tap = null);
+    const el = e.target.closest(TAPPABLE);
+    tap = el && !el.disabled && !el.closest("#icons") ? { el, x: e.clientX, y: e.clientY, at: performance.now() } : null;
   }, true);
+  document.addEventListener("pointercancel", () => (tap = null), true);
   document.addEventListener("pointerup", e => {
     const t0 = tap;
     tap = null;
     if (!t0 || e.pointerType !== "touch" || twoFingersLately()) return;
-    if (Math.hypot(e.clientX - t0.x, e.clientY - t0.y) > 12 || performance.now() - t0.at > 700) return;
-    const upAt = performance.now();
-    setTimeout(() => { if (lastClick < t0.at && t0.el.isConnected && !twoFingersLately()) t0.el.click(); }, 320);
-    void upAt;
+    if (Math.hypot(e.clientX - t0.x, e.clientY - t0.y) > 12 || performance.now() - t0.at > 800) return;
+    pressed = { el: t0.el, until: performance.now() + 700 };
+    t0.el.click();
+  }, true);
+  document.addEventListener("click", e => {
+    if (!e.isTrusted || !pressed || performance.now() > pressed.until) return;
+    if (pressed.el === e.target || pressed.el.contains(e.target) || e.target.contains?.(pressed.el)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      pressed = null;
+    }
   }, true);
 
   let two = null, three = null;
