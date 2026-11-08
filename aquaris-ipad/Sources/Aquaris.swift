@@ -184,25 +184,33 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
   func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { self.webView(webView, didFinish: navigation) }
   func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { self.webView(webView, didFinish: navigation) }
 
-  // Links to other apps (mailto:, zoommtg:, tel:…) open those apps; Aquaris stays on its own files
+  // Websites stay inside Aquaris. iPadOS normally hands some addresses to their own app or
+  // browser (after signing in, youtube.com goes to the YouTube app, Safari or Chrome); this
+  // "allow, without trying the app" answer keeps them in the Aquaris window.
+  private static let stayHere = WKNavigationActionPolicy(rawValue: WKNavigationActionPolicy.allow.rawValue + 2) ?? .allow
+  // Only these kinds of links may open another app (email, calls, Zoom meetings, maps)
+  private static let otherApps: Set<String> = ["mailto", "tel", "sms", "facetime", "facetime-audio", "zoomus", "zoommtg", "maps"]
+
   func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
     guard let url = action.request.url, let scheme = url.scheme?.lowercased() else { return decisionHandler(.allow) }
-    if ["http", "https", "about", "blob", "data", "aquaris", "javascript"].contains(scheme) {
-      // Aquaris itself never leaves its own page: websites it opens go to Safari only if it asks for that
-      if webView === desk && scheme != "aquaris" && action.targetFrame?.isMainFrame == true {
-        UIApplication.shared.open(url)
+    if webView === desk {
+      if scheme == "aquaris" || scheme == "about" || scheme == "blob" || scheme == "data" { return decisionHandler(.allow) }
+      // Aquaris never leaves its own page: a website it opens gets its own Aquaris window
+      if action.targetFrame?.isMainFrame != false, scheme == "http" || scheme == "https" {
+        send(["type": "openUrl", "url": url.absoluteString])
         return decisionHandler(.cancel)
       }
-      return decisionHandler(.allow)
+      return decisionHandler(Self.stayHere)
     }
-    UIApplication.shared.open(url)
-    decisionHandler(.cancel)
+    if ["http", "https", "about", "blob", "data", "javascript"].contains(scheme) { return decisionHandler(Self.stayHere) }
+    if Self.otherApps.contains(scheme) { UIApplication.shared.open(url) }
+    decisionHandler(.cancel)   // youtube://, googlechrome://, intent:… stay closed
   }
 
   // "Open in a new window" links (and sign-in pop-ups) open in the same app window
   func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
     if webView === desk {
-      if let url = action.request.url { UIApplication.shared.open(url) }
+      if let url = action.request.url, url.scheme == "http" || url.scheme == "https" { send(["type": "openUrl", "url": url.absoluteString]) }
       return nil
     }
     webView.load(action.request)

@@ -274,8 +274,15 @@ function focusWin(win) {
     if (win.throttled) unthrottle(win);
   }
   for (const w of wins) w.el.classList.toggle("active", w === win);
-  drawDock();
-  drawTopApp();
+  // On an iPad, redrawing the dock and menu bar while a finger is still down makes iPadOS think
+  // the tap was only a "hover", and the button never gets clicked: so redraw just after the tap.
+  if (onWeb) {
+    clearTimeout(focusWin.later);
+    focusWin.later = setTimeout(() => { drawDock(); drawTopApp(); }, 450);
+  } else {
+    drawDock();
+    drawTopApp();
+  }
 }
 const activeWin = () => wins.filter(w => !w.state.startsWith("min")).sort((a, b) => b.el.style.zIndex - a.el.style.zIndex)[0] || null;
 const isFront = w => w === activeWin() && w.el.classList.contains("active") && !w.state.startsWith("min");
@@ -534,7 +541,7 @@ function wake(win) {
 }
 
 function noteRecent(app) {
-  if (!app?.id || SYSTEM[app.id] || app.id.startsWith("photo:")) return;
+  if (!app?.id || SYSTEM[app.id] || app.id.startsWith("photo:") || app.id.startsWith("page-")) return;
   settings.aquarisRecent = [app.id, ...settings.aquarisRecent.filter(i => i !== app.id)].slice(0, 6);
   store.set({ aquarisRecent: settings.aquarisRecent });
 }
@@ -1940,7 +1947,7 @@ function dragIcon(e, b, app, spots) {
     b.removeEventListener("pointermove", move);
     b.classList.remove("dragging-icon");
     clearTimeout(hold);
-    if (!moved) { if (touch && !held) openApp(app); return; }
+    if (!moved) { if (touch && !held && !twoFingersLately()) openApp(app); return; }
     const { cols, rows } = gridSize();
     const c = Math.max(0, Math.min(cols - 1, Math.round((parseFloat(b.style.left) - CELL.x) / CELL.w)));
     const r = Math.max(0, Math.min(rows - 1, Math.round((parseFloat(b.style.top) - CELL.y) / CELL.h)));
@@ -3559,7 +3566,78 @@ function shellEvent(ev) {
   if (ev.type === "loaded" && win) { cover(win, null); if (ev.url) v.dataset.url = ev.url; }
   if (ev.type === "snap" && v) { v.style.backgroundImage = `url(${ev.data})`; v.style.backgroundSize = "100% 100%"; }
   if (ev.type === "tap" && win) focusWin(win);
+  if (ev.type === "openUrl" && /^https?:/.test(ev.url || "")) {
+    let name = "Web page";
+    try { name = new URL(ev.url).hostname.replace(/^www\./, ""); } catch {}
+    openApp({ ...AERIS_APP, id: "page-" + Date.now(), name, url: ev.url });
+  }
 }
+// ================= Fingers (iPad) =================
+// 1. A tap on a button always counts. (iPadOS sometimes treats a tap as "hovering" instead of a
+//    click, so if no click follows a finger's tap on a button, Aquaris clicks it itself.)
+// 2. A two-finger tap is a right-click: it opens the menu of whatever is under the fingers.
+let lastTwoFingers = 0;
+const twoFingersLately = () => performance.now() - lastTwoFingers < 700;
+if (onWeb) {
+  let tap = null, lastClick = 0;
+  document.addEventListener("click", () => (lastClick = performance.now()), true);
+  document.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "touch" || !e.isPrimary) return void (tap = null);
+    const el = e.target.closest("button, .tb-btn, [role=button], label, a[href]");
+    tap = el && !el.disabled ? { el, x: e.clientX, y: e.clientY, at: performance.now() } : null;
+  }, true);
+  document.addEventListener("pointerup", e => {
+    const t0 = tap;
+    tap = null;
+    if (!t0 || e.pointerType !== "touch" || twoFingersLately()) return;
+    if (Math.hypot(e.clientX - t0.x, e.clientY - t0.y) > 12 || performance.now() - t0.at > 700) return;
+    const upAt = performance.now();
+    setTimeout(() => { if (lastClick < t0.at && t0.el.isConnected && !twoFingersLately()) t0.el.click(); }, 320);
+    void upAt;
+  }, true);
+
+  let two = null, three = null;
+  document.addEventListener("touchstart", e => {
+    if (e.touches.length === 3) {
+      two = null;
+      lastTwoFingers = performance.now();
+      three = { at: performance.now(), pts: [...e.touches].map(x => [x.clientX, x.clientY]) };
+      return;
+    }
+    if (e.touches.length > 3) three = null;
+    if (e.touches.length === 2) {
+      const [a, b] = e.touches;
+      lastTwoFingers = performance.now();
+      two = { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2, at: performance.now(), a: [a.clientX, a.clientY], b: [b.clientX, b.clientY] };
+    } else if (e.touches.length > 2) two = null;
+  }, { passive: true, capture: true });
+  document.addEventListener("touchmove", e => {
+    if (three && [...e.touches].some((x, i) => three.pts[i] && Math.hypot(x.clientX - three.pts[i][0], x.clientY - three.pts[i][1]) > 16)) three = null;
+    if (!two || e.touches.length < 2) return;
+    const [a, b] = e.touches;
+    if (Math.hypot(a.clientX - two.a[0], a.clientY - two.a[1]) > 14 || Math.hypot(b.clientX - two.b[0], b.clientY - two.b[1]) > 14) two = null;
+  }, { passive: true, capture: true });
+  document.addEventListener("touchend", e => {
+    // A three-finger tap opens Spotlight search
+    if (three) {
+      if (e.touches.length) return;
+      const t3 = three;
+      three = null;
+      lastTwoFingers = performance.now();
+      if (performance.now() - t3.at < 600) { closeOverlays(); toggleOverlay("#spotlight", true); }
+      return;
+    }
+    if (e.touches.length) lastTwoFingers = two ? performance.now() : lastTwoFingers;
+    if (!two || e.touches.length) return;     // wait for every finger to lift
+    const t2 = two;
+    two = null;
+    lastTwoFingers = performance.now();
+    if (performance.now() - t2.at > 600) return;
+    const target = document.elementFromPoint(t2.x, t2.y);
+    target?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: t2.x, clientY: t2.y, button: 2 }));
+  }, { capture: true });
+}
+
 if (inShell) {
   new MutationObserver(shellSync).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["style", "class", "hidden"] });
   addEventListener("resize", shellSync);
