@@ -12,6 +12,7 @@
 
 import UIKit
 import WebKit
+import GameController
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -87,7 +88,77 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     if #available(iOS 16.4, *) { desk.isInspectable = true }
     view.addSubview(desk)
     desk.load(URLRequest(url: URL(string: "aquaris://app/aquaris/index.html")!))
+    pad = PadCursor(owner: self)
+    pad?.start()
   }
+  private var pad: PadCursor?
+
+  // MARK: Game controller: what the cursor touches
+
+  /// The website window under a point (the front-most one), if any
+  private func appView(at p: CGPoint) -> (String, WKWebView)? {
+    for sub in view.subviews.reversed() {
+      guard let web = sub as? WKWebView, web !== desk, !web.isHidden, web.frame.contains(p), let id = idOf(web) else { continue }
+      return (id, web)
+    }
+    return nil
+  }
+  private var padDownOnDesk = false
+  private func deskPad(_ action: String, _ p: CGPoint, _ dx: CGFloat = 0, _ dy: CGFloat = 0) {
+    desk.evaluateJavaScript("window.Aquaris && Aquaris.pad('\(action)', \(p.x), \(p.y), \(dx), \(dy))")
+  }
+  /// A click (or right-click) on a website: the page gets the same events a mouse would give it
+  private func clickInPage(_ web: WKWebView, _ p: CGPoint, right: Bool) {
+    let local = CGPoint(x: p.x - web.frame.minX, y: p.y - web.frame.minY)
+    let js = """
+    (function(x,y,right){var el=document.elementFromPoint(x,y);if(!el)return;
+    var o={bubbles:true,cancelable:true,composed:true,clientX:x,clientY:y,screenX:x,screenY:y,button:right?2:0,buttons:right?2:1,view:window};
+    if(right){el.dispatchEvent(new MouseEvent('contextmenu',o));return;}
+    var p=function(t,b){try{el.dispatchEvent(new PointerEvent(t,Object.assign({},o,{pointerId:1,pointerType:'mouse',isPrimary:true,buttons:b})));}catch(e){}};
+    p('pointerdown',1);el.dispatchEvent(new MouseEvent('mousedown',o));
+    if(el.focus)el.focus();
+    p('pointerup',0);el.dispatchEvent(new MouseEvent('mouseup',Object.assign({},o,{buttons:0})));
+    el.click();})(\(local.x),\(local.y),\(right))
+    """
+    web.evaluateJavaScript(js)
+  }
+  func padPress(_ down: Bool, at p: CGPoint) {
+    if down {
+      if let hit = appView(at: p) {
+        let (id, web) = hit
+        padDownOnDesk = false
+        send(["type": "tap", "id": id])
+        clickInPage(web, p, right: false)
+      } else {
+        padDownOnDesk = true
+        deskPad("down", p)
+      }
+    } else if padDownOnDesk {
+      padDownOnDesk = false
+      deskPad("up", p)
+    }
+  }
+  func padMove(_ p: CGPoint) { if padDownOnDesk { deskPad("move", p) } }
+  func padRightClick(at p: CGPoint) {
+    if let hit = appView(at: p) {
+      let (id, web) = hit
+      send(["type": "tap", "id": id])
+      clickInPage(web, p, right: true)
+    } else {
+      deskPad("right", p)
+    }
+  }
+  func padScroll(at p: CGPoint, dx: CGFloat, dy: CGFloat) {
+    if let hit = appView(at: p) {
+      let web = hit.1
+      let s = web.scrollView
+      let maxX = max(0, s.contentSize.width - s.bounds.width), maxY = max(0, s.contentSize.height - s.bounds.height)
+      s.setContentOffset(CGPoint(x: min(maxX, max(0, s.contentOffset.x + dx)), y: min(maxY, max(0, s.contentOffset.y + dy))), animated: false)
+    } else {
+      deskPad("scroll", p, dx, dy)
+    }
+  }
+  func padButton(_ action: String) { deskPad(action, .zero) }
 
   // MARK: Messages from Aquaris
 
@@ -258,5 +329,145 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in completionHandler(nil) })
     alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in completionHandler(alert.textFields?.first?.text) })
     present(alert, animated: true)
+  }
+}
+
+
+// MARK: - Game controller
+
+/// The arrow the controller moves around (drawn above everything, websites included)
+final class CursorView: UIView {
+  override init(frame: CGRect) {
+    super.init(frame: CGRect(x: 0, y: 0, width: 22, height: 30))
+    isUserInteractionEnabled = false
+    backgroundColor = .clear
+    layer.shadowColor = UIColor.black.cgColor
+    layer.shadowOpacity = 0.35
+    layer.shadowRadius = 2
+    layer.shadowOffset = CGSize(width: 0, height: 1)
+  }
+  required init?(coder: NSCoder) { fatalError() }
+  override func draw(_ rect: CGRect) {
+    let arrow = UIBezierPath()
+    arrow.move(to: CGPoint(x: 2, y: 2))
+    arrow.addLine(to: CGPoint(x: 2, y: 24))
+    arrow.addLine(to: CGPoint(x: 8, y: 18.5))
+    arrow.addLine(to: CGPoint(x: 12, y: 27))
+    arrow.addLine(to: CGPoint(x: 15.5, y: 25.5))
+    arrow.addLine(to: CGPoint(x: 11.5, y: 17))
+    arrow.addLine(to: CGPoint(x: 19, y: 17))
+    arrow.close()
+    UIColor.white.setFill()
+    arrow.fill()
+    UIColor.black.setStroke()
+    arrow.lineWidth = 1.5
+    arrow.lineJoin = .round
+    arrow.stroke()
+  }
+}
+
+/// Reads a connected controller: the left stick (or D-pad) moves the cursor, R1 clicks (hold to
+/// drag), L1 right-clicks, the right stick scrolls, and the other buttons open parts of Aquaris.
+/// Buttons are matched by the label on them, so "X" is X on Xbox and Cross on PlayStation.
+final class PadCursor: NSObject {
+  private unowned let owner: DeskController
+  private let arrow = CursorView()
+  private var pos = CGPoint(x: 300, y: 300)
+  private var link: CADisplayLink?
+  private var idle: Double = 0
+  private var slow = false
+  private var holding = false
+
+  init(owner: DeskController) { self.owner = owner }
+
+  func start() {
+    arrow.isHidden = true
+    owner.view.addSubview(arrow)
+    NotificationCenter.default.addObserver(forName: .GCControllerDidConnect, object: nil, queue: .main) { [weak self] note in
+      if let c = note.object as? GCController { self?.attach(c) }
+    }
+    NotificationCenter.default.addObserver(forName: .GCControllerDidDisconnect, object: nil, queue: .main) { [weak self] _ in
+      if GCController.controllers().isEmpty { self?.arrow.isHidden = true }
+    }
+    GCController.controllers().forEach(attach)
+  }
+
+  private func attach(_ controller: GCController) {
+    guard let pad = controller.extendedGamepad else { return }
+    var playStation = pad is GCDualShockGamepad
+    if #available(iOS 14.5, *) { playStation = playStation || pad is GCDualSenseGamepad }
+    let on: (GCControllerButtonInput?, @escaping (Bool) -> Void) -> Void = { button, act in
+      button?.pressedChangedHandler = { _, _, pressed in act(pressed) }
+    }
+    let tap: (GCControllerButtonInput?, String) -> Void = { [weak self] button, action in
+      on(button) { if $0 { self?.show(); self?.owner.padButton(action) } }
+    }
+    on(pad.rightShoulder) { [weak self] pressed in
+      guard let self else { return }
+      self.show()
+      self.holding = pressed
+      self.owner.padPress(pressed, at: self.pos)
+    }
+    on(pad.leftShoulder) { [weak self] pressed in
+      guard let self, pressed else { return }
+      self.show()
+      self.owner.padRightClick(at: self.pos)
+    }
+    tap(playStation ? pad.buttonA : pad.buttonX, "spotlight")   // X
+    tap(playStation ? pad.buttonX : pad.buttonA, "control")     // Square / A
+    tap(pad.buttonY, "apps")                                    // Triangle / Y
+    tap(pad.buttonB, "back")                                    // Circle / B
+    tap(pad.rightTrigger, "nextWin")
+    tap(pad.leftTrigger, "prevWin")
+    tap(pad.buttonMenu, "menu")
+    tap(pad.buttonOptions, "desktop")
+    on(pad.leftThumbstickButton) { [weak self] pressed in if pressed { self?.slow.toggle() } }
+    if link == nil {
+      link = CADisplayLink(target: self, selector: #selector(tick(_:)))
+      link?.add(to: .main, forMode: .common)
+    }
+    show()
+  }
+
+  private func show() {
+    idle = 0
+    if arrow.isHidden {
+      arrow.isHidden = false
+      pos.x = min(max(pos.x, 0), owner.view.bounds.width - 4)
+      pos.y = min(max(pos.y, 0), owner.view.bounds.height - 4)
+      arrow.frame.origin = CGPoint(x: pos.x - 2, y: pos.y - 2)
+    }
+    owner.view.bringSubviewToFront(arrow)
+  }
+
+  @objc private func tick(_ link: CADisplayLink) {
+    guard let pad = (GCController.current ?? GCController.controllers().first)?.extendedGamepad else { return }
+    let dt = CGFloat(min(0.05, max(0.001, link.targetTimestamp - link.timestamp)))
+    // Move: the stick, with a curve so small pushes are precise; the D-pad for tiny steps
+    var vx = CGFloat(pad.leftThumbstick.xAxis.value), vy = CGFloat(-pad.leftThumbstick.yAxis.value)
+    let mag = hypot(vx, vy)
+    if mag < 0.12 { vx = 0; vy = 0 } else {
+      let speed = (slow ? 380 : 1250) * pow(min(mag, 1), 1.7) / mag
+      vx *= speed; vy *= speed
+    }
+    vx += CGFloat(pad.dpad.xAxis.value) * 160
+    vy += CGFloat(-pad.dpad.yAxis.value) * 160
+    if vx != 0 || vy != 0 {
+      show()
+      let b = owner.view.bounds
+      pos.x = min(max(pos.x + vx * dt, 0), b.width - 2)
+      pos.y = min(max(pos.y + vy * dt, 0), b.height - 2)
+      arrow.frame.origin = CGPoint(x: pos.x - 2, y: pos.y - 2)
+      if holding { owner.padMove(pos) }
+    } else {
+      idle += Double(dt)
+      if idle > 10 && !holding { arrow.isHidden = true }
+    }
+    // Scroll with the right stick
+    let sx = CGFloat(pad.rightThumbstick.xAxis.value), sy = CGFloat(-pad.rightThumbstick.yAxis.value)
+    if abs(sx) > 0.15 || abs(sy) > 0.15 {
+      show()
+      owner.padScroll(at: pos, dx: sx * 1100 * dt, dy: sy * 1100 * dt)
+    }
   }
 }

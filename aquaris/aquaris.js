@@ -363,7 +363,7 @@ function wireWindow(win, bar, caption, tools) {
     const d = deskRect();
     let start = { x: e.clientX, y: e.clientY, rx: win.rect.x, ry: win.rect.y };
     let moved = false, snap = null;
-    bar.setPointerCapture(e.pointerId);
+    try { bar.setPointerCapture(e.pointerId); } catch {}
     document.body.classList.add("dragging");
     const move = ev => {
       if (!moved && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 4) return;
@@ -417,7 +417,7 @@ function wireWindow(win, bar, caption, tools) {
       focusWin(win);
       const dir = h.dataset.d;
       const px = e.clientX, py = e.clientY, s = { ...win.rect };
-      h.setPointerCapture(e.pointerId);
+      try { h.setPointerCapture(e.pointerId); } catch {}
       document.body.classList.add("dragging");
       const move = ev => {
         const dx = ev.clientX - px, dy = ev.clientY - py;
@@ -3737,8 +3737,78 @@ async function setUpAppWindow() {
 window.Aquaris = {
   openInAeris(urls) { window.focus(); openInAeris(urls); },
   focus() { window.focus(); },
-  shellEvent(ev) { shellEvent(ev); }
+  shellEvent(ev) { shellEvent(ev); },
+  pad(action, x, y, dx, dy) { padAction(action, x, y, dx, dy); }
 };
+
+// ================= Game controller (iPad app) =================
+// The iPad app reads the controller and draws the cursor; here is what it does on Aquaris's own
+// screen (websites in windows get their clicks from the iPad app directly).
+let padTarget = null;
+function padFire(el, type, x, y, buttons) {
+  const o = { bubbles: true, cancelable: true, composed: true, clientX: x, clientY: y, screenX: x, screenY: y, button: 0, buttons, view: window };
+  if (type.startsWith("pointer")) el.dispatchEvent(new PointerEvent(type, { ...o, pointerId: 1, pointerType: "mouse", isPrimary: true }));
+  else el.dispatchEvent(new MouseEvent(type, o));
+}
+function scrollableAt(el) {
+  for (; el && el !== document.body; el = el.parentElement) {
+    const s = getComputedStyle(el);
+    if ((el.scrollHeight > el.clientHeight + 2 && /auto|scroll/.test(s.overflowY)) || (el.scrollWidth > el.clientWidth + 2 && /auto|scroll/.test(s.overflowX))) return el;
+  }
+  return null;
+}
+function cycleWindows(step) {
+  const list = wins.filter(w => w.kind !== "native").sort((a, b) => (+a.el.style.zIndex || 0) - (+b.el.style.zIndex || 0));
+  if (!list.length) return;
+  const front = activeWin();
+  const i = list.indexOf(front);
+  const next = list[(i + step + list.length) % list.length];
+  restore(next);
+  focusWin(next);
+}
+function padAction(action, x, y, dx, dy) {
+  if (mbOpen && !["down", "move", "up", "scroll", "right", "menu", "back"].includes(action)) closeMenuBar();
+  const at = () => document.elementFromPoint(x, y);
+  if (action === "down") {
+    const el = at();
+    if (!el) return;
+    padTarget = el;
+    padFire(el, "pointerdown", x, y, 1);
+    padFire(el, "mousedown", x, y, 1);
+  } else if (action === "move" && padTarget) {
+    padFire(padTarget, "pointermove", x, y, 1);
+    padFire(padTarget, "mousemove", x, y, 1);
+  } else if (action === "up" && padTarget) {
+    const down = padTarget;
+    padTarget = null;
+    padFire(down, "pointerup", x, y, 0);
+    padFire(down, "mouseup", x, y, 0);
+    const el = at();
+    if (!el || !(el === down || down.contains(el) || el.contains(down))) return;
+    if (el.matches("input, textarea, select")) el.focus();
+    el.click();
+    // Desktop icons and files open with a double-click
+    const icon = el.closest("#icons > *, .fx-item");
+    if (icon) icon.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, clientX: x, clientY: y }));
+  } else if (action === "right") {
+    at()?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 2 }));
+  } else if (action === "scroll") {
+    scrollableAt(at())?.scrollBy({ left: dx, top: dy });
+  } else if (action === "spotlight") toggleOverlay("#spotlight");
+  else if (action === "apps") toggleOverlay("#launcher");
+  else if (action === "control") toggleOverlay("#quick");
+  else if (action === "menu") (mbOpen ? closeMenuBar() : openMenuBar($("#tbLauncher")));
+  else if (action === "desktop") { for (const w of wins) if (!w.state.startsWith("min")) minimise(w); }
+  else if (action === "nextWin") cycleWindows(1);
+  else if (action === "prevWin") cycleWindows(-1);
+  else if (action === "back") {
+    // Close whatever is open first; otherwise go back a page in the front window
+    const open = ["#spotlight", "#launcher", "#quick", "#tasks", "#calendar", "#menu", "#mbMenu"].some(s => !$(s).hidden) || document.querySelector(".ask");
+    if (open || mbOpen) { document.querySelector(".ask [data-a=no]")?.click(); closeOverlays(); closeMenuBar(); $("#menu").hidden = true; return; }
+    const w = activeWin();
+    if (w?.view?.dataset.shell) shell.postMessage({ cmd: "back", id: w.view.dataset.shell });
+  }
+}
 
 // ================= The iPad app =================
 // Each website is a real app view the iPad app lays exactly over its window's body. The window's

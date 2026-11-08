@@ -34,6 +34,10 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+        # Game controllers: Aquaris uses them as a mouse (see PadCursor)
+        GCSupportsControllerUserInteraction: true
+        GCSupportedGameControllers:
+          - ProfileName: ExtendedGamepad
         NSCameraUsageDescription: Apps in Aquaris (like Zoom and Discord) can use the camera when you allow it.
         NSMicrophoneUsageDescription: Apps in Aquaris (like Zoom and Discord) can use the microphone when you allow it.
         NSPhotoLibraryUsageDescription: So you can pick photos to send or edit in Aquaris apps.
