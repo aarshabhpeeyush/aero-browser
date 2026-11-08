@@ -20,6 +20,23 @@ with tempfile.TemporaryDirectory() as tmp:
     subprocess.run([sys.executable, "-I", str(repo / "aeris/tools/addon.py"), str(fake)], check=True, cwd=repo, stdout=subprocess.DEVNULL)
     shutil.copy(fake / "browser/extensions/aeris/extension/themes/index.json", out / "themes/index.json")
 
+# Aeris for the iPad app: Aeris's own New Tab page (the one Aero had), its themes and its icon
+newtab = out / "aeris" / "newtab"
+shutil.copytree(repo / "pages" / "newtab", newtab)
+page = (newtab / "index.html").read_text(encoding="utf-8")
+theme_link = '<link id="aeroTheme" rel="stylesheet" href="aero://themes/_active/newtab.css">'
+assert theme_link in page
+# The theme comes from the address: index.html#theme=<id> (Aquaris passes the Aeris theme you picked)
+page = page.replace(theme_link, '<link id="aeroTheme" rel="stylesheet">\n  <script>{ const id = (location.hash.match(/theme=([\\w-]+)/) || [])[1];'
+                    ' if (id) document.getElementById("aeroTheme").href = "../../themes/" + id + "/newtab.css"; }</script>')
+(newtab / "index.html").write_text(page, encoding="utf-8")
+for folder in sorted((repo / "themes-builtin").iterdir()):
+    if folder.is_dir():
+        shutil.copytree(folder, out / "themes" / folder.name, dirs_exist_ok=True)
+(out / "icons").mkdir(exist_ok=True)
+from PIL import Image
+Image.open(repo / "build" / "icon.png").convert("RGBA").resize((128, 128), Image.LANCZOS).save(out / "icons" / "aeris-128.png")
+
 (out / "index.html").write_text('<!doctype html><meta charset="utf-8"><title>Aquaris</title>'
                                 '<meta http-equiv="refresh" content="0; url=aquaris/"><a href="aquaris/">Open Aquaris</a>\n', encoding="utf-8")
 (out / ".nojekyll").write_text("")

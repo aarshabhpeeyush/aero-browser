@@ -53,6 +53,8 @@ final class AquarisFiles: NSObject, WKURLSchemeHandler {
 final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate, UIGestureRecognizerDelegate {
   private var desk: WKWebView!
   private var apps: [String: WKWebView] = [:]
+  private var watching: [String: [NSKeyValueObservation]] = [:]
+  private let files = AquarisFiles()
   private let pool = WKProcessPool()       // one engine for every app: shared sign-ins, less memory
 
   override var prefersStatusBarHidden: Bool { true }
@@ -65,7 +67,7 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
 
     let config = WKWebViewConfiguration()
     config.processPool = pool
-    config.setURLSchemeHandler(AquarisFiles(), forURLScheme: "aquaris")
+    config.setURLSchemeHandler(files, forURLScheme: "aquaris")
     config.userContentController.add(self, name: "aquarisShell")
     // Aquaris's settings from last time, ready before Aquaris starts
     let saved = UserDefaults.standard.string(forKey: "aquaris") ?? "null"
@@ -94,8 +96,10 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     let id = msg["id"] as? String ?? ""
     switch cmd {
     case "open": open(id, url: msg["url"] as? String ?? "")
-    case "close": apps[id]?.removeFromSuperview(); apps[id] = nil
+    case "close": apps[id]?.removeFromSuperview(); apps[id] = nil; watching[id] = nil
     case "reload": apps[id]?.reload()
+    case "stop": apps[id]?.stopLoading()
+    case "go": if let url = URL(string: msg["url"] as? String ?? "") { apps[id]?.load(URLRequest(url: url)) }
     case "back": apps[id]?.goBack()
     case "forward": apps[id]?.goForward()
     case "layout": layout(msg["views"] as? [[String: Any]] ?? [])
@@ -116,6 +120,7 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     let config = WKWebViewConfiguration()
     config.processPool = pool
     config.websiteDataStore = .default()
+    config.setURLSchemeHandler(files, forURLScheme: "aquaris")   // Aeris's New Tab page
     config.allowsInlineMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
     // The full websites (WhatsApp Web, Discord…), not the phone versions
@@ -135,7 +140,18 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     web.addGestureRecognizer(tap)
     apps[id] = web
     view.addSubview(web)
+    // Tell Aquaris where the page is, its title, and whether back / forward work (for Aeris's toolbar)
+    let changed: (WKWebView, Any) -> Void = { [weak self] web, _ in self?.sendState(web) }
+    watching[id] = [web.observe(\.url, changeHandler: changed), web.observe(\.title, changeHandler: changed),
+                    web.observe(\.canGoBack, changeHandler: changed), web.observe(\.canGoForward, changeHandler: changed),
+                    web.observe(\.isLoading, changeHandler: changed)]
     web.load(URLRequest(url: address))
+  }
+
+  private func sendState(_ web: WKWebView) {
+    guard let id = idOf(web) else { return }
+    send(["type": "state", "id": id, "url": web.url?.absoluteString ?? "", "title": web.title ?? "",
+          "back": web.canGoBack, "forward": web.canGoForward, "loading": web.isLoading])
   }
 
   @objc private func tapped(_ gesture: UITapGestureRecognizer) {
@@ -202,7 +218,7 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
       }
       return decisionHandler(Self.stayHere)
     }
-    if ["http", "https", "about", "blob", "data", "javascript"].contains(scheme) { return decisionHandler(Self.stayHere) }
+    if ["http", "https", "about", "blob", "data", "javascript", "aquaris"].contains(scheme) { return decisionHandler(Self.stayHere) }
     if Self.otherApps.contains(scheme) { UIApplication.shared.open(url) }
     decisionHandler(.cancel)   // youtube://, googlechrome://, intent:… stay closed
   }

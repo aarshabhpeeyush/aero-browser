@@ -96,7 +96,14 @@ const allApps = () => [...AQUARIS_APPS.filter(a => !settings.aquarisRemoved.incl
 const NEW_TAB_URL = (() => {
   try { return ChromeUtils.importESModule("resource:///modules/AboutNewTab.sys.mjs").AboutNewTab.newTabURL; } catch { return "https://www.google.com/"; }
 })();
-const AERIS_APP = onWeb ? { id: "aeris", name: "Browser", about: inShell ? "The web, in a window" : "Opens the web in a new tab", url: "https://www.google.com/", color: "#2a86e8", ui: "globe", size: [1000, 700] }
+// In the iPad app, Aeris is Aeris's own New Tab page, toolbar and tabs, in an Aquaris window (on the
+// iPad's engine: Apple only allows its own). The theme you picked in Aquaris goes along.
+const aerisNewTab = () => {
+  const id = (typeof settings !== "undefined" && settings.aquarisTheme?.startsWith("t:")) ? settings.aquarisTheme.slice(2) : "";
+  return new URL("../aeris/newtab/index.html", location.href).href + (id ? "#theme=" + id : "");
+};
+const AERIS_APP = inShell ? { id: "aeris", name: "Aeris", about: "The web browser, with Aeris's New Tab and themes", get url() { return aerisNewTab(); }, browser: true, size: [1060, 720] }
+  : onWeb ? { id: "aeris", name: "Browser", about: "Opens the web in a new tab", url: "https://www.google.com/", color: "#2a86e8", ui: "globe", size: [1000, 700] }
   : { id: "aeris", name: "Aeris", about: "The web browser, with all of Aeris", url: NEW_TAB_URL, size: [1180, 760] };
 // Aquaris's own apps: made by Aquaris, nothing from the internet
 const OWN_APPS = [
@@ -153,14 +160,14 @@ function loadView(v, url) {
   v.fixupAndLoadURIString(url, { triggeringPrincipal: ALL_PRINCIPAL() });
 }
 const viewUrl = v => (inChrome ? v.currentURI?.spec : v.src || v.dataset.url) || v.dataset.first || "";
-const viewTitle = v => (inChrome ? v.contentTitle : "") || "";
-const viewLoading = v => (inChrome ? !!v.webProgress?.isLoadingDocument : false);
+const viewTitle = v => (inChrome ? v.contentTitle : v.dataset.title) || "";
+const viewLoading = v => (inChrome ? !!v.webProgress?.isLoadingDocument : v.dataset.loading === "1");
 const pageIcon = url => (inChrome && /^https?:/.test(url) ? "page-icon:" + url : "");
 
 // Turn what someone typed into an address (a website, or a web search)
 function fixup(text) {
   text = text.trim();
-  if (!inChrome) return /^\w+:\/\//.test(text) ? text : /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(text) ? "https://" + text : "https://duckduckgo.com/?q=" + encodeURIComponent(text);
+  if (!inChrome) return /^\w+:\/\//.test(text) ? text : /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(text) ? "https://" + text : "https://www.google.com/search?q=" + encodeURIComponent(text);
   const info = Services.uriFixup.getFixupURIInfo(text, Ci.nsIURIFixup.FIXUP_FLAG_FIX_SCHEME_TYPOS | Ci.nsIURIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP);
   return info.preferredURI?.spec || text;
 }
@@ -169,7 +176,7 @@ function fixup(text) {
 
 function tile(app, size = "") {
   const t = html("span", "tile" + (size ? " " + size : ""));
-  if (app.id === "aeris" && !onWeb) {
+  if (app.id === "aeris" && (!onWeb || inShell)) {
     t.classList.add("img");
     const img = html("img");
     img.alt = "";
@@ -587,16 +594,24 @@ function addBrowserBar(win) {
     <button class="ab-btn" data-a="reload" title="Reload (F5)">${icon("reload")}</button>
     <button class="ab-btn" data-a="home" title="Home">${icon("home")}</button>
     <label class="ab-url"><span class="ab-lock"></span><input spellcheck="false" placeholder="Search Google or type a web address"></label>
-    <button class="ab-btn" data-a="customize" title="Customize Aeris: themes, colours and more">${icon("sliders")}</button>`);
+    ${AERIS_PANEL ? `<button class="ab-btn" data-a="customize" title="Customize Aeris: themes, colours and more">${icon("sliders")}</button>` : ""}`);
   win.body.before(tb);
   win.toolbar = tb;
   win.url = tb.querySelector("input");
+  if (inShell) addTabs(win);
   tb.addEventListener("click", e => {
     const a = e.target.closest("[data-a]")?.dataset.a;
     const v = win.view;
     if (!a) return;
     if (win.napped) wake(win);
     if (!v) return;
+    if (inShell) {
+      const id = v.dataset.shell;
+      if (a === "back" || a === "forward") shell.postMessage({ cmd: a, id });
+      if (a === "reload") shell.postMessage({ cmd: viewLoading(v) ? "stop" : "reload", id });
+      if (a === "home") shell.postMessage({ cmd: "go", id, url: aerisNewTab() });
+      return;
+    }
     if (a === "back" && v.canGoBack) v.goBack();
     if (a === "forward" && v.canGoForward) v.goForward();
     if (a === "reload") viewLoading(v) ? v.stop() : v.reload();
@@ -606,7 +621,8 @@ function addBrowserBar(win) {
   win.url.addEventListener("focus", () => win.url.select());
   win.url.addEventListener("keydown", e => {
     if (e.key === "Enter" && win.url.value.trim() && win.view) {
-      loadView(win.view, fixup(win.url.value));
+      if (inShell) shell.postMessage({ cmd: "go", id: win.view.dataset.shell, url: fixup(win.url.value) });
+      else loadView(win.view, fixup(win.url.value));
       win.url.blur();
     }
     if (e.key === "Escape") win.url.blur();
@@ -633,7 +649,7 @@ function toggleCustomize(win) {
   win.toolbar.querySelector('[data-a="customize"]').classList.add("on");
 }
 
-const isNewTab = url => !url || url === "about:blank" || url === "about:newtab" || url === NEW_TAB_URL || /^moz-extension:\/\/[^/]+\/newtab\//.test(url);
+const isNewTab = url => !url || url === "about:blank" || url === "about:newtab" || url === NEW_TAB_URL || /^moz-extension:\/\/[^/]+\/newtab\//.test(url) || /\/aeris\/newtab\//.test(url);
 function updateBrowserBar(win) {
   const v = win.view;
   if (!win.toolbar) return;
@@ -643,10 +659,70 @@ function updateBrowserBar(win) {
     if (win.url.value !== shown) win.url.value = shown;
   }
   win.toolbar.querySelector(".ab-lock").classList.toggle("secure", url.startsWith("https:"));
-  win.toolbar.querySelector('[data-a="back"]').disabled = !(v && inChrome && v.canGoBack);
-  win.toolbar.querySelector('[data-a="forward"]').disabled = !(v && inChrome && v.canGoForward);
+  win.toolbar.querySelector('[data-a="back"]').disabled = !(v && (inChrome ? v.canGoBack : v.dataset.back === "1"));
+  win.toolbar.querySelector('[data-a="forward"]').disabled = !(v && (inChrome ? v.canGoForward : v.dataset.forward === "1"));
   const t = (v && viewTitle(v)) || "Aeris";
   if (win.name.textContent !== t) win.name.textContent = t;
+  if (win.tabs) drawTabs(win);
+}
+
+// ----- Tabs (Aeris in the iPad app) -----
+function addTabs(win) {
+  const strip = html("div", "ab-tabs");
+  win.toolbar.before(strip);
+  win.tabStrip = strip;
+  win.tabs = [];
+}
+function drawTabs(win) {
+  if (win.view && !win.tabs.includes(win.view)) win.tabs.push(win.view);   // the first tab (loadApp made it)
+  win.tabs = win.tabs.filter(v => v.isConnected);
+  const strip = win.tabStrip;
+  const key = win.tabs.map(v => v.dataset.shell + (v === win.view ? "*" : "") + viewTitle(v)).join("|");
+  if (strip.dataset.key === key) return;
+  strip.dataset.key = key;
+  strip.textContent = "";
+  for (const v of win.tabs) {
+    const tab = html("button", "ab-tab" + (v === win.view ? " on" : ""));
+    tab.append(html("span", "ab-tab-title", isNewTab(viewUrl(v)) ? "New Tab" : viewTitle(v) || viewUrl(v).replace(/^https?:\/\/(www\.)?/, "") || "New Tab"));
+    const x = html("span", "ab-tab-x", "×");
+    x.title = "Close tab";
+    tab.append(x);
+    tab.addEventListener("click", e => (e.target === x ? closeTab(win, v) : switchTab(win, v)));
+    strip.append(tab);
+  }
+  const plus = html("button", "ab-tab-new", "+");
+  plus.title = "New tab";
+  plus.addEventListener("click", () => newTab(win));
+  strip.append(plus);
+}
+function newTab(win, url = aerisNewTab()) {
+  const v = makeView(url);
+  win.body.prepend(v);
+  win.tabs.push(v);
+  loadView(v, url);
+  switchTab(win, v);
+  if (isNewTab(url)) setTimeout(() => win.url.focus(), 50);
+}
+function switchTab(win, v) {
+  win.view = v;
+  for (const t of win.tabs) t.classList.toggle("tab-off", t !== v);
+  cover(win, null);
+  updateBrowserBar(win);
+}
+function closeTab(win, v) {
+  const i = win.tabs.indexOf(v);
+  win.tabs.splice(i, 1);
+  v.remove();
+  if (!win.tabs.length) return closeWin(win);
+  if (win.view === v) switchTab(win, win.tabs[Math.max(0, i - 1)]);
+  else updateBrowserBar(win);
+}
+// A web page from elsewhere in Aquaris: a new tab in Aeris (opening Aeris if it isn't open)
+function openInAerisTab(url) {
+  const win = wins.find(w => w.app.id === "aeris" && w.kind === "app");
+  if (!win) return openApp({ ...AERIS_APP, url });
+  restore(win);
+  newTab(win, url);
 }
 setInterval(() => { for (const w of wins) if (w.toolbar) updateBrowserBar(w); }, 500);
 
@@ -3566,10 +3642,16 @@ function shellEvent(ev) {
   if (ev.type === "loaded" && win) { cover(win, null); if (ev.url) v.dataset.url = ev.url; }
   if (ev.type === "snap" && v) { v.style.backgroundImage = `url(${ev.data})`; v.style.backgroundSize = "100% 100%"; }
   if (ev.type === "tap" && win) focusWin(win);
-  if (ev.type === "openUrl" && /^https?:/.test(ev.url || "")) {
-    let name = "Web page";
-    try { name = new URL(ev.url).hostname.replace(/^www\./, ""); } catch {}
-    openApp({ ...AERIS_APP, id: "page-" + Date.now(), name, url: ev.url });
+  if (ev.type === "openUrl" && /^https?:/.test(ev.url || "")) openInAerisTab(ev.url);
+  if (ev.type === "state" && v) {
+    v.dataset.url = ev.url || v.dataset.url || "";
+    v.dataset.title = ev.title || "";
+    v.dataset.back = ev.back ? "1" : "";
+    v.dataset.forward = ev.forward ? "1" : "";
+    v.dataset.loading = ev.loading ? "1" : "";
+    const owner = wins.find(w => w.view === v || w.tabs?.includes(v));
+    if (owner && !ev.loading && owner.view === v) cover(owner, null);
+    if (owner?.toolbar) updateBrowserBar(owner);
   }
 }
 // ================= Fingers (iPad) =================

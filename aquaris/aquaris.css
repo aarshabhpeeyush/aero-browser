@@ -1219,3 +1219,14 @@ html:has(body.web), body.web { height: 100dvh; overflow: hidden; }
 @media (pointer: coarse) {
   body.web .tb-btn, body.web .win-btn, body.web .wbtn { min-width: 32px; min-height: 28px; }
 }
+
+/* Aeris's tabs (iPad app) */
+.view.tab-off { display: none !important; }
+.ab-tabs { height: 38px; flex: none; display: flex; align-items: flex-end; gap: 4px; padding: 0 8px; background: var(--surface-2, var(--surface)); overflow-x: auto; scrollbar-width: none; }
+.ab-tab { height: 32px; min-width: 0; max-width: 200px; flex: 1 1 160px; display: flex; align-items: center; gap: 6px; padding: 0 8px 0 12px; border-radius: 10px 10px 0 0; color: var(--muted); font-size: 12.5px; }
+.ab-tab.on { background: var(--surface); color: var(--text); box-shadow: 0 -1px 0 var(--line); }
+.ab-tab-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.ab-tab-x { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 6px; font-size: 15px; }
+.ab-tab-x:hover { background: var(--hover); }
+.ab-tab-new { width: 32px; height: 32px; flex: none; border-radius: 8px; font-size: 20px; color: var(--text); margin-bottom: 0; }
+.ab-tab-new:hover { background: var(--hover); }
