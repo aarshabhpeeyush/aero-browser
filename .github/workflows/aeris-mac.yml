@@ -67,7 +67,7 @@ jobs:
           dmg=$(ls "$RUNNER_TEMP"/aeris/src/obj-aeris/dist/*.dmg | head -1)
           hdiutil attach "$dmg" -mountpoint /tmp/aeris-dmg -nobrowse -readonly
           app=$(ls -d /tmp/aeris-dmg/*.app | head -1)
-          ditto "$app" "$stage/Aeris.app"
+          ditto --norsrc --noextattr "$app" "$stage/Aeris.app"
           hdiutil detach /tmp/aeris-dmg
           # uBlock Origin comes with Aeris (Firefox adds it to each new profile from here)
           mkdir -p "$stage/Aeris.app/Contents/Resources/distribution/extensions"
@@ -83,6 +83,8 @@ jobs:
           python3 -c "from PIL import Image; Image.open('aquaris/icon-256.png').convert('RGBA').resize((1024, 1024), Image.LANCZOS).save('$a/Resources/aquaris.icns', format='ICNS')"
 
           # Apple chips only run signed programs: sign both "ad hoc" (no Apple account needed)
+          # Signing refuses apps carrying Finder data, so clear it first
+          xattr -cr "$stage/Aeris.app" "$stage/Aquaris.app"
           codesign --force --deep --sign - "$stage/Aeris.app"
           codesign --force --deep --sign - "$stage/Aquaris.app"
 
