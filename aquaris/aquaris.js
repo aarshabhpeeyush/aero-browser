@@ -28,6 +28,11 @@ const inChrome = typeof ChromeUtils !== "undefined" && typeof Services !== "unde
 // The web version (iPad, phones, any browser): Aquaris as a website you add to the Home Screen
 const onWeb = !inChrome;
 if (onWeb) document.body.classList.add("web");
+// The iPad app ("shell", aquaris-ipad/): every website opens inside Aquaris windows, as a real
+// app view the iPad app lays over the window (websites can't be put inside a web page there).
+const shell = window.webkit?.messageHandlers?.aquarisShell || null;
+const inShell = !!shell;
+if (inShell) document.body.classList.add("shell");
 
 // ================= Settings storage =================
 // Inside Aeris: aquaris.json in the profile folder. As a plain file: in memory only.
@@ -38,6 +43,7 @@ const store = {
   timer: 0,
   async load() {
     if (this.file) this.data = await IOUtils.readJSON(this.file).catch(() => ({}));
+    else if (inShell && window.aquarisSaved) this.data = window.aquarisSaved;
     else try { this.data = JSON.parse(localStorage.getItem("aquaris") || "{}"); } catch { this.data = {}; }
   },
   async get(defaults) {
@@ -46,7 +52,11 @@ const store = {
   async set(changes) {
     Object.assign(this.data, changes);
     clearTimeout(this.timer);
-    if (!this.file) return void (this.timer = setTimeout(() => { try { localStorage.setItem("aquaris", JSON.stringify(this.data)); } catch {} }, 300));
+    if (!this.file) return void (this.timer = setTimeout(() => {
+      const json = JSON.stringify(this.data);
+      if (inShell) shell.postMessage({ cmd: "save", data: json });
+      try { localStorage.setItem("aquaris", json); } catch {}
+    }, 300));
     this.timer = setTimeout(() => IOUtils.writeJSON(this.file, this.data, { tmpPath: this.file + ".tmp" }).catch(e => console.error("Aquaris save:", e)), 300);
   }
 };
@@ -86,7 +96,7 @@ const allApps = () => [...AQUARIS_APPS.filter(a => !settings.aquarisRemoved.incl
 const NEW_TAB_URL = (() => {
   try { return ChromeUtils.importESModule("resource:///modules/AboutNewTab.sys.mjs").AboutNewTab.newTabURL; } catch { return "https://www.google.com/"; }
 })();
-const AERIS_APP = onWeb ? { id: "aeris", name: "Browser", about: "Opens the web in a new tab", url: "https://www.google.com/", color: "#2a86e8", ui: "globe" }
+const AERIS_APP = onWeb ? { id: "aeris", name: "Browser", about: inShell ? "The web, in a window" : "Opens the web in a new tab", url: "https://www.google.com/", color: "#2a86e8", ui: "globe", size: [1000, 700] }
   : { id: "aeris", name: "Aeris", about: "The web browser, with all of Aeris", url: NEW_TAB_URL, size: [1180, 760] };
 // Aquaris's own apps: made by Aquaris, nothing from the internet
 const OWN_APPS = [
@@ -116,6 +126,13 @@ const SYSTEM = {
 const ALL_PRINCIPAL = () => Services.scriptSecurityManager.getSystemPrincipal();
 function makeView(url) {
   let v;
+  if (inShell) {
+    v = html("div", "shell-view");
+    v.dataset.shell = "v" + ++shellSeq;
+    v.className = "view shell-view";
+    v.dataset.first = url;
+    return v;
+  }
   if (inChrome) {
     v = document.createXULElement("browser");
     for (const [k, val] of Object.entries({ type: "content", remote: "true", maychangeremoteness: "true", messagemanagergroup: "browsers", nodefaultsrc: "true" })) v.setAttribute(k, val);
@@ -131,10 +148,11 @@ function makeView(url) {
 }
 // Call once the view is in the page
 function loadView(v, url) {
+  if (inShell && v.dataset.shell) { shellOpen.add(v.dataset.shell); shell.postMessage({ cmd: "open", id: v.dataset.shell, url }); return shellSync(); }
   if (!inChrome) return void (v.src = url);
   v.fixupAndLoadURIString(url, { triggeringPrincipal: ALL_PRINCIPAL() });
 }
-const viewUrl = v => (inChrome ? v.currentURI?.spec : v.src) || v.dataset.first || "";
+const viewUrl = v => (inChrome ? v.currentURI?.spec : v.src || v.dataset.url) || v.dataset.first || "";
 const viewTitle = v => (inChrome ? v.contentTitle : "") || "";
 const viewLoading = v => (inChrome ? !!v.webProgress?.isLoadingDocument : false);
 const pageIcon = url => (inChrome && /^https?:/.test(url) ? "page-icon:" + url : "");
@@ -314,7 +332,7 @@ function wireWindow(win, bar, caption, tools) {
   caption.querySelector(".c-max").addEventListener("click", () => maximise(win));
   caption.querySelector(".c-close").addEventListener("click", () => closeWin(win));
   bar.addEventListener("dblclick", e => !e.target.closest("button") && maximise(win));
-  tools.querySelector(".t-reload")?.addEventListener("click", () => (inChrome && win.view ? win.view.reload() : loadApp(win)));
+  tools.querySelector(".t-reload")?.addEventListener("click", () => (inChrome && win.view ? win.view.reload() : inShell && win.view ? shell.postMessage({ cmd: "reload", id: win.view.dataset.shell }) : loadApp(win)));
   tools.querySelector(".t-split").addEventListener("click", () => splitScreen(win, "left"));
   tools.querySelector(".t-out")?.addEventListener("click", () => { openInAeris([win.view ? viewUrl(win.view) : win.app.url]); closeWin(win); });
 
@@ -500,7 +518,7 @@ function loadApp(win) {
   cover(win, "loading");
   win.body.prepend(v);
   loadView(v, win.app.url);
-  if (!inChrome) v.addEventListener("load", () => cover(win, null), { once: true });
+  if (!inChrome && !inShell) v.addEventListener("load", () => cover(win, null), { once: true });
   drawDock();
 }
 function nap(win) {
@@ -524,9 +542,9 @@ function noteRecent(app) {
 function openApp(app, opts = {}) {
   if (!opts.rect) noteRecent(app);
   if (SYSTEM[app.id]) return openSystem(app.id);
-  if (app.id === "aeris") return showOrOpenAeris();
+  if (app.id === "aeris" && !inShell) return showOrOpenAeris();
   if (app.own) return openOwnApp(app);
-  if (onWeb && !app.frame) { closeOverlays(); window.open(app.url, "_blank"); return null; }
+  if (onWeb && !app.frame && !inShell) { closeOverlays(); window.open(app.url, "_blank"); return null; }
   const open = wins.find(w => w.app.id === app.id && w.kind === "app");
   if (open) return restore(open), open;
   const win = makeWindow({ app, title: app.name, kind: "app", rect: opts.rect, state: opts.state === "max" ? "max" : "normal" });
@@ -675,6 +693,7 @@ function showAeris(w) {
 }
 // The dock's Aeris icon: open Aeris, or bring it up / put it away
 function showOrOpenAeris() {
+  if (inShell) return openApp(AERIS_APP);
   const list = aerisWindows();
   if (!list.length) return openAerisWindow();
   const w = list[list.length - 1];
@@ -3488,8 +3507,63 @@ async function setUpAppWindow() {
 // What Aeris Core uses to reach this window (pages to open in Aeris, coming to the front)
 window.Aquaris = {
   openInAeris(urls) { window.focus(); openInAeris(urls); },
-  focus() { window.focus(); }
+  focus() { window.focus(); },
+  shellEvent(ev) { shellEvent(ev); }
 };
+
+// ================= The iPad app =================
+// Each website is a real app view the iPad app lays exactly over its window's body. The window's
+// title bar (move, minimise, close) and the dock stay Aquaris's own. App views can't be drawn
+// under Aquaris's menus, so whenever something covers one (a menu, the app page, another window)
+// it's swapped for a picture of itself until it's uncovered.
+let shellSeq = 0, shellQueued = false, shellUntil = 0;
+const shellOpen = new Set(), shellShown = new Set();
+const SHELL_OVERLAYS = ["#menu", "#mbMenu", "#quick", "#tasks", "#calendar", "#launcher", "#spotlight", "#lock", "#boot", ".ask"];
+const isShown = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
+function shellSync() {
+  if (!inShell) return;
+  shellUntil = performance.now() + 450;       // follow windows while they animate
+  if (shellQueued) return;
+  shellQueued = true;
+  const frame = () => {
+    shellLayout();
+    if (performance.now() < shellUntil) requestAnimationFrame(frame);
+    else shellQueued = false;
+  };
+  requestAnimationFrame(frame);
+}
+function shellLayout() {
+  const views = [...document.querySelectorAll(".shell-view")];
+  const live = new Set(views.map(v => v.dataset.shell));
+  for (const id of [...shellOpen]) if (!live.has(id)) { shell.postMessage({ cmd: "close", id }); shellOpen.delete(id); shellShown.delete(id); }
+  const overlay = SHELL_OVERLAYS.some(s => [...document.querySelectorAll(s)].some(isShown)) || document.body.classList.contains("launcher-open");
+  const winsShown = [...document.querySelectorAll(".win")].filter(w => isShown(w) && !w.classList.contains("min") && !w.classList.contains("closing"));
+  const z = el => +el.style.zIndex || 0;
+  const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+  const list = views.filter(v => shellOpen.has(v.dataset.shell)).map(v => {
+    const win = v.closest(".win"), r = v.getBoundingClientRect();
+    const onScreen = !!win && winsShown.includes(win) && r.width > 0;
+    const covered = overlay || (onScreen && winsShown.some(o => o !== win && z(o) > z(win) && hit(o.getBoundingClientRect(), r)));
+    return { id: v.dataset.shell, x: r.left, y: r.top, w: r.width, h: r.height, z: win ? z(win) : 0, show: onScreen && !covered, snap: onScreen && covered,
+      radius: settings.aquarisLookMore?.radius ?? 10 };
+  }).sort((a, b) => a.z - b.z);
+  for (const it of list) {
+    if (it.snap && shellShown.has(it.id)) shell.postMessage({ cmd: "snapshot", id: it.id });   // a picture before it hides
+    it.show ? shellShown.add(it.id) : shellShown.delete(it.id);
+  }
+  shell.postMessage({ cmd: "layout", views: list });
+}
+function shellEvent(ev) {
+  const v = document.querySelector(`.shell-view[data-shell="${ev.id}"]`);
+  const win = v && wins.find(w => w.view === v);
+  if (ev.type === "loaded" && win) { cover(win, null); if (ev.url) v.dataset.url = ev.url; }
+  if (ev.type === "snap" && v) { v.style.backgroundImage = `url(${ev.data})`; v.style.backgroundSize = "100% 100%"; }
+  if (ev.type === "tap" && win) focusWin(win);
+}
+if (inShell) {
+  new MutationObserver(shellSync).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["style", "class", "hidden"] });
+  addEventListener("resize", shellSync);
+}
 
 // ================= Start =================
 

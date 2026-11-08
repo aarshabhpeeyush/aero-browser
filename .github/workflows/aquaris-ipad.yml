@@ -1,0 +1,48 @@
+# Builds the Aquaris iPad app on GitHub's Macs: Aquaris-iPad.ipa, not signed by Apple.
+# Install it with AltStore or SideStore (they sign it with your own free Apple ID).
+# Start it from the Actions tab, or with: gh workflow run aquaris-ipad.yml
+name: Build Aquaris for iPad
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ipad:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Aquaris's files and icon
+        run: |
+          python3 -m pip install --quiet --break-system-packages pillow || python3 -m pip install --quiet pillow
+          python3 aeris/tools/aquaris_web.py aquaris-ipad/web
+          python3 -c "from PIL import Image; Image.open('aquaris/icon-256.png').convert('RGB').resize((1024, 1024), Image.LANCZOS).save('aquaris-ipad/Assets.xcassets/AppIcon.appiconset/icon-1024.png')"
+
+      - name: Make the Xcode project
+        working-directory: aquaris-ipad
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Build
+        working-directory: aquaris-ipad
+        run: |
+          xcodebuild -project AquarisShell.xcodeproj -target Aquaris -sdk iphoneos -configuration Release \
+            SYMROOT="$PWD/build" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build | tail -40
+          test -d build/Release-iphoneos/Aquaris.app
+
+      - name: Pack the .ipa
+        working-directory: aquaris-ipad
+        run: |
+          version=$(cat ../aeris/version.txt)
+          mkdir -p Payload out
+          cp -R build/Release-iphoneos/Aquaris.app Payload/
+          zip -qr "out/Aquaris-iPad-$version.ipa" Payload
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aquaris-ipad
+          path: aquaris-ipad/out/*.ipa
+          retention-days: 14

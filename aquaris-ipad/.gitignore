@@ -1,0 +1,4 @@
+web/
+Assets.xcassets/AppIcon.appiconset/icon-1024.png
+*.xcodeproj/
+build/
