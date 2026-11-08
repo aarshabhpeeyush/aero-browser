@@ -1,0 +1,340 @@
+/* More theme skins (see skins.css): Neon Gamer, Luna XP (an XP-style desktop) and Retro 2000
+   (a Windows 95-style desktop). */
+
+/* ===================================================================================== */
+/* ===================================== NEON GAMER ==================================== */
+/* ===================================================================================== */
+/* RGB everything: black carbon panels, neon edges, a spinning rainbow rim on the window you're
+   using, angled corners, a sporty font and a synthwave grid. */
+
+@property --rgb-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes rgb-spin { to { --rgb-angle: 360deg; } }
+@keyframes rgb-slide { to { background-position: 200% 0; } }
+
+body[data-skin="gamer"] {
+  --font: "Bahnschrift", "Rajdhani", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Bahnschrift", "Rajdhani", "Segoe UI", system-ui, sans-serif;
+  --text: #ece8f7;
+  --muted: #9c93b9;
+  --surface: #0d0b14;
+  --surface-2: #14111e;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --hover: rgba(255, 31, 90, 0.12);
+  --press: rgba(255, 31, 90, 0.22);
+  --accent: #ff1f5a;
+  --accent-ink: #fff;
+  --glass: rgba(10, 8, 16, 0.86);
+  --glass-strong: rgba(12, 10, 18, 0.94);
+  --rgb: linear-gradient(90deg, #ff1f5a, #b00cff, #00e5ff, #39ff88, #ffd23f, #ff1f5a);
+  --carbon: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 4px), repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.35) 0 2px, transparent 2px 4px);
+  --cut: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  --r-win: 3px;
+  --r-ctl: 2px;
+  color-scheme: dark;
+}
+body[data-skin="gamer"][data-wall="gamer"]::before { background: url("walls/neon-grid.svg") center / cover no-repeat, #07050d; }
+body[data-skin="gamer"] :is(.titlebar .title, .tb-appname, .page h2, .page h3, .qs-label, .icon span, .ln-app span) { text-transform: uppercase; letter-spacing: 0.08em; }
+
+body[data-skin="gamer"] #topbar { background: rgba(5, 4, 10, 0.82); backdrop-filter: blur(14px); box-shadow: none; }
+body[data-skin="gamer"] #topbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--rgb); background-size: 200% 100%; animation: rgb-slide 6s linear infinite; }
+body[data-skin="gamer"] #topbar .tb-btn:hover, body[data-skin="gamer"] #topbar .tb-btn.open { background: var(--hover); color: #fff; box-shadow: inset 0 -2px 0 var(--accent); }
+
+body[data-skin="gamer"] .win {
+  border: 1px solid rgba(255, 31, 90, 0.35);
+  background: var(--carbon), var(--surface);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+body[data-skin="gamer"] .win.active {
+  border: 2px solid transparent;
+  background: var(--carbon) padding-box, linear-gradient(var(--surface), var(--surface)) padding-box,
+    conic-gradient(from var(--rgb-angle), #ff1f5a, #b00cff, #00e5ff, #39ff88, #ffd23f, #ff1f5a) border-box;
+  box-shadow: 0 0 22px rgba(255, 31, 90, 0.35), 0 0 60px rgba(0, 229, 255, 0.12), 0 14px 50px rgba(0, 0, 0, 0.7);
+  animation: rgb-spin 4s linear infinite;
+}
+body[data-skin="gamer"] .titlebar { background: linear-gradient(180deg, #17131f, #0e0b15); border-bottom: 1px solid rgba(255, 31, 90, 0.4); }
+body[data-skin="gamer"] .titlebar .title { font-weight: 600; font-size: 12.5px; color: #fff; }
+body[data-skin="gamer"] .caption button:hover { background: var(--hover); color: #fff; }
+body[data-skin="gamer"] .caption .c-close:hover { background: #ff1f5a; box-shadow: 0 0 14px #ff1f5a; }
+body[data-skin="gamer"] :is(.body, .page) { background: transparent; }
+body[data-skin="gamer"] .page section { background: rgba(255, 255, 255, 0.025); box-shadow: inset 0 0 0 1px var(--line); border-left: 2px solid var(--accent); border-radius: 0; }
+
+/* Icons: dark plates with the app's colour glowing out of them */
+body[data-skin="gamer"] .tile:not(.img):not(.site) {
+  --neon: color-mix(in srgb, var(--c), #fff 35%);
+  border-radius: 0;
+  background: linear-gradient(180deg, #1b1726, #0c0a12);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--neon), transparent 30%), inset 0 0 14px color-mix(in srgb, var(--neon), transparent 70%);
+  clip-path: var(--cut);
+}
+body[data-skin="gamer"] .tile:not(.img):not(.site) .glyph { filter: drop-shadow(0 0 4px var(--neon)); }
+body[data-skin="gamer"] .tile:not(.img):not(.site) .glyph.ui { color: var(--neon); }
+body[data-skin="gamer"] .tile:not(.img):not(.site) .glyph:not(.ui) [fill="#fff"] { fill: var(--neon); }
+body[data-skin="gamer"] .tile:not(.img):not(.site) .glyph:not(.ui) [stroke="#fff"] { stroke: var(--neon); }
+body[data-skin="gamer"] .tile:not(.img):not(.site) .glyph:not(.ui) [fill="currentColor"] { fill: #0c0a12; }
+body[data-skin="gamer"] .tile:not(.img):not(.site) .glyph:not(.ui) [stroke="currentColor"] { stroke: #0c0a12; }
+body[data-skin="gamer"] .icon span { font-size: 10.5px; font-weight: 600; color: #fff; text-shadow: 0 0 6px rgba(0, 0, 0, 0.9); }
+body[data-skin="gamer"] .icon:hover, body[data-skin="gamer"] .icon.on { background: rgba(255, 31, 90, 0.14); border-color: rgba(255, 31, 90, 0.6); box-shadow: 0 0 14px rgba(255, 31, 90, 0.35); }
+
+/* Dock: black with an RGB underglow */
+body[data-skin="gamer"] #dock {
+  border-radius: 4px;
+  background: rgba(8, 6, 14, 0.85);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 6px 18px rgba(255, 31, 90, 0.35), 0 10px 40px rgba(0, 229, 255, 0.2);
+}
+body[data-skin="gamer"] #dock::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -2px; height: 2px; background: var(--rgb); background-size: 200% 100%; animation: rgb-slide 6s linear infinite; filter: blur(1px); }
+body[data-skin="gamer"] .dock-item:hover { transform: translateY(-4px); }
+body[data-skin="gamer"] .dock-item.running::after { width: 14px; margin-left: -7px; height: 2px; border-radius: 0; background: #00e5ff; box-shadow: 0 0 6px #00e5ff; }
+body[data-skin="gamer"] .launcher-icon { background: linear-gradient(180deg, #1b1726, #0c0a12); color: #ff1f5a; box-shadow: inset 0 0 0 1px rgba(255, 31, 90, 0.6); clip-path: var(--cut); border-radius: 0; }
+
+body[data-skin="gamer"] .btn { border-radius: 0; clip-path: var(--cut); background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px var(--line-strong); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; font-size: 12px; }
+body[data-skin="gamer"] .btn:hover { background: var(--hover); box-shadow: inset 0 0 0 1px var(--accent); }
+body[data-skin="gamer"] :is(.btn.primary, .qs-tile.on, .cal-day.today, .seg button.on, .qs-cell.on .qs-on) { background: var(--accent); color: #fff; box-shadow: 0 0 14px rgba(255, 31, 90, 0.6); }
+body[data-skin="gamer"] .seg { border-radius: 0; background: rgba(255, 255, 255, 0.04); }
+body[data-skin="gamer"] .seg button { border-radius: 0; }
+
+body[data-skin="gamer"] :is(.menu, .flyout, .mb-menu, .sp-box, #quick) { background: var(--glass-strong); backdrop-filter: blur(16px); border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(255, 31, 90, 0.4), 0 0 30px rgba(255, 31, 90, 0.2), 0 16px 40px rgba(0, 0, 0, 0.7); }
+body[data-skin="gamer"] :is(.menu button, .mb-menu button) { border-radius: 0; }
+body[data-skin="gamer"] :is(.menu button:hover, .mb-menu button:hover, .ln-result.on, .sp-row.on) { background: linear-gradient(90deg, rgba(255, 31, 90, 0.45), rgba(255, 31, 90, 0.05)); color: #fff; box-shadow: inset 2px 0 0 #ff1f5a; }
+body[data-skin="gamer"] #launcher .ln-app:hover { background: rgba(255, 31, 90, 0.12); box-shadow: inset 0 0 0 1px rgba(255, 31, 90, 0.6); }
+
+/* ===================================================================================== */
+/* ============================ LUNA XP: an XP-style desktop  ======================== */
+/* ===================================================================================== */
+/* Blue title bars with rounded tops, a red close button, beige windows, a blue taskbar along the
+   bottom with a green start button, Tahoma everywhere. */
+
+body[data-skin="xp"] {
+  --font: Tahoma, "Segoe UI", Verdana, sans-serif;
+  --font-display: "Trebuchet MS", Tahoma, sans-serif;
+  --text: #000;
+  --muted: #444;
+  --surface: #ece9d8;
+  --surface-2: #fff;
+  --line: #aca899;
+  --line-strong: #7f9db9;
+  --hover: #c1d2ee;
+  --press: #98b4e0;
+  --accent: #316ac5;
+  --accent-ink: #fff;
+  --glass: #ece9d8;
+  --glass-strong: #fff;
+  --r-win: 8px;
+  --r-ctl: 3px;
+  --luna: linear-gradient(180deg, #0997ff 0%, #0053ee 8%, #0050ee 40%, #0066ff 88%, #0066ff 93%, #005bff 95%, #003dd7 96%, #003dd7 100%);
+  --luna-inactive: linear-gradient(180deg, #7996de 0%, #7b97e0 40%, #8ba7ec 88%, #7591da 100%);
+  --taskbar: linear-gradient(180deg, #1f2f86 0, #3165c4 3%, #3682e5 6%, #4490e6 10%, #3883e5 12%, #2b71e0 15%, #2663da 18%, #235bd6 20%, #2258d5 23%, #2157d6 38%, #245ddb 54%, #2562df 86%, #245fdc 89%, #2158d4 92%, #1d4ec0 95%, #1941a5 98%);
+  font-size: 12px;
+  color-scheme: light;
+}
+body[data-skin="xp"][data-wall="xp"]::before { background: url("walls/green-hill.svg") center / cover no-repeat, #3a6fd8; }
+
+body[data-skin="xp"] #topbar { background: var(--taskbar); backdrop-filter: none; box-shadow: 0 1px 0 #0b2a8a; color: #fff; }
+body[data-skin="xp"] #topbar :is(.tb-btn, .tb-btn *) { color: #fff; text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35); }
+body[data-skin="xp"] #topbar .tb-btn { border-radius: 3px; }
+body[data-skin="xp"] #topbar .tb-btn:hover, body[data-skin="xp"] #topbar .tb-btn.open { background: rgba(255, 255, 255, 0.18); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25); }
+
+body[data-skin="xp"] .win {
+  border-radius: 8px 8px 0 0;
+  border: 3px solid #0054e3;
+  border-top: 0;
+  background: var(--surface);
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.45);
+}
+body[data-skin="xp"] .win:not(.active) { border-color: #7a96df; }
+body[data-skin="xp"] .titlebar { height: 30px; padding-left: 7px; background: var(--luna); border-radius: 8px 8px 0 0; }
+body[data-skin="xp"] .win:not(.active) .titlebar { background: var(--luna-inactive); }
+body[data-skin="xp"] .win:not(.active) .titlebar > :not(.caption) { opacity: 1; }
+body[data-skin="xp"] .titlebar .title { font: bold 13px "Trebuchet MS", Tahoma, sans-serif; color: #fff; text-shadow: 1px 1px 0 #0f1089; }
+body[data-skin="xp"] .titlebar .tool { color: #fff; }
+body[data-skin="xp"] .titlebar .tool:hover { background: rgba(255, 255, 255, 0.2); }
+body[data-skin="xp"] .caption { align-self: center; gap: 2px; padding-right: 5px; }
+body[data-skin="xp"] .caption button {
+  width: 21px;
+  height: 21px;
+  border-radius: 3px;
+  color: #fff;
+  border: 1px solid #fff;
+  background: radial-gradient(circle at 90% 90%, #0054e9 0, #2263d5 55%, #4479e4 70%, #a3bbec 90%, #fff 100%);
+}
+body[data-skin="xp"] .caption .c-close { background: radial-gradient(circle at 90% 90%, #cc4600 0, #dc6527 55%, #cd7546 70%, #ffccb2 90%, #fff 100%); }
+body[data-skin="xp"] .caption button:hover, body[data-skin="xp"] .caption .c-close:hover { filter: brightness(1.2); }
+body[data-skin="xp"] .caption .c-close:hover { background: radial-gradient(circle at 90% 90%, #cc4600 0, #dc6527 55%, #cd7546 70%, #ffccb2 90%, #fff 100%); }
+body[data-skin="xp"] .caption .i { width: 11px; height: 11px; filter: drop-shadow(0 0 0.6px #fff) drop-shadow(0 0 0.6px #fff); }
+body[data-skin="xp"] .win:not(.active) .caption button { opacity: 0.75; }
+body[data-skin="xp"] .body { border-top: 0; background: var(--surface); }
+body[data-skin="xp"] .page { background: var(--surface); }
+body[data-skin="xp"] .page section { background: #fff; border: 1px solid #d0d0bf; border-radius: 3px; box-shadow: none; }
+body[data-skin="xp"] .page h2 { font: bold 18px "Trebuchet MS", Tahoma, sans-serif; color: #0c2e8a; }
+
+body[data-skin="xp"] .tile:not(.img):not(.site) {
+  border-radius: 8px;
+  background: radial-gradient(90% 60% at 30% 20%, rgba(255, 255, 255, 0.55), transparent 60%), linear-gradient(180deg, color-mix(in srgb, var(--c), #fff 15%), color-mix(in srgb, var(--c), #000 25%));
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), 1px 2px 3px rgba(0, 0, 0, 0.35);
+}
+body[data-skin="xp"] .icon { border-radius: 0; }
+body[data-skin="xp"] .icon span { font: 11px Tahoma, sans-serif; text-shadow: 1px 1px 1px #000; padding: 0 2px; }
+body[data-skin="xp"] .icon:hover, body[data-skin="xp"] .icon.on { background: none; border-color: transparent; }
+body[data-skin="xp"] .icon.on span { background: #316ac5; text-shadow: none; outline: 1px dotted #fff; }
+
+/* The dock becomes the taskbar: full width along the bottom, a green start button on the left */
+body[data-skin="xp"] #dock {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: none;
+  max-width: none;
+  justify-content: flex-start;
+  height: 34px;
+  padding: 0 6px 0 0;
+  border-radius: 0;
+  background: var(--taskbar);
+  backdrop-filter: none;
+  box-shadow: 0 -1px 0 #0b2a8a;
+}
+body[data-skin="xp"] #dockLauncher { height: 100%; border-radius: 0; }
+body[data-skin="xp"] .launcher-icon {
+  width: auto;
+  height: 100%;
+  padding: 0 22px 0 10px;
+  gap: 5px;
+  display: flex;
+  align-items: center;
+  border-radius: 0 12px 12px 0;
+  color: #fff;
+  font: italic bold 17px "Trebuchet MS", Tahoma, sans-serif;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(180deg, #3c9c3c 0%, #4fbd4f 8%, #3aa83a 40%, #2c912c 88%, #2a7e2a 100%);
+  box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+body[data-skin="xp"] .launcher-icon::after { content: "start"; }
+body[data-skin="xp"] .launcher-icon .i { width: 16px; height: 16px; filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5)); }
+body[data-skin="xp"].launcher-open .launcher-icon { background: linear-gradient(180deg, #2a7e2a, #3aa83a); }
+body[data-skin="xp"] #dockApps { gap: 3px; padding-left: 6px; }
+body[data-skin="xp"] #dockApps .dock-item { padding: 2px 6px; border-radius: 3px; background: linear-gradient(180deg, #3c8af2, #1e62d8); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+body[data-skin="xp"] #dockApps .dock-item .tile { --size: 22px; }
+body[data-skin="xp"] #dockApps .dock-item.front { background: linear-gradient(180deg, #1e52b7, #1a48a8); box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.5); }
+body[data-skin="xp"] .dock-item:hover { transform: none; filter: brightness(1.12); }
+body[data-skin="xp"] .dock-item.running::after, body[data-skin="xp"] .dock-sep { display: none; }
+
+body[data-skin="xp"] .btn { border-radius: 3px; border: 1px solid #003c74; background: linear-gradient(180deg, #fff 0%, #ecebe6 86%, #d6d0c5 100%); box-shadow: none; color: #000; font-weight: 400; }
+body[data-skin="xp"] .btn:hover { box-shadow: inset 0 -1px 1px #e5a01a, inset 0 1px 1px #fecf85, inset 1px 0 1px #f9b84e, inset -1px 0 1px #f9b84e; }
+body[data-skin="xp"] :is(.btn.primary, .qs-tile.on, .cal-day.today, .seg button.on, .qs-cell.on .qs-on) { background: linear-gradient(180deg, #4d8de8, #2a5fc8); color: #fff; border-color: #003c74; box-shadow: none; }
+body[data-skin="xp"] .seg { border-radius: 3px; background: #fff; box-shadow: inset 0 0 0 1px #7f9db9; }
+body[data-skin="xp"] .seg button { border-radius: 2px; }
+
+body[data-skin="xp"] :is(.menu, .mb-menu) { background: #fff; backdrop-filter: none; border: 1px solid #aca899; border-radius: 0; padding: 2px; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.35); }
+body[data-skin="xp"] :is(.menu button, .mb-menu button) { border-radius: 0; }
+body[data-skin="xp"] :is(.menu button:hover, .mb-menu button:hover, .ln-result.on, .sp-row.on) { background: #316ac5; color: #fff; }
+body[data-skin="xp"] :is(.flyout, .sp-box, #quick) { background: #fff; backdrop-filter: none; border: 2px solid #0054e3; border-radius: 6px 6px 0 0; box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.45); }
+body[data-skin="xp"] #launcher .ln-app span { color: #fff; text-shadow: 1px 1px 1px #000; }
+body[data-skin="xp"] #launcher .ln-app:hover { background: rgba(49, 106, 197, 0.55); border-radius: 0; }
+
+/* ===================================================================================== */
+/* ============================ RETRO 2000: a 95-style desktop ============================ */
+/* ===================================================================================== */
+/* Grey 3-D bevels everywhere, a navy title bar, a plain teal desktop, a grey taskbar with a
+   raised Start button, small sharp text. */
+
+body[data-skin="w95"] {
+  --font: "Microsoft Sans Serif", "MS Sans Serif", Tahoma, Arial, sans-serif;
+  --font-display: "Microsoft Sans Serif", "MS Sans Serif", Tahoma, Arial, sans-serif;
+  --text: #000;
+  --muted: #404040;
+  --surface: #c0c0c0;
+  --surface-2: #fff;
+  --line: #808080;
+  --line-strong: #404040;
+  --hover: #000080;
+  --press: #000080;
+  --accent: #000080;
+  --accent-ink: #fff;
+  --glass: #c0c0c0;
+  --glass-strong: #c0c0c0;
+  --r-win: 0px;
+  --r-ctl: 0px;
+  /* raised and sunken 3-D edges */
+  --out: inset -1px -1px 0 #000, inset 1px 1px 0 #fff, inset -2px -2px 0 #808080, inset 2px 2px 0 #dfdfdf;
+  --in: inset -1px -1px 0 #fff, inset 1px 1px 0 #808080, inset -2px -2px 0 #dfdfdf, inset 2px 2px 0 #000;
+  font-size: 12px;
+  color-scheme: light;
+  -webkit-font-smoothing: none;
+}
+body[data-skin="w95"][data-wall="w95"]::before { background: #008080; }
+body[data-skin="w95"] * { border-radius: 0 !important; }
+body[data-skin="w95"] .dock-item.running::after { display: none; }
+
+/* Top bar: a grey menu strip */
+body[data-skin="w95"] #topbar { background: #c0c0c0; backdrop-filter: none; box-shadow: inset 0 -1px 0 #808080, inset 0 1px 0 #fff; color: #000; }
+body[data-skin="w95"] #topbar :is(.tb-btn, .tb-btn *) { color: #000; text-shadow: none; }
+body[data-skin="w95"] #topbar .tb-btn:hover, body[data-skin="w95"] #topbar .tb-btn.open { background: #000080; }
+body[data-skin="w95"] #topbar .tb-btn:hover *, body[data-skin="w95"] #topbar .tb-btn.open * { color: #fff; }
+
+/* Windows: a grey bevelled frame with the navy title bar */
+body[data-skin="w95"] .win { background: #c0c0c0; box-shadow: var(--out); padding: 3px; }
+body[data-skin="w95"] .win.max { padding: 0; }
+body[data-skin="w95"] .titlebar { height: 20px; padding-left: 3px; gap: 4px; background: linear-gradient(90deg, #000080, #1084d0); }
+body[data-skin="w95"] .win:not(.active) .titlebar { background: linear-gradient(90deg, #808080, #b5b5b5); }
+body[data-skin="w95"] .win:not(.active) .titlebar > :not(.caption) { opacity: 1; }
+body[data-skin="w95"] .titlebar .title { color: #fff; font-weight: bold; font-size: 12px; }
+body[data-skin="w95"] .titlebar .tile.tiny { --size: 16px; box-shadow: none; }
+body[data-skin="w95"] .titlebar .tool { width: 16px; height: 14px; color: #000; background: #c0c0c0; box-shadow: var(--out); }
+body[data-skin="w95"] .caption { align-self: center; gap: 2px; padding-right: 2px; }
+body[data-skin="w95"] .caption button { width: 16px; height: 14px; color: #000; background: #c0c0c0; box-shadow: var(--out); }
+body[data-skin="w95"] .caption .c-close { margin-left: 2px; }
+body[data-skin="w95"] .caption button:hover, body[data-skin="w95"] .caption .c-close:hover { background: #c0c0c0; color: #000; }
+body[data-skin="w95"] .caption button:active { box-shadow: var(--in); }
+body[data-skin="w95"] .caption .i { width: 9px; height: 9px; stroke-width: 3; }
+body[data-skin="w95"] .body { border-top: 0; margin-top: 2px; background: #c0c0c0; }
+body[data-skin="w95"] .page { background: #c0c0c0; }
+body[data-skin="w95"] .page section { background: #c0c0c0; box-shadow: inset -1px -1px 0 #fff, inset 1px 1px 0 #808080, inset -2px -2px 0 #808080, inset 2px 2px 0 #fff; }
+body[data-skin="w95"] .page h2 { font-size: 16px; font-weight: bold; }
+body[data-skin="w95"] :is(.field input, .page select, textarea, .ln-search, .sp-field) { background: #fff; box-shadow: var(--in); border: 0; }
+
+/* Icons: little pictures with no shine; labels highlight in navy */
+body[data-skin="w95"] .tile:not(.img):not(.site) { background: var(--c); box-shadow: inset -1px -1px 0 rgba(0, 0, 0, 0.5), inset 1px 1px 0 rgba(255, 255, 255, 0.5); }
+body[data-skin="w95"] .icon span { color: #fff; text-shadow: none; padding: 0 2px; font-size: 11px; }
+body[data-skin="w95"] .icon:hover, body[data-skin="w95"] .icon.on { background: none; border-color: transparent; }
+body[data-skin="w95"] .icon.on span { background: #000080; outline: 1px dotted #fff; }
+
+/* Taskbar: grey, full width, the Start button raised on the left */
+body[data-skin="w95"] #dock {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: none;
+  max-width: none;
+  justify-content: flex-start;
+  height: 30px;
+  padding: 2px;
+  background: #c0c0c0;
+  backdrop-filter: none;
+  box-shadow: inset 0 1px 0 #dfdfdf, inset 0 2px 0 #fff;
+}
+body[data-skin="w95"] #dockLauncher { height: 100%; }
+body[data-skin="w95"] .launcher-icon { width: auto; height: 100%; padding: 0 6px; gap: 4px; display: flex; align-items: center; background: #c0c0c0; color: #000; font-weight: bold; font-size: 12px; box-shadow: var(--out); }
+body[data-skin="w95"] .launcher-icon::after { content: "Start"; }
+body[data-skin="w95"] .launcher-icon .i { width: 14px; height: 14px; }
+body[data-skin="w95"].launcher-open .launcher-icon { box-shadow: var(--in); background: #c0c0c0; color: #000; }
+body[data-skin="w95"] #dockApps { gap: 3px; padding-left: 4px; }
+body[data-skin="w95"] #dockApps .dock-item { padding: 2px 6px; background: #c0c0c0; box-shadow: var(--out); }
+body[data-skin="w95"] #dockApps .dock-item .tile { --size: 20px; }
+body[data-skin="w95"] #dockApps .dock-item.front { box-shadow: var(--in); background: repeating-conic-gradient(#c0c0c0 0 25%, #fff 0 50%) 0 0 / 2px 2px; }
+body[data-skin="w95"] .dock-item:hover { transform: none; }
+body[data-skin="w95"] .dock-sep { display: none; }
+
+/* Buttons: raised grey, pressed in when chosen */
+body[data-skin="w95"] .btn { background: #c0c0c0; color: #000; font-weight: 400; box-shadow: var(--out); border: 0; }
+body[data-skin="w95"] .btn:active, body[data-skin="w95"] :is(.btn.primary, .qs-tile.on, .seg button.on, .qs-cell.on .qs-on) { background: #c0c0c0; color: #000; box-shadow: var(--in); }
+body[data-skin="w95"] .btn.primary { box-shadow: var(--out), 0 0 0 1px #000; }
+body[data-skin="w95"] .cal-day.today { background: #000080; color: #fff; }
+body[data-skin="w95"] .seg { background: #c0c0c0; box-shadow: none; gap: 2px; }
+body[data-skin="w95"] .seg button { box-shadow: var(--out); }
+body[data-skin="w95"] .qs-pill { background: #c0c0c0; box-shadow: var(--out); }
+
+/* Menus and panels: grey with a raised edge; the highlight is navy */
+body[data-skin="w95"] :is(.menu, .mb-menu, .flyout, .sp-box, #quick) { background: #c0c0c0; backdrop-filter: none; box-shadow: var(--out), 2px 2px 0 rgba(0, 0, 0, 0.3); }
+body[data-skin="w95"] :is(.menu button:hover, .mb-menu button:hover, .ln-result.on, .sp-row.on) { background: #000080; color: #fff; }
+body[data-skin="w95"] #launcher .ln-app span { color: #fff; }
+body[data-skin="w95"] #launcher .ln-app:hover { background: rgba(0, 0, 128, 0.6); }

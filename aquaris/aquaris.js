@@ -3635,7 +3635,8 @@ function applyLook() {
   const aerisTheme = themeById(s.aquarisTheme);
   const theme = s.aquarisTheme === "aqua" ? "aqua" : "minimal";
   // Frutiger Aqua is always light; an Aeris theme is light or dark unless you choose
-  const mode = theme === "aqua" || s.aquarisTheme === "t:woodland-hut" ? "light"
+  const mode = theme === "aqua" || ["t:woodland-hut", "t:retro-2000", "t:luna-xp"].includes(s.aquarisTheme) ? "light"
+    : s.aquarisTheme === "t:neon-gamer" ? "dark"
     : s.aquarisMode !== "auto" ? s.aquarisMode
     : aerisTheme ? (aerisTheme.light ? "light" : "dark")
     : darkQuery.matches ? "dark" : "light";
@@ -3644,7 +3645,8 @@ function applyLook() {
   b.dataset.mode = mode;
   // An Aeris theme dresses all of Aquaris (skins.css): Woodland Hut in wood, Frutiger Metro in
   // Metro, every other one in Frutiger Aero
-  const skin = !aerisTheme ? "" : s.aquarisTheme === "t:woodland-hut" ? "wood" : s.aquarisTheme === "t:frutiger-metro" ? "metro" : "aero";
+  const SKINS = { "t:woodland-hut": "wood", "t:frutiger-metro": "metro", "t:neon-gamer": "gamer", "t:retro-2000": "w95", "t:luna-xp": "xp" };
+  const skin = !aerisTheme ? "" : SKINS[s.aquarisTheme] || "aero";
   if (skin) b.dataset.skin = skin; else delete b.dataset.skin;
   b.style.setProperty("--accent", aerisTheme?.accent || "");
   if (!aerisTheme) b.style.removeProperty("--accent");

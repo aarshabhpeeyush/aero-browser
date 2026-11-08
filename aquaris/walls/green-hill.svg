@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <!-- Luna XP: a rolling green hill under a bright blue sky with soft clouds (Aquaris's own
+       drawing; your own picture can be used instead in Settings → Wallpaper) -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f62d8"/>
+      <stop offset="0.6" stop-color="#5d93ec"/>
+      <stop offset="1" stop-color="#a9c9f5"/>
+    </linearGradient>
+    <linearGradient id="hill" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#7fd23a"/>
+      <stop offset="0.45" stop-color="#4fae1f"/>
+      <stop offset="1" stop-color="#2e7d14"/>
+    </linearGradient>
+    <linearGradient id="hill2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5fb92a"/>
+      <stop offset="1" stop-color="#2a6d12"/>
+    </linearGradient>
+    <radialGradient id="light" cx="0.35" cy="0.15" r="0.6">
+      <stop offset="0" stop-color="#e8ff9a" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#e8ff9a" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
+    <g id="cloud" filter="url(#soft)">
+      <ellipse cx="0" cy="0" rx="90" ry="34" fill="#fff"/>
+      <ellipse cx="-55" cy="10" rx="60" ry="24" fill="#fff"/>
+      <ellipse cx="60" cy="8" rx="70" ry="26" fill="#fff"/>
+      <ellipse cx="10" cy="-22" rx="52" ry="30" fill="#fff"/>
+    </g>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <!-- clouds -->
+  <use href="#cloud" transform="translate(470 140) scale(0.8)" opacity="0.95"/>
+  <use href="#cloud" transform="translate(1000 330) scale(1.2)" opacity="0.95"/>
+  <use href="#cloud" transform="translate(1500 280) scale(1.5)" opacity="0.95"/>
+  <use href="#cloud" transform="translate(1830 160) scale(0.9)" opacity="0.9"/>
+  <use href="#cloud" transform="translate(320 300) scale(1.1, 0.55)" opacity="0.8"/>
+  <use href="#cloud" transform="translate(1250 560) scale(1.8, 0.5)" opacity="0.9"/>
+  <use href="#cloud" transform="translate(1700 600) scale(2, 0.6)" opacity="0.92"/>
+  <use href="#cloud" transform="translate(760 560) scale(1.2, 0.4)" opacity="0.85"/>
+  <!-- distant hills -->
+  <path d="M1500 700 C 1620 660, 1760 650, 1920 670 L1920 760 L1500 760 Z" fill="#6a7f9a" opacity="0.7"/>
+  <!-- the big hill -->
+  <path d="M-20 650 C 300 600, 700 560, 1000 600 C 1300 640, 1600 700, 1940 740 L1940 1080 L-20 1080 Z" fill="url(#hill)"/>
+  <path d="M-20 650 C 300 600, 700 560, 1000 600 C 1300 640, 1600 700, 1940 740 L1940 1080 L-20 1080 Z" fill="url(#light)"/>
+  <!-- the shadow sweeping across it, and the field in front -->
+  <path d="M-20 900 C 400 840, 900 880, 1400 960 S 1800 1000, 1940 990 L1940 1080 L-20 1080 Z" fill="url(#hill2)" opacity="0.85"/>
+  <path d="M600 700 C 900 760, 1300 820, 1940 880 L1940 1000 C 1400 900, 900 820, 600 760 Z" fill="#1f5a0e" opacity="0.18"/>
+</svg>
