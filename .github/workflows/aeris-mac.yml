@@ -11,9 +11,6 @@ jobs:
   mac:
     runs-on: macos-latest
     timeout-minutes: 355
-    env:
-      SCCACHE_GHA_ENABLED: "true"
-      SCCACHE_CACHE_SIZE: 9G
     steps:
       - uses: actions/checkout@v4
 
@@ -47,8 +44,6 @@ jobs:
           python3 -m pip install --quiet --break-system-packages pillow || python3 -m pip install --quiet pillow
           bash aeris/prepare.sh "$RUNNER_TEMP/aeris/src" mac
 
-      - uses: mozilla-actions/sccache-action@v0.0.9
-
       - name: Get build tools
         working-directory: ${{ runner.temp }}/aeris/src
         run: ./mach --no-interactive bootstrap --application-choice browser
@@ -62,7 +57,6 @@ jobs:
         run: |
           ./mach package
           ls -la obj-aeris/dist/
-          sccache --show-stats || true
 
       - name: Aeris.app (with uBlock Origin), Aquaris.app and the .dmg
         run: |

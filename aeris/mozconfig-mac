@@ -13,9 +13,6 @@ ac_add_options --disable-crashreporter
 # Aeris checks GitHub for updates itself (like Aero did), so Mozilla's updater isn't built.
 ac_add_options --disable-updater
 
-# Reuse compiled pieces between builds in the cloud.
-ac_add_options --with-ccache=sccache
-
 mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-aeris
 export MOZ_TELEMETRY_REPORTING=
 export MOZ_REQUIRE_SIGNING=
