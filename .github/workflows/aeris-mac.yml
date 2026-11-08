@@ -9,7 +9,7 @@ on:
 
 jobs:
   mac:
-    runs-on: macos-14
+    runs-on: macos-latest
     timeout-minutes: 355
     env:
       SCCACHE_GHA_ENABLED: "true"
