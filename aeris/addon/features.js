@@ -17,14 +17,16 @@ browser.commands.onCommand.addListener(name => name === "focus-mode" && toggleFo
 browser.pageAction.onClicked.addListener(toggleFocus);
 
 // ================= Apps in the side panel =================
-// The panel shows web apps (Discord, Spotify…) in a frame. Many sites refuse to be shown inside
-// another page, so for frames inside Aeris's own panel those refusals are taken out.
+// The panel shows web apps (Discord, Spotify…) in a frame, and so do Aquaris's app windows. Many
+// sites refuse to be shown inside another page, so for frames inside the panel and Aquaris (Aeris's
+// own pages, nobody else's) those refusals are taken out.
 
-const PANEL_URL = browser.runtime.getURL("panel/");
+const FRAME_HOSTS = [browser.runtime.getURL("panel/"), browser.runtime.getURL("aquaris/")];
+const ownPage = url => FRAME_HOSTS.some(p => (url || "").startsWith(p));
 browser.webRequest.onHeadersReceived.addListener(details => {
+  // Frames inside the app count too: sites check every page above them, right up to Aeris's page
   const parent = details.documentUrl || details.originUrl || "";
-  const fromPanel = parent.startsWith(PANEL_URL) || (details.frameAncestors || []).some(f => f.url.startsWith(PANEL_URL));
-  if (!fromPanel) return {};
+  if (!ownPage(parent) && !(details.frameAncestors || []).some(f => ownPage(f.url))) return {};
   const responseHeaders = [];
   for (const h of details.responseHeaders) {
     const name = h.name.toLowerCase();

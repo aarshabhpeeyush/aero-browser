@@ -1,0 +1,109 @@
+# Builds Aeris for Macs with Apple chips (M1 and newer) on GitHub's Mac computers:
+# a .dmg with Aeris.app and Aquaris.app (drag both into Applications).
+# Start it from the Actions tab, or with: gh workflow run aeris-mac.yml
+# The apps are not signed by Apple, so the first time you open each one: right-click it > Open.
+name: Build Aeris for Mac
+
+on:
+  workflow_dispatch:
+
+jobs:
+  mac:
+    runs-on: macos-14
+    timeout-minutes: 355
+    env:
+      MOZBUILD_STATE_PATH: ${{ runner.temp }}/mozbuild
+      SCCACHE_GHA_ENABLED: "true"
+      SCCACHE_CACHE_SIZE: 9G
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make room
+        run: |
+          # Firefox needs a lot of disk; GitHub's Macs come with several spare copies of Xcode and phone simulators
+          df -h /
+          current="$(xcode-select -p | sed 's#/Contents/Developer##')"
+          for x in /Applications/Xcode_*.app; do [ "$x" = "$current" ] || sudo rm -rf "$x"; done
+          xcrun simctl delete all 2>/dev/null || true
+          sudo rm -rf ~/Library/Developer/CoreSimulator /Library/Developer/CoreSimulator/Profiles/Runtimes 2>/dev/null || true
+          sudo rm -rf /Users/runner/Library/Android /usr/local/share/dotnet ~/.dotnet 2>/dev/null || true
+          df -h /
+
+      - name: Download Firefox source
+        run: |
+          version=$(cat aeris/firefox-version.txt)
+          mkdir -p "$RUNNER_TEMP/aeris"
+          curl -fsSL "https://archive.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.xz" \
+            | tar -xJ -C "$RUNNER_TEMP/aeris"
+          mv "$RUNNER_TEMP/aeris/firefox-$version" "$RUNNER_TEMP/aeris/src"
+
+      - name: Turn it into Aeris
+        run: |
+          python3 -m pip install --quiet --break-system-packages pillow || python3 -m pip install --quiet pillow
+          bash aeris/prepare.sh "$RUNNER_TEMP/aeris/src" mac
+
+      - uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Get build tools
+        working-directory: ${{ runner.temp }}/aeris/src
+        run: ./mach --no-interactive bootstrap --application-choice browser
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/aeris/src
+        run: nice -n 10 ./mach build
+
+      - name: Package
+        working-directory: ${{ runner.temp }}/aeris/src
+        run: |
+          ./mach package
+          ls -la obj-aeris/dist/
+          sccache --show-stats || true
+
+      - name: Aeris.app (with uBlock Origin), Aquaris.app and the .dmg
+        run: |
+          version=$(cat aeris/version.txt)
+          out="$RUNNER_TEMP/aeris/out"; stage="$RUNNER_TEMP/aeris/stage"
+          mkdir -p "$out" "$stage"
+          # The finished app from the packaged .dmg
+          dmg=$(ls "$RUNNER_TEMP"/aeris/src/obj-aeris/dist/*.dmg | head -1)
+          hdiutil attach "$dmg" -mountpoint /tmp/aeris-dmg -nobrowse -readonly
+          app=$(ls -d /tmp/aeris-dmg/*.app | head -1)
+          ditto "$app" "$stage/Aeris.app"
+          hdiutil detach /tmp/aeris-dmg
+          # uBlock Origin comes with Aeris (Firefox adds it to each new profile from here)
+          mkdir -p "$stage/Aeris.app/Contents/Resources/distribution/extensions"
+          curl -fsSL https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi \
+            -o "$stage/Aeris.app/Contents/Resources/distribution/extensions/uBlock0@raymondhill.net.xpi"
+
+          # Aquaris.app: a small launcher that opens Aeris as Aquaris
+          a="$stage/Aquaris.app/Contents"
+          mkdir -p "$a/MacOS" "$a/Resources"
+          cp aeris/mac/Aquaris "$a/MacOS/Aquaris"
+          chmod +x "$a/MacOS/Aquaris"
+          sed "s/VERSION/$version/g" aeris/mac/Info.plist > "$a/Info.plist"
+          python3 -c "from PIL import Image; Image.open('aquaris/icon-256.png').convert('RGBA').resize((1024, 1024), Image.LANCZOS).save('$a/Resources/aquaris.icns', format='ICNS')"
+
+          # Apple chips only run signed programs: sign both "ad hoc" (no Apple account needed)
+          codesign --force --deep --sign - "$stage/Aeris.app"
+          codesign --force --deep --sign - "$stage/Aquaris.app"
+
+          # The .dmg: both apps and a shortcut to Applications to drag them onto
+          ln -s /Applications "$stage/Applications"
+          hdiutil create -volname "Aeris $version" -srcfolder "$stage" -ov -format UDZO "$out/Aeris-$version-mac-arm64.dmg"
+          ls -la "$out"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aeris-mac
+          path: ${{ runner.temp }}/aeris/out/*
+          retention-days: 14
+
+      - name: Keep the build log if something broke
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aeris-mac-logs
+          path: |
+            ${{ runner.temp }}/aeris/src/obj-aeris/config.log
+            ${{ runner.temp }}/aeris/src/obj-aeris/.mozbuild/last_log.json
+          if-no-files-found: ignore

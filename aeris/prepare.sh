@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Turns a plain Firefox source folder into Aeris: branding, settings, our own files and patches.
-# Usage: aeris/prepare.sh <firefox source folder> [windows|linux]
+# Usage: aeris/prepare.sh <firefox source folder> [windows|linux|mac]
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 src="$(cd "$1" && pwd)"
@@ -13,6 +13,10 @@ python3 "$here/tools/brand.py" "$src/browser/branding/aeris" "$here/../build/ico
 if [ "$platform" = linux ]; then
   cp "$here/mozconfig-linux" "$src/mozconfig"
   system="X11; Linux x86_64"
+elif [ "$platform" = mac ]; then
+  cp "$here/mozconfig-mac" "$src/mozconfig"
+  # Firefox itself says "Intel Mac OS X 10.15" on every Mac, Apple Silicon too
+  system="Macintosh; Intel Mac OS X 10.15"
 else
   cp "$here/mozconfig" "$src/mozconfig"
   system="Windows NT 10.0; Win64; x64"

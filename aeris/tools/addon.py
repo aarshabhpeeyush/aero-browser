@@ -67,6 +67,9 @@ for folder in sorted((repo / "themes-builtin").iterdir()):
 (ext / "themes/index.json").write_text(json.dumps(index, indent=1))
 print("Themes:", ", ".join(t["id"] for t in index))
 
+# ---- Aquaris: the desktop of web apps (repo/aquaris), served at aquaris/ inside Aeris Core ----
+shutil.copytree(repo / "aquaris", ext / "aquaris", ignore=shutil.ignore_patterns("README.md", "DESIGN.md"))
+
 # ---- Website styles shared by every theme ----
 for name in ("aero-sites.css", "site-fixes.css"):
     shutil.copy(repo / "pages" / name, ext / "content" / name)

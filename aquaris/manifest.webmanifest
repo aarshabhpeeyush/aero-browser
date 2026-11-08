@@ -1,0 +1,12 @@
+{
+  "name": "Aquaris",
+  "short_name": "Aquaris",
+  "description": "A desktop made of web apps",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0b1a2e",
+  "theme_color": "#0b1a2e",
+  "icons": [{ "src": "icon-256.png", "sizes": "256x256", "type": "image/png", "purpose": "any" }]
+}

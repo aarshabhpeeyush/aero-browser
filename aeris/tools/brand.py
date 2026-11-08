@@ -45,6 +45,9 @@ for f in branding.rglob("*"):
     elif f.suffix == ".ico":
         sizes = sorted(Image.open(f).info.get("sizes") or [(16, 16), (32, 32), (48, 48), (256, 256)])
         icon.save(f, format="ICO", sizes=sizes)
+    elif f.suffix == ".icns":
+        # The Mac app icon (Pillow makes every size it needs from the big one)
+        sized(1024, 1024).save(f, format="ICNS")
     elif f.suffix == ".svg":
         if "wordmark" in f.name:
             svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="172" height="42" viewBox="0 0 172 42">'

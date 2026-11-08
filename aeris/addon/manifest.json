@@ -44,7 +44,8 @@
       "studio-css.js",
       "background.js",
       "features.js",
-      "vivaldi.js"
+      "vivaldi.js",
+      "aquaris-core.js"
     ]
   },
   "browser_action": {

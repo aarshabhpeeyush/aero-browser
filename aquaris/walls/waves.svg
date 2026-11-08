@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMax slice">
+<path d="M0 640C330 560 650 720 980 650S1610 540 1920 615V1080H0Z" fill="#fff" fill-opacity=".12"/>
+<path d="M0 770C390 690 770 850 1150 775S1710 700 1920 770V1080H0Z" fill="#fff" fill-opacity=".14"/>
+<path d="M0 890C430 830 830 965 1270 895S1770 845 1920 905V1080H0Z" fill="#000" fill-opacity=".1"/>
+<path d="M0 640C330 560 650 720 980 650S1610 540 1920 615" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2"/>
+</svg>

@@ -4,6 +4,41 @@
     "description": "The few things Aeris Core needs that normal extensions can't do.",
     "functions": [
       {
+        "name": "aquarisMode",
+        "type": "function",
+        "async": true,
+        "description": "True when Aeris was started as Aquaris (its own profile, called Aquaris).",
+        "parameters": []
+      },
+      {
+        "name": "watchAquarisLinks",
+        "type": "function",
+        "async": true,
+        "description": "In normal Aeris: let Aeris windows that Aquaris opens follow Aquaris (minimise, restore, close).",
+        "parameters": []
+      },
+      {
+        "name": "startAquaris",
+        "type": "function",
+        "async": true,
+        "description": "In Aquaris mode: open the Aquaris desktop window (or bring it to the front).",
+        "parameters": []
+      },
+      {
+        "name": "launchAquaris",
+        "type": "function",
+        "async": true,
+        "description": "Start Aquaris as its own app (Aeris with the Aquaris profile), or bring it to the front.",
+        "parameters": []
+      },
+      {
+        "name": "makeAquarisShortcut",
+        "type": "function",
+        "async": true,
+        "description": "Put an Aquaris shortcut on the desktop (Windows). Returns its path.",
+        "parameters": []
+      },
+      {
         "name": "setChromeStyle",
         "type": "function",
         "async": true,
@@ -300,7 +335,7 @@
         "name": "setPagesStyle",
         "type": "function",
         "async": true,
-        "description": "Restyle Firefox's own pages (Settings, Add-ons…) with this CSS; empty turns it off.",
+        "description": "Restyle Firefox's own pages (Settings, Add-ons\u2026) with this CSS; empty turns it off.",
         "parameters": [
           {
             "name": "css",

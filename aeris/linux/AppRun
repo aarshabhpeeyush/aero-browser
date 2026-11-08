@@ -1,4 +1,11 @@
 #!/bin/sh
 # Starts Aeris from inside the AppImage.
 here="$(dirname "$(readlink -f "$0")")"
+# "--aquaris" starts it as Aquaris, the desktop of web apps, with its own profile.
+if [ "$1" = "--aquaris" ]; then
+  shift
+  profile="${XDG_DATA_HOME:-$HOME/.local/share}/aeris/Aquaris"
+  mkdir -p "$profile"
+  exec "$here/aeris/aeris" -profile "$profile" "$@"
+fi
 exec "$here/aeris/aeris" "$@"

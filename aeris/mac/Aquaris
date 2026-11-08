@@ -1,0 +1,14 @@
+#!/bin/sh
+# Aquaris.app: starts Aeris as Aquaris, the desktop of web apps, with its own profile.
+# Finds Aeris.app next to this app (normally both are in Applications).
+here="$(cd "$(dirname "$0")/../../.." && pwd)"
+app="$here/Aeris.app"
+[ -d "$app" ] || app="/Applications/Aeris.app"
+[ -d "$app" ] || app="$HOME/Applications/Aeris.app"
+if [ ! -d "$app" ]; then
+  osascript -e 'display alert "Aquaris needs Aeris" message "Put Aeris.app in your Applications folder too, then open Aquaris again."'
+  exit 1
+fi
+profile="$HOME/Library/Application Support/Aeris/Aquaris"
+mkdir -p "$profile"
+exec "$app/Contents/MacOS/aeris" -profile "$profile" "$@"

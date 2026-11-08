@@ -88,6 +88,9 @@ Section
   ; Shortcuts, and an entry in Windows' "Installed apps" to uninstall it
   CreateShortCut "$SMPROGRAMS\Aeris.lnk" "$0\aeris.exe"
   CreateShortCut "$DESKTOP\Aeris.lnk" "$0\aeris.exe"
+  ; Aquaris: Aeris started with its own profile called Aquaris, which opens the Aquaris desktop
+  CreateDirectory "$APPDATA\Aeris\Aquaris"
+  CreateShortCut "$SMPROGRAMS\Aquaris.lnk" "$0\aeris.exe" '-profile "$APPDATA\Aeris\Aquaris"'
   WriteUninstaller "$0\Uninstall Aeris.exe"
   WriteRegStr HKCU "Software\Aeris" "InstallDir" "$0"
   WriteRegStr HKCU "Software\Aeris" "Version" "${VERSION}"
@@ -140,6 +143,7 @@ Section "Uninstall"
   ${EndIf}
   Delete "$SMPROGRAMS\Aeris.lnk"
   Delete "$DESKTOP\Aeris.lnk"
+  Delete "$SMPROGRAMS\Aquaris.lnk"
   RMDir /r "$INSTDIR"
   DeleteRegKey HKCU "${AERIS_UNINSTALL}"
   DeleteRegKey HKCU "Software\Aeris"

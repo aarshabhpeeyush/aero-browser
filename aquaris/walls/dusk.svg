@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1e5a"/><stop offset=".6" stop-color="#7a3f8f"/><stop offset="1" stop-color="#e0806a"/></linearGradient>
+<linearGradient id="w1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb38a" stop-opacity=".35"/><stop offset="1" stop-color="#ff7aa8" stop-opacity=".35"/></linearGradient>
+<linearGradient id="w2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a4fd0" stop-opacity=".45"/><stop offset="1" stop-color="#ff9a7a" stop-opacity=".45"/></linearGradient>
+<linearGradient id="w3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a2370" stop-opacity=".85"/><stop offset="1" stop-color="#a84d8f" stop-opacity=".85"/></linearGradient>
+<filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="90"/></filter>
+<filter id="soft"><feGaussianBlur stdDeviation="2"/></filter>
+</defs>
+<rect width="1920" height="1080" fill="url(#sky)"/>
+<ellipse cx="1450" cy="230" rx="520" ry="300" fill="#ffcf8a" opacity=".5" filter="url(#blur)"/>
+<ellipse cx="380" cy="820" rx="620" ry="320" fill="#ff6fae" opacity=".5" filter="url(#blur)"/>
+<path d="M0 640C330 560 650 720 980 650S1610 540 1920 615V1080H0Z" fill="url(#w1)"/>
+<path d="M0 770C390 690 770 850 1150 775S1710 700 1920 770V1080H0Z" fill="url(#w2)"/>
+<path d="M0 890C430 830 830 965 1270 895S1770 845 1920 905V1080H0Z" fill="url(#w3)"/>
+<path d="M0 640C330 560 650 720 980 650S1610 540 1920 615" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="2" filter="url(#soft)"/>
+<path d="M0 770C390 690 770 850 1150 775S1710 700 1920 770" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1.5" filter="url(#soft)"/>
+</svg>

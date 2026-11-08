@@ -24,7 +24,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
 {
   const major = Services.appinfo.platformVersion.split(".")[0];
   Services.prefs.getDefaultBranch("").setStringPref("general.useragent.override",
-    `Mozilla/5.0 (${Services.appinfo.OS === "WINNT" ? "Windows NT 10.0; Win64; x64" : "X11; Linux x86_64"}; rv:${major}.0) Gecko/20100101 Firefox/${major}.0`);
+    `Mozilla/5.0 (${{ WINNT: "Windows NT 10.0; Win64; x64", Darwin: "Macintosh; Intel Mac OS X 10.15" }[Services.appinfo.OS] || "X11; Linux x86_64"}; rv:${major}.0) Gecko/20100101 Firefox/${major}.0`);
 }
 
 // The Firefox settings Customize may read and change, and their type.
@@ -409,7 +409,8 @@ function paletteCommands(win, extras) {
     ["Save all tabs for later", "", send("save-tabs")],
     ["Copy this page's link", "Ctrl+Shift+C", send("copy-link")],
     ["Clip this page to Notes", "", send("clip-page")],
-    ["Aeris Store", "", send("store")]
+    ["Aeris Store", "", send("store")],
+    ["Open Aquaris (a desktop of web apps)", "", send("aquaris")]
   ].map(([title, keys, action]) => ({ kind: "command", title, keys, action }));
   for (const e of extras || []) list.push({ kind: "command", title: e.title, keys: "", action: send(e.command) });
   return list;
@@ -522,6 +523,198 @@ function openPalette(win, extras) {
   panel.openPopupAtScreen(win.screenX + (win.outerWidth - width) / 2, win.screenY + 90, false);
   panel.addEventListener("popupshown", () => input.focus(), { once: true });
   update();
+}
+
+// ================= Aquaris =================
+// Aquaris (../aquaris/) is its own app: a desktop OS made of web apps, running on Aeris's engine.
+// "Aquaris mode" is Aeris started with a profile folder called Aquaris (the Aquaris shortcut does
+// that, or "Open Aquaris" in Aeris). Then Aquaris opens as its own privileged window
+// (chrome://aquaris/content/aquaris/index.html, served from Aeris Core), with its own icon and
+// taskbar button.
+//
+// Aeris stays its own app. Aquaris starts it (normal Aeris, its normal profile) and the windows
+// it opens are linked to Aquaris: when Aquaris is minimised, restored or closed, they follow. Not
+// the other way round. The two apps talk through a small "link" file that Aquaris writes
+// ({ sid, state: "normal" | "minimized" | "closed" }) and Aeris reads, plus a reply file Aeris
+// writes (its linked windows) so Aquaris's dock can show them. Aquaris asks Aeris for a window by
+// starting Aeris with "about:blank#aquaris-link=<json>" (Aeris hands that to the running Aeris).
+
+const aquarisProfile = () => {
+  const os = Services.appinfo.OS;
+  if (os === "WINNT") return PathUtils.join(Services.dirsvc.get("AppData", Ci.nsIFile).path, "Aeris", "Aquaris");
+  const home = Services.dirsvc.get("Home", Ci.nsIFile).path;
+  if (os === "Darwin") return PathUtils.join(home, "Library", "Application Support", "Aeris", "Aquaris");
+  // Same folder the AppImage's "--aquaris" option uses
+  return PathUtils.join(Services.env.get("XDG_DATA_HOME") || PathUtils.join(home, ".local", "share"), "aeris", "Aquaris");
+};
+const isAquarisMode = () => /^aquaris$/i.test(PathUtils.filename(PathUtils.profileDir)) || Services.env.get("AERIS_AQUARIS") === "1";
+const AQUARIS_AUMID = "Aeris.Aquaris";
+const AQUARIS_URL = "chrome://aquaris/content/aquaris/index.html";
+const AQUARIS_PING = "about:blank#aquaris";
+const LINK_MARK = "about:blank#aquaris-link=";
+const aquarisWindow = () => Services.wm.getMostRecentWindow("aquaris:desktop");
+
+// Start another copy of this program with these arguments (it hands over to a running one)
+function runSelf(args) {
+  // Settings this copy got from how it was started mustn't leak into the new one
+  for (const name of ["MOZ_NO_REMOTE", "XRE_PROFILE_PATH", "XRE_PROFILE_LOCAL_PATH", "XRE_PROFILE_NAME"]) Services.env.set(name, "");
+  const proc = Cc["@mozilla.org/process/util;1"].createInstance(Ci.nsIProcess);
+  proc.init(Services.dirsvc.get("XREExeF", Ci.nsIFile));
+  proc.runw(false, args, args.length);
+}
+
+let aquarisChrome = null;
+function registerAquarisChrome(extension) {
+  if (aquarisChrome) return;
+  const aom = Cc["@mozilla.org/addons/addon-manager-startup;1"].getService(Ci.amIAddonManagerStartup);
+  aquarisChrome = aom.registerChrome(Services.io.newURI("manifest.json", null, extension.rootURI), [["content", "aquaris", "./"]]);
+}
+
+function watchNewWindow(win, check) {
+  if (win.document.readyState === "complete") win.setTimeout(() => check(win), 600);
+  else win.addEventListener("load", () => win.setTimeout(() => check(win), 600), { once: true });
+}
+
+// ----- Inside Aquaris: browser windows don't belong here -----
+// The empty window Aeris opens by itself at start-up and the "come to the front" signal are closed.
+// A page opened in a new window (a link in an app) goes to Aeris instead. Pop-ups that a page
+// opened (sign-in windows and so on) stay, because they need their opener.
+const STRAY_EMPTY = /^(about:(blank|home|newtab|welcome|sessionrestore|privatebrowsing)|moz-extension:\/\/[^/]+\/(newtab|welcome|whatsnew)\/)/;
+function checkStrayWindow(win) {
+  if (win.closed || win.document.documentElement.getAttribute("windowtype") !== "navigator:browser") return;
+  // Real Aeris windows that Aquaris opened belong here
+  if (win.aquarisLinked) return;
+  // (Automated tests need a browser window to attach to)
+  if (Services.prefs.getBoolPref("aeris.aquaris.testKeepWindows", false)) return;
+  const desk = aquarisWindow();
+  if (!desk?.Aquaris) return win.setTimeout(() => checkStrayWindow(win), 300);
+  const tabs = [...win.gBrowser.tabs];
+  if (!win.toolbar.visible || tabs.some(t => t.linkedBrowser.browsingContext?.opener)) return;
+  const urls = tabs.map(t => t.linkedBrowser.currentURI?.spec || "").filter(u => u && !STRAY_EMPTY.test(u));
+  if (urls.length) desk.Aquaris.openInAeris(urls);
+  else desk.focus();
+  win.close();
+}
+const strayWatcher = { observe(subject, topic) { if (topic === "domwindowopened") watchNewWindow(subject, checkStrayWindow); } };
+let watchingStrays = false;
+
+async function startAquaris(extension) {
+  registerAquarisChrome(extension);
+  // Aquaris remembers its own windows; old browser windows shouldn't come back here
+  Services.prefs.setIntPref("browser.startup.page", 0);
+  Services.prefs.setBoolPref("browser.sessionstore.resume_from_crash", false);
+  // Some music and video sites need protected playback (DRM). Normal Aeris asks with a
+  // bar at the top of the page; Aquaris has no such bar, so it's simply on here.
+  Services.prefs.setBoolPref("media.eme.enabled", true);
+  let desk = aquarisWindow();
+  if (!desk) {
+    desk = Services.ww.openWindow(null, AQUARIS_URL, "_blank", "chrome,dialog=no,all,resizable", null);
+    await new Promise(r => desk.addEventListener("load", r, { once: true }));
+  }
+  // What the Aquaris window uses from here (set once its page has loaded)
+  desk.aerisHost = { openLinkedAeris };
+  desk.focus();
+  if (!watchingStrays) {
+    watchingStrays = true;
+    Services.ww.registerNotification(strayWatcher);
+  }
+  for (const win of Services.wm.getEnumerator("navigator:browser")) watchNewWindow(win, checkStrayWindow);
+}
+
+// Aquaris asks for an Aeris window: start normal Aeris (or hand over to the running one)
+function openLinkedAeris(file, sid, urls, focus) {
+  const mark = LINK_MARK + encodeURIComponent(JSON.stringify({ file, sid, urls, focus }));
+  const args = [];
+  // For testing, a different Aeris profile can be used
+  const profile = Services.prefs.getStringPref("aeris.aquaris.aerisProfile", "");
+  if (profile) args.push("-profile", profile);
+  args.push("-new-window", mark);
+  runSelf(args);
+}
+
+// ----- In normal Aeris: windows linked to Aquaris -----
+
+const links = new Map(); // link file → { sid, windows: Set, last }
+let linkTimer = null;
+const liveWindows = link => [...link.windows].filter(w => !w.closed);
+
+function checkLinkWindow(win, tries = 0) {
+  if (win.closed || win.document.documentElement.getAttribute("windowtype") !== "navigator:browser") return;
+  const mark = [...win.gBrowser.tabs].find(t => t.linkedBrowser.currentURI?.spec.startsWith(LINK_MARK));
+  if (!mark) {
+    // A new window's address can take a moment to show up
+    if (tries < 12) win.setTimeout(() => checkLinkWindow(win, tries + 1), 500);
+    return;
+  }
+  let data;
+  try { data = JSON.parse(decodeURIComponent(mark.linkedBrowser.currentURI.spec.slice(LINK_MARK.length))); } catch { return; }
+  if (typeof data?.file !== "string" || !/aeris-link\.json$/.test(data.file)) return;
+  let link = links.get(data.file);
+  if (!link || link.sid !== data.sid) {
+    link = { sid: data.sid, windows: new Set(), last: "normal" };
+    links.set(data.file, link);
+  }
+  const system = Services.scriptSecurityManager.getSystemPrincipal();
+  const urls = (data.urls || []).filter(u => typeof u === "string" && /^(https?|about|moz-extension):/.test(u));
+  const existing = liveWindows(link)[0];
+  if (existing && existing !== win && (data.focus || urls.length)) {
+    // Aeris already has a window for Aquaris: open the pages there and bring it up
+    for (const u of urls) existing.openTrustedLinkIn(u, "tab");
+    if (existing.windowState === existing.STATE_MINIMIZED) existing.restore();
+    existing.focus();
+    if (win.gBrowser.tabs.length === 1) win.close();
+    else win.gBrowser.removeTab(mark);
+    return;
+  }
+  link.windows.add(win);
+  win.aquarisLinked = data.file;
+  if (urls.length) {
+    for (const u of urls) win.gBrowser.addTab(u, { triggeringPrincipal: system });
+    win.gBrowser.removeTab(mark);
+  } else {
+    mark.linkedBrowser.fixupAndLoadURIString(win.BROWSER_NEW_TAB_URL || "about:newtab", { triggeringPrincipal: system });
+  }
+  startLinkTimer();
+}
+const linkWatcher = { observe(subject, topic) { if (topic === "domwindowopened") watchNewWindow(subject, w => checkLinkWindow(w)); } };
+let watchingLinks = false;
+
+// Follow Aquaris: minimised → minimise; back → restore (only the ones it minimised); closed → close
+async function followLinks() {
+  for (const [file, link] of links) {
+    const state = await IOUtils.readJSON(file).catch(() => null);
+    if (state?.sid === link.sid && state.state !== link.last) {
+      link.last = state.state;
+      for (const w of liveWindows(link)) {
+        if (state.state === "minimized" && w.windowState !== w.STATE_MINIMIZED) { w.aquarisMinimized = true; w.minimize(); }
+        if (state.state === "normal" && w.aquarisMinimized) { w.aquarisMinimized = false; w.restore(); }
+        if (state.state === "closed") w.close();
+      }
+    }
+    // Tell Aquaris which windows it has here (for its dock)
+    const open = liveWindows(link).filter(w => !w.closing);
+    const reply = { sid: link.sid, at: Date.now(), windows: open.map(w => ({ title: w.gBrowser.selectedTab.label, minimized: w.windowState === w.STATE_MINIMIZED })) };
+    IOUtils.writeJSON(file + ".aeris", reply).catch(() => {});
+    if (link.last === "closed" || !open.length) links.delete(file);
+  }
+  if (!links.size) { linkTimer?.cancel(); linkTimer = null; }
+}
+function startLinkTimer() {
+  if (linkTimer) return;
+  linkTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+  linkTimer.initWithCallback({ notify: () => followLinks() }, 600, Ci.nsITimer.TYPE_REPEATING_SLACK);
+}
+function watchAquarisLinks() {
+  if (watchingLinks || isAquarisMode()) return;
+  watchingLinks = true;
+  Services.ww.registerNotification(linkWatcher);
+  for (const win of Services.wm.getEnumerator("navigator:browser")) watchNewWindow(win, w => checkLinkWindow(w));
+}
+
+async function launchAquaris() {
+  const profile = aquarisProfile();
+  await IOUtils.makeDirectory(profile, { ignoreExisting: true });
+  runSelf(["-profile", profile, AQUARIS_PING]);
 }
 
 this.aeris = class extends ExtensionAPI {
@@ -689,6 +882,38 @@ this.aeris = class extends ExtensionAPI {
             return () => Services.obs.removeObserver(observer, "aeris-command");
           }
         }).api(),
+
+        async aquarisMode() {
+          return isAquarisMode();
+        },
+
+        async watchAquarisLinks() {
+          watchAquarisLinks();
+        },
+
+        async startAquaris() {
+          if (!isAquarisMode()) throw new Error("Aquaris runs as its own app; use launchAquaris.");
+          await startAquaris(extension);
+        },
+
+        async launchAquaris() {
+          await launchAquaris();
+        },
+
+        async makeAquarisShortcut() {
+          if (Services.appinfo.OS !== "WINNT") throw new Error(Services.appinfo.OS === "Darwin" ? "On a Mac, open Aquaris from your Applications folder." : "On Linux, open Aquaris from your apps menu, or start Aeris with --aquaris.");
+          const exe = Services.dirsvc.get("XREExeF", Ci.nsIFile);
+          const profile = aquarisProfile();
+          await IOUtils.makeDirectory(profile, { ignoreExisting: true });
+          // Aquaris's own icon, saved next to its profile for the shortcut to use
+          const iconPath = PathUtils.join(PathUtils.parent(profile), "Aquaris.ico");
+          const res = await fetch(extension.baseURI.resolve("aquaris/icon.ico"));
+          await IOUtils.write(iconPath, new Uint8Array(await res.arrayBuffer()));
+          const icon = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+          icon.initWithPath(iconPath);
+          const shell = Cc["@mozilla.org/browser/shell-service;1"].getService(Ci.nsIWindowsShellService);
+          return shell.createShortcut(exe, ["-profile", profile], "Aquaris", icon, 0, AQUARIS_AUMID, "Desktop", "Aquaris.lnk");
+        },
 
         async setPagesStyle(css) {
           setPagesStyle(css);

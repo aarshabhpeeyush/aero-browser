@@ -1,0 +1,35 @@
+# Puts the web version of Aquaris (for iPads, phones and any browser) online with GitHub Pages:
+# https://<user>.github.io/aero-browser/aquaris/  → on the iPad: Share > Add to Home Screen.
+# Start it from the Actions tab, or with: gh workflow run aquaris-web.yml
+# (Settings > Pages > Source must be "GitHub Actions" once.)
+name: Put Aquaris for iPad online
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}aquaris/
+    steps:
+      - uses: actions/checkout@v4
+      - name: Put the web version together
+        run: |
+          pip install --quiet pillow
+          python3 aeris/tools/aquaris_web.py site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -9,7 +9,7 @@ Terminal=false
 Categories=Network;WebBrowser;
 MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
 StartupWMClass=aeris
-Actions=new-window;new-private-window;
+Actions=new-window;new-private-window;aquaris;
 
 [Desktop Action new-window]
 Name=New Window
@@ -18,3 +18,7 @@ Exec=aeris --new-window %u
 [Desktop Action new-private-window]
 Name=New Private Window
 Exec=aeris --private-window %u
+
+[Desktop Action aquaris]
+Name=Aquaris (desktop of web apps)
+Exec=aeris --aquaris

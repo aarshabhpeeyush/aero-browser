@@ -51,6 +51,7 @@ browser.aeris.onCommand.addListener(async command => {
     return browser.storage.local.set({ theme: arg || null, ...(plain && arg ? { colorTheme: "aqua" } : {}) });
   }
   if (kind === "space") return switchSpace(arg);
+  if (kind === "aquaris") return openAquaris();
   if (kind === "filter" && tab) return arg === "off" ? setPageFilters(tab.id, []) : togglePageFilter(tab.id, arg);
 });
 
