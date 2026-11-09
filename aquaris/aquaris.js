@@ -1026,7 +1026,7 @@ function webMenu() {
     items.push(["Cut", () => windowUtils.sendContentCommandEvent("cut")], ["Copy", () => windowUtils.sendContentCommandEvent("copy")],
       ["Paste", () => windowUtils.sendContentCommandEvent("paste")], null);
   } else if (sel) {
-    items.push(["Copy", () => clipboard(sel)], [`Search DuckDuckGo for “${short(sel)}”`, () => openInAeris([webSearchUrl(sel)])], null);
+    items.push(["Copy", () => clipboard(sel)], [`Search Aeris for “${short(sel)}”`, () => openInAeris([webSearchUrl(sel)])], null);
   }
   if (!c.onLink && !c.onImage && !c.onEditable && !sel) {
     items.push(["Back", () => view.canGoBack && view.goBack()], ["Forward", () => view.canGoForward && view.goForward()], ["Reload", () => view.reload()], null);
