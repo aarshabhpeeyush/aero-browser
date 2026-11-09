@@ -271,7 +271,7 @@ SETUP.search = el => {
     if (typeof chrome !== "undefined" && chrome.search) {
       chrome.search.query({ text, disposition: "CURRENT_TAB" });
     } else {
-      location.href = "https://www.google.com/search?q=" + encodeURIComponent(text);
+      location.href = "https://duckduckgo.com/?q=" + encodeURIComponent(text);
     }
   });
 };

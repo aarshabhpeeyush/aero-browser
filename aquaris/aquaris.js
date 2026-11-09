@@ -97,7 +97,7 @@ const allApps = () => [...AQUARIS_APPS.filter(a => !settings.aquarisRemoved.incl
 // Aeris runs inside Aquaris as an app: its New Tab page (with its themes and Google search), with
 // back / forward / home and an address bar. Links stay in its window.
 const NEW_TAB_URL = (() => {
-  try { return ChromeUtils.importESModule("resource:///modules/AboutNewTab.sys.mjs").AboutNewTab.newTabURL; } catch { return "https://www.google.com/"; }
+  try { return ChromeUtils.importESModule("resource:///modules/AboutNewTab.sys.mjs").AboutNewTab.newTabURL; } catch { return "https://duckduckgo.com/"; }
 })();
 // In the iPad app, Aeris is Aeris's own New Tab page, toolbar and tabs, in an Aquaris window (on the
 // iPad's engine: Apple only allows its own). The theme you picked in Aquaris goes along.
@@ -109,7 +109,7 @@ const aerisNewTab = () => {
   return new URL("../aeris/newtab/index.html", location.href).href + "#size=" + (s.aquarisAeris?.ntZoom || 85) + (id ? "&theme=" + id : "");
 };
 const AERIS_APP = inShell ? { id: "aeris", name: "Aeris", about: "The web browser, with Aeris's New Tab and themes", get url() { return aerisNewTab(); }, browser: true, size: [1060, 720] }
-  : onWeb ? { id: "aeris", name: "Browser", about: "Opens the web in a new tab", url: "https://www.google.com/", color: "#2a86e8", ui: "globe", size: [1000, 700] }
+  : onWeb ? { id: "aeris", name: "Browser", about: "Opens the web in a new tab", url: "https://duckduckgo.com/", color: "#2a86e8", ui: "globe", size: [1000, 700] }
   : { id: "aeris", name: "Aeris", about: "The web browser, with all of Aeris", url: NEW_TAB_URL, size: [1180, 760] };
 // Aquaris's own apps: made by Aquaris, nothing from the internet
 const OWN_APPS = [
@@ -173,7 +173,7 @@ const pageIcon = url => (inChrome && /^https?:/.test(url) ? "page-icon:" + url :
 // Turn what someone typed into an address (a website, or a web search)
 function fixup(text) {
   text = text.trim();
-  if (!inChrome) return /^\w+:\/\//.test(text) ? text : /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(text) ? "https://" + text : "https://www.google.com/search?q=" + encodeURIComponent(text);
+  if (!inChrome) return /^\w+:\/\//.test(text) ? text : /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(text) ? "https://" + text : "https://duckduckgo.com/?q=" + encodeURIComponent(text);
   const info = Services.uriFixup.getFixupURIInfo(text, Ci.nsIURIFixup.FIXUP_FLAG_FIX_SCHEME_TYPOS | Ci.nsIURIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP);
   return info.preferredURI?.spec || text;
 }
@@ -599,7 +599,7 @@ function addBrowserBar(win) {
     <button class="ab-btn" data-a="forward" title="Forward (Alt+Right)">${icon("right")}</button>
     <button class="ab-btn" data-a="reload" title="Reload (F5)">${icon("reload")}</button>
     <button class="ab-btn" data-a="home" title="Home">${icon("home")}</button>
-    <label class="ab-url"><span class="ab-lock"></span><input spellcheck="false" placeholder="Search Google or type a web address"></label>
+    <label class="ab-url"><span class="ab-lock"></span><input spellcheck="false" placeholder="Search DuckDuckGo or type a web address"></label>
     ${AERIS_PANEL || inShell ? `<button class="ab-btn" data-a="customize" title="Customize Aeris: themes, colours and more">${icon("sliders")}</button>` : ""}`);
   win.body.before(tb);
   win.toolbar = tb;
@@ -1026,7 +1026,7 @@ function webMenu() {
     items.push(["Cut", () => windowUtils.sendContentCommandEvent("cut")], ["Copy", () => windowUtils.sendContentCommandEvent("copy")],
       ["Paste", () => windowUtils.sendContentCommandEvent("paste")], null);
   } else if (sel) {
-    items.push(["Copy", () => clipboard(sel)], [`Search Google for “${short(sel)}”`, () => openInAeris([webSearchUrl(sel)])], null);
+    items.push(["Copy", () => clipboard(sel)], [`Search DuckDuckGo for “${short(sel)}”`, () => openInAeris([webSearchUrl(sel)])], null);
   }
   if (!c.onLink && !c.onImage && !c.onEditable && !sel) {
     items.push(["Back", () => view.canGoBack && view.goBack()], ["Forward", () => view.canGoForward && view.goForward()], ["Reload", () => view.reload()], null);

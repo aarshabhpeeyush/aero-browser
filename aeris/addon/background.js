@@ -437,6 +437,15 @@ browser.alarms.onAlarm.addListener(a => a.name === "update" && checkForUpdate())
   if (!s.imported) await importFromAero();
   await applyTheme();
 
+  // Aeris searches with DuckDuckGo. Set once, so someone who picks another engine in Customize keeps it.
+  const { searchDefault } = await browser.storage.local.get({ searchDefault: 0 });
+  if (searchDefault < 1) {
+    try {
+      await browser.aeris.setSearchEngine("DuckDuckGo");
+      await browser.storage.local.set({ searchDefault: 1 });
+    } catch (e) { console.warn("Aeris: couldn't set DuckDuckGo as the search engine yet", e); }
+  }
+
   const { aeris: version } = await browser.aeris.appInfo();
   if (s.lastVersion !== version) {
     await browser.storage.local.set({ lastVersion: version });
