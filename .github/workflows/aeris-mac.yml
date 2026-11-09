@@ -11,6 +11,9 @@ jobs:
   mac:
     runs-on: macos-latest
     timeout-minutes: 355
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      SCCACHE_CACHE_SIZE: 9G
     steps:
       - uses: actions/checkout@v4
 
@@ -43,6 +46,19 @@ jobs:
         run: |
           python3 -m pip install --quiet --break-system-packages pillow || python3 -m pip install --quiet pillow
           bash aeris/prepare.sh "$RUNNER_TEMP/aeris/src" mac
+
+      # The build cache makes a Mac build take about an hour instead of six. Its download sometimes
+      # fails on GitHub's side, so try twice, and build without it if it still isn't there.
+      - uses: mozilla-actions/sccache-action@v0.0.9
+        id: cache1
+        continue-on-error: true
+      - uses: mozilla-actions/sccache-action@v0.0.9
+        if: steps.cache1.outcome != 'success'
+        continue-on-error: true
+      - name: Use the build cache if it's there
+        working-directory: ${{ runner.temp }}/aeris/src
+        run: |
+          if command -v sccache >/dev/null; then echo "ac_add_options --with-ccache=sccache" >> mozconfig; echo "using sccache"; else echo "no build cache"; fi
 
       - name: Get build tools
         working-directory: ${{ runner.temp }}/aeris/src

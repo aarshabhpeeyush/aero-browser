@@ -717,6 +717,7 @@ function newTab(win, url = aerisNewTab()) {
 }
 function switchTab(win, v) {
   win.view = v;
+  v.dataset.used = Date.now();
   for (const t of win.tabs) t.classList.toggle("tab-off", t !== v);
   cover(win, null);
   updateBrowserBar(win);
@@ -881,6 +882,8 @@ function openAerisWindow(urls = []) {
   // "dependent": the window belongs to Aquaris's window (it stays on top of Aquaris and goes with it)
   const w = Services.ww.openWindow(window, "chrome://browser/content/browser.xhtml", "_blank", "chrome,all,dialog=no,dependent", args);
   w.aquarisLinked = true;
+  w.aquarisUsed = Date.now();
+  w.addEventListener("activate", () => (w.aquarisUsed = Date.now()));
   w.addEventListener("load", () => {
     // Part of Aquaris on the taskbar: same group and icon as Aquaris
     if (Services.appinfo.OS === "WINNT") {
@@ -1531,6 +1534,76 @@ document.addEventListener("pointerdown", e => {
   if (!e.target.closest("#calendar, #tbClock")) $("#calendar").hidden = true;
   if (!e.target.closest("#menu")) $("#menu").hidden = true;
 });
+// ================= The window switcher (Alt+Shift+T) =================
+// Like Alt+Tab: hold Alt+Shift and press T. The window (or tab) you used just before is picked
+// already; press T again for the next one, or use the arrow keys, or click one. Let go of Alt to
+// switch to it; Esc closes the switcher.
+const switcher = { open: false, items: [], index: 0, timer: 0 };
+function switchItems() {
+  const items = [];
+  for (const w of wins) {
+    if (w.kind === "native") continue;
+    // Aeris in the iPad app: each tab is its own entry
+    if (w.tabs?.length > 1) {
+      for (const v of w.tabs) items.push({ app: w.app, title: viewTitle(v) || (isNewTab(viewUrl(v)) ? "New Tab" : viewUrl(v)), used: Math.max(+v.dataset.used || 0, w.view === v ? w.lastUsed || 0 : 0), go: () => { restore(w); switchTab(w, v); focusWin(w); } });
+    } else {
+      items.push({ app: w.app, title: w.name?.textContent || w.app.name, used: w.lastUsed || 0, go: () => { restore(w); focusWin(w); } });
+    }
+  }
+  // The real Aeris windows on a computer
+  for (const a of aerisWindows()) items.push({ app: AERIS_APP, title: aerisTitle(a), used: a.aquarisUsed || 0, go: () => showAeris(a) });
+  return items.sort((x, y) => y.used - x.used);
+}
+function drawSwitcher() {
+  const list = $("#swList");
+  list.textContent = "";
+  switcher.items.forEach((it, i) => {
+    const b = html("button", "sw-item" + (i === switcher.index ? " on" : ""));
+    b.append(tile(it.app, "big"), html("span", "sw-name", it.app.name));
+    b.title = it.title;
+    b.addEventListener("click", () => { switcher.index = i; finishSwitch(true); });
+    list.append(b);
+  });
+  $("#swTitle").textContent = switcher.items[switcher.index]?.title || "";
+  list.children[switcher.index]?.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+function stepSwitch(step = 1, { gesture = false } = {}) {
+  if (!switcher.open) {
+    switcher.items = switchItems();
+    if (!switcher.items.length) return;
+    closeOverlays();
+    switcher.open = true;
+    switcher.index = Math.min(1, switcher.items.length - 1);   // the one used just before
+    $("#switcher").hidden = false;
+  } else {
+    const n = switcher.items.length;
+    switcher.index = (switcher.index + step + n) % n;
+  }
+  drawSwitcher();
+  // Keyboards that don't tell us when Alt is let go (iPad websites): switch after a short pause
+  clearTimeout(switcher.timer);
+  if (inShell && !gesture) switcher.timer = setTimeout(() => finishSwitch(true), 1300);
+}
+function finishSwitch(go) {
+  if (!switcher.open) return;
+  clearTimeout(switcher.timer);
+  switcher.open = false;
+  $("#switcher").hidden = true;
+  if (go) switcher.items[switcher.index]?.go();
+}
+const isSwitchKey = e => e.altKey && e.shiftKey && (e.code === "KeyT" || e.key.toLowerCase() === "t");
+addEventListener("keydown", e => {
+  if (isSwitchKey(e)) { e.preventDefault(); e.stopPropagation(); stepSwitch(1); return; }
+  if (!switcher.open) return;
+  if (e.key === "Escape") { e.preventDefault(); finishSwitch(false); }
+  else if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); stepSwitch(1); }
+  else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); stepSwitch(-1); }
+  else if (e.key === "Enter") { e.preventDefault(); finishSwitch(true); }
+}, true);
+addEventListener("keyup", e => { if (switcher.open && e.key === "Alt") finishSwitch(true); }, true);
+addEventListener("blur", () => finishSwitch(true));
+$("#switcher").addEventListener("pointerdown", e => { if (e.target.id === "switcher") finishSwitch(false); });
+
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") closeOverlays();
   if ((e.ctrlKey || e.altKey) && e.code === "Space") { e.preventDefault(); toggleOverlay("#spotlight"); }
@@ -3775,6 +3848,10 @@ function cycleWindows(step) {
 function padAction(action, x, y, dx, dy) {
   if (mbOpen && !["down", "move", "up", "scroll", "right", "menu", "back"].includes(action)) closeMenuBar();
   const at = () => document.elementFromPoint(x, y);
+  // The window switcher from a controller: R3 opens it and moves along (it switches after a short
+  // pause); R1 still just clicks, so clicking a tile picks it; Circle/B cancels
+  if (action === "switch") return stepSwitch(1);
+  if (switcher.open && action === "back") return finishSwitch(false);
   if (action === "down") {
     const el = at();
     if (!el) return;
@@ -3823,7 +3900,7 @@ function padAction(action, x, y, dx, dy) {
 // it's swapped for a picture of itself until it's uncovered.
 let shellSeq = 0, shellQueued = false, shellUntil = 0;
 const shellOpen = new Set(), shellShown = new Set();
-const SHELL_OVERLAYS = ["#menu", "#mbMenu", "#quick", "#tasks", "#calendar", "#launcher", "#spotlight", "#lock", "#boot", ".ask"];
+const SHELL_OVERLAYS = ["#switcher", "#menu", "#mbMenu", "#quick", "#tasks", "#calendar", "#launcher", "#spotlight", "#lock", "#boot", ".ask"];
 const isShown = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
 function shellSync() {
   if (!inShell) return;
@@ -3864,6 +3941,8 @@ function shellEvent(ev) {
   if (ev.type === "loaded" && win) { cover(win, null); if (ev.url) v.dataset.url = ev.url; }
   if (ev.type === "snap" && v) { v.style.backgroundImage = `url(${ev.data})`; v.style.backgroundSize = "100% 100%"; }
   if (ev.type === "tap" && win) focusWin(win);
+  if (ev.type === "switch") stepSwitch(ev.step || 1, { gesture: !!ev.gesture });
+  if (ev.type === "switchEnd") finishSwitch(true);
   if (ev.type === "openUrl" && /^https?:/.test(ev.url || "")) openInAerisTab(ev.url);
   if (ev.type === "state" && v) {
     v.dataset.url = ev.url || v.dataset.url || "";
@@ -3912,7 +3991,7 @@ if (onWeb) {
     }
   }, true);
 
-  let two = null, three = null;
+  let two = null, three = null, swipe = null;
   document.addEventListener("touchstart", e => {
     if (e.touches.length === 3) {
       two = null;
@@ -3925,15 +4004,29 @@ if (onWeb) {
       const [a, b] = e.touches;
       lastTwoFingers = performance.now();
       two = { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2, at: performance.now(), a: [a.clientX, a.clientY], b: [b.clientX, b.clientY] };
+      swipe = { x: two.x, y: two.y, steps: 0, on: false };
     } else if (e.touches.length > 2) two = null;
   }, { passive: true, capture: true });
   document.addEventListener("touchmove", e => {
     if (three && [...e.touches].some((x, i) => three.pts[i] && Math.hypot(x.clientX - three.pts[i][0], x.clientY - three.pts[i][1]) > 16)) three = null;
+    // Two fingers swiping sideways: the window switcher (right = next, left = back; lift to switch)
+    if (swipe && e.touches.length === 2) {
+      const [p, q] = e.touches;
+      const dx = (p.clientX + q.clientX) / 2 - swipe.x, dy = (p.clientY + q.clientY) / 2 - swipe.y;
+      if (!swipe.on && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { swipe.on = true; two = null; stepSwitch(1, { gesture: true }); }
+      if (swipe.on) {
+        const want = Math.trunc(dx / 90);
+        while (swipe.steps < want) { swipe.steps++; stepSwitch(1, { gesture: true }); }
+        while (swipe.steps > want) { swipe.steps--; stepSwitch(-1, { gesture: true }); }
+      }
+    }
     if (!two || e.touches.length < 2) return;
     const [a, b] = e.touches;
     if (Math.hypot(a.clientX - two.a[0], a.clientY - two.a[1]) > 14 || Math.hypot(b.clientX - two.b[0], b.clientY - two.b[1]) > 14) two = null;
   }, { passive: true, capture: true });
   document.addEventListener("touchend", e => {
+    if (swipe?.on && e.touches.length < 2) { swipe = null; lastTwoFingers = performance.now(); finishSwitch(true); return; }
+    if (e.touches.length < 2) swipe = null;
     // A three-finger tap opens Spotlight search
     if (three) {
       if (e.touches.length) return;

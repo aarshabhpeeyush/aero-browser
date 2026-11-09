@@ -59,6 +59,15 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
   private let pool = WKProcessPool()       // one engine for every app: shared sign-ins, less memory
 
   override var prefersStatusBarHidden: Bool { true }
+
+  // Alt+Shift+T (Option+Shift+T on an iPad keyboard): Aquaris's window switcher, from anywhere
+  override var keyCommands: [UIKeyCommand]? {
+    let command = UIKeyCommand(title: "Switch window", action: #selector(switchWindow), input: "t", modifierFlags: [.alternate, .shift])
+    command.wantsPriorityOverSystemBehavior = true
+    return [command]
+  }
+  override var canBecomeFirstResponder: Bool { true }
+  @objc private func switchWindow() { send(["type": "switch"]) }
   override var prefersHomeIndicatorAutoHidden: Bool { true }
   override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge { .bottom }
 
@@ -210,6 +219,13 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     tap.cancelsTouchesInView = false
     tap.delegate = self
     web.addGestureRecognizer(tap)
+    // Two fingers swiping sideways over a website: Aquaris's window switcher
+    let swipe = UIPanGestureRecognizer(target: self, action: #selector(swiped(_:)))
+    swipe.minimumNumberOfTouches = 2
+    swipe.maximumNumberOfTouches = 2
+    swipe.cancelsTouchesInView = false
+    swipe.delegate = self
+    web.addGestureRecognizer(swipe)
     apps[id] = web
     view.addSubview(web)
     // Tell Aquaris where the page is, its title, and whether back / forward work (for Aeris's toolbar)
@@ -230,6 +246,29 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     if let web = gesture.view as? WKWebView, let id = idOf(web) { send(["type": "tap", "id": id]) }
   }
   func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
+
+  private var swipeSteps = 0, swipeOn = false
+  @objc private func swiped(_ g: UIPanGestureRecognizer) {
+    let move = g.translation(in: view)
+    switch g.state {
+    case .began:
+      swipeSteps = 0; swipeOn = false
+    case .changed:
+      if !swipeOn && abs(move.x) > 50 && abs(move.x) > abs(move.y) * 1.5 {
+        swipeOn = true
+        send(["type": "switch", "step": 1, "gesture": true])
+      }
+      if swipeOn {
+        let want = Int(move.x / 90)
+        while swipeSteps < want { swipeSteps += 1; send(["type": "switch", "step": 1, "gesture": true]) }
+        while swipeSteps > want { swipeSteps -= 1; send(["type": "switch", "step": -1, "gesture": true]) }
+      }
+    case .ended, .cancelled, .failed:
+      if swipeOn { send(["type": "switchEnd"]) }
+      swipeOn = false
+    default: break
+    }
+  }
 
   /// Put each app view over its window (back to front) and show or hide it
   private func layout(_ views: [[String: Any]]) {
@@ -422,6 +461,7 @@ final class PadCursor: NSObject {
     tap(pad.buttonMenu, "menu")
     tap(pad.buttonOptions, "desktop")
     on(pad.leftThumbstickButton) { [weak self] pressed in if pressed { self?.slow.toggle() } }
+    tap(pad.rightThumbstickButton, "switch")                    // R3: the window switcher
     if link == nil {
       link = CADisplayLink(target: self, selector: #selector(tick(_:)))
       link?.add(to: .main, forMode: .common)
