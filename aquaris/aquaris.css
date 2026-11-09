@@ -1216,9 +1216,10 @@ body.web input, body.web textarea, body.web [contenteditable] { -webkit-user-sel
 /* Room for the iPad's rounded corners and home bar */
 body.web #dock { margin-bottom: env(safe-area-inset-bottom); }
 html:has(body.web), body.web { height: 100dvh; overflow: hidden; }
-@media (pointer: coarse) {
-  body.web .tb-btn, body.web .win-btn, body.web .wbtn { min-width: 32px; min-height: 28px; }
-}
+/* Finger-sized controls only while there's no mouse or trackpad (with one, it's the computer look) */
+body.web:not(.has-mouse) :is(.tb-btn, .win-btn, .wbtn) { min-width: 32px; min-height: 28px; }
+body.web:not(.has-mouse) .caption button { min-width: 40px; }
+body.web:not(.has-mouse) .tool { width: 34px; height: 32px; }
 
 /* Aeris's tabs (iPad app) */
 .view.tab-off { display: none !important; }

@@ -61,11 +61,20 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
   override var prefersStatusBarHidden: Bool { true }
 
   // Alt+Shift+T (Option+Shift+T on an iPad keyboard): Aquaris's window switcher, from anywhere
+  // and the rest of Aquaris's shortcuts, so a Bluetooth keyboard works like on a computer even
+  // while a website has the keyboard
   override var keyCommands: [UIKeyCommand]? {
-    let command = UIKeyCommand(title: "Switch window", action: #selector(switchWindow), input: "t", modifierFlags: [.alternate, .shift])
-    command.wantsPriorityOverSystemBehavior = true
-    return [command]
+    let commands = [
+      UIKeyCommand(title: "Switch window", action: #selector(switchWindow), input: "t", modifierFlags: [.alternate, .shift]),
+      UIKeyCommand(title: "Spotlight", action: #selector(spotlightKey), input: " ", modifierFlags: [.alternate]),
+      UIKeyCommand(title: "Spotlight", action: #selector(spotlightKey), input: " ", modifierFlags: [.control]),
+      UIKeyCommand(title: "Lock", action: #selector(lockKey), input: "l", modifierFlags: [.control, .alternate])
+    ]
+    commands.forEach { $0.wantsPriorityOverSystemBehavior = true }
+    return commands
   }
+  @objc private func spotlightKey() { send(["type": "key", "key": "spotlight"]) }
+  @objc private func lockKey() { send(["type": "key", "key": "lock"]) }
   override var canBecomeFirstResponder: Bool { true }
   @objc private func switchWindow() { send(["type": "switch"]) }
   override var prefersHomeIndicatorAutoHidden: Bool { true }

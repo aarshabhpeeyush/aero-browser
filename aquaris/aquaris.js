@@ -3943,6 +3943,11 @@ function shellEvent(ev) {
   if (ev.type === "tap" && win) focusWin(win);
   if (ev.type === "switch") stepSwitch(ev.step || 1, { gesture: !!ev.gesture });
   if (ev.type === "switchEnd") finishSwitch(true);
+  if (ev.type === "key") {
+    if (ev.key === "spotlight") toggleOverlay("#spotlight");
+    if (ev.key === "lock") lockScreen();
+    if (ev.key === "escape") { finishSwitch(false); closeOverlays(); }
+  }
   if (ev.type === "openUrl" && /^https?:/.test(ev.url || "")) openInAerisTab(ev.url);
   if (ev.type === "state" && v) {
     v.dataset.url = ev.url || v.dataset.url || "";
@@ -3955,6 +3960,18 @@ function shellEvent(ev) {
     if (owner?.toolbar) updateBrowserBar(owner);
   }
 }
+// ================= Mouse, trackpad and keyboard on an iPad =================
+// With a Bluetooth mouse or trackpad connected, Aquaris works like on a computer: double-click to
+// open, right-click menus, hover, computer-sized controls (the finger-only gestures below only react
+// to fingers). It follows the iPad: connecting or disconnecting a mouse switches straight away.
+if (onWeb) {
+  const fine = matchMedia("(any-pointer: fine)");
+  const setMouse = on => document.body.classList.toggle("has-mouse", on);
+  setMouse(fine.matches);
+  fine.addEventListener?.("change", () => setMouse(fine.matches));
+  addEventListener("pointermove", e => { if (e.pointerType === "mouse" && !document.body.classList.contains("has-mouse")) setMouse(true); }, { passive: true });
+}
+
 // ================= Fingers (iPad) =================
 // 1. A tap on a button always counts. (iPadOS sometimes treats a tap as "hovering" instead of a
 //    click, so if no click follows a finger's tap on a button, Aquaris clicks it itself.)
