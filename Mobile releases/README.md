@@ -45,7 +45,7 @@ Updates install over the old version, and your tabs and settings stay.
 It's Aeris's start page, so websites you open still use Safari or Chrome. It has the welcome tour,
 the colour themes and custom themes, widgets, quick app shortcuts and a battery saver, and it works offline.
 
-To use it, the `app` folder has to be on a **https://** website (for example GitHub Pages). Then:
+**Link: https://aarshabhpeeyush.github.io/aero-browser/aeris/** (it updates by itself when `app/` changes here). Open it, then:
 - **iPhone / iPad (Safari):** open the link → **Share** → **Add to Home Screen** → **Add**.
 - **Android (Chrome):** open the link → **⋮** → **Install app**.
 
