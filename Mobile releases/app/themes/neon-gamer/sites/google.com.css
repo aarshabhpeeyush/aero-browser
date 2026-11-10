@@ -1,0 +1,36 @@
+/* Neon Gamer for Google: always dark, with glowing neon-red accents. */
+
+img[alt="Google"], svg[aria-label="Google"] { filter: drop-shadow(0 0 10px rgba(255, 31, 90, 0.9)); }
+
+/* ---- Google's own dark look: add the neon ---- */
+html:has(body[data-dt="1"]) { background: #0b0b10 !important; }
+body[data-dt="1"] { background: transparent !important; }
+body[data-dt="1"] .RNNXgb {
+  background: #14141c !important;
+  border: 1px solid #ff1f5a !important;
+  box-shadow: 0 0 12px rgba(255, 31, 90, 0.45) !important;
+}
+body[data-dt="1"] #search a h3, body[data-dt="1"] #rso a h3 { color: #ff6b8f !important; }
+body[data-dt="1"] #search a:hover h3, body[data-dt="1"] #rso a:hover h3 { text-shadow: 0 0 10px rgba(255, 31, 90, 0.8); }
+body[data-dt="1"] [aria-current="page"], body[data-dt="1"] [selected] { color: #ff6b8f !important; }
+
+/* ---- Google came out light: flip the whole page dark, then add the neon ---- */
+html:has(body:not([data-dt="1"])) {
+  filter: invert(0.92) hue-rotate(180deg) !important;
+  background: #fff !important; /* becomes almost black after the flip */
+}
+html:has(body:not([data-dt="1"])) :is(img, picture, video, canvas, iframe, embed, object, svg image, [style*="background-image"]) {
+  filter: invert(1) hue-rotate(180deg) !important;
+}
+/* The logo is a picture too: flip it back, then glow */
+html:has(body:not([data-dt="1"])) :is(img[alt="Google"], svg[aria-label="Google"]) {
+  filter: invert(1) hue-rotate(180deg) drop-shadow(0 0 10px rgba(0, 224, 165, 0.9)) !important;
+}
+/* These colours show as neon red / pink once flipped */
+body:not([data-dt="1"]) .RNNXgb {
+  border: 1px solid #ff5081 !important;
+  box-shadow: 0 0 12px rgba(0, 200, 160, 0.45) !important;
+}
+body:not([data-dt="1"]) #search a h3, body:not([data-dt="1"]) #rso a h3 { color: #b52f51 !important; }
+body:not([data-dt="1"]) #search a:hover h3, body:not([data-dt="1"]) #rso a:hover h3 { text-shadow: 0 0 10px rgba(0, 224, 165, 0.8); }
+body:not([data-dt="1"]) [aria-current="page"], body:not([data-dt="1"]) [selected] { color: #b52f51 !important; }

@@ -1,0 +1,139 @@
+/* Phone and iPad tweaks on top of the desktop New Tab styles (newtab.css). */
+
+/* Typing must work in boxes even though the page itself can't be text-selected (iPhone needs this). */
+input, textarea { -webkit-user-select: text; user-select: text; }
+
+/* Keep the toolbar clear of the notch and the rounded screen corners. */
+#toolbar {
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+}
+
+/* Touch screens have no hover, so show the dock labels and the little remove buttons all the time. */
+@media (hover: none) {
+  .dock-item .label { opacity: 1; }
+  .dock-item .remove { opacity: 0.75; }
+}
+
+/* ================= Phones and iPads: a scrolling stack instead of dragging ================= */
+/* Touch screens always get it, even big sideways tablets, where dragging widgets would overlap. */
+
+@media (max-width: 1180px), (pointer: coarse) {
+  html, body { overflow-x: hidden; overflow-y: auto; height: auto; min-height: 100%; }
+
+  #desk {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: calc(70px + env(safe-area-inset-top)) 12px calc(40px + env(safe-area-inset-bottom));
+  }
+
+  .widget {
+    position: static;
+    transform: none;
+    cursor: auto;
+  }
+
+  /* Most useful widgets first */
+  .widget[data-id="clock"] { order: 1; }
+  .widget[data-id="search"] { order: 2; }
+  .widget[data-id="dock"] { order: 3; }
+  .widget[data-id="weather"] { order: 4; }
+  .widget[data-id="tasks"] { order: 5; }
+  .widget[data-id="music"] { order: 6; }
+  .widget[data-id="notes"] { order: 7; }
+  .widget[data-id="calendar"] { order: 8; }
+  .widget[data-id="timer"] { order: 9; }
+  .widget[data-id="aquarium"] { order: 10; }
+  .widget[data-id="bubblewrap"] { order: 11; }
+
+  .clock { padding: 14px 20px 16px; }
+  .clock .time { font-size: 72px; }
+  .clock .date { font-size: 13px; letter-spacing: 3px; }
+
+  .search { width: 100%; }
+  /* 16px stops iPhones from zooming in when you tap a box */
+  input, textarea, .search input { font-size: 16px !important; }
+
+  .dock { flex-wrap: wrap; justify-content: center; gap: 12px; border-radius: 28px; padding-bottom: 26px; }
+
+  .aquarium canvas { width: 100%; height: auto; }
+  .bubblewrap { display: flex; flex-direction: column; align-items: center; }
+
+  /* The "put widgets back" button only matters for dragging, which phones don't do */
+  #resetLayout { display: none; }
+
+  #settings {
+    top: max(10px, env(safe-area-inset-top));
+    left: 10px;
+    right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: auto;
+  }
+}
+
+/* Phones: one column, each widget as wide as the screen */
+@media (max-width: 760px) {
+  .widget { width: 100%; max-width: 420px; }
+}
+
+/* iPads and sideways phones: widgets wrap into rows of 2–3, with the clock, search and dock across the top */
+@media (min-width: 761px) and (max-width: 1180px), (min-width: 761px) and (pointer: coarse) {
+  #desk {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 22px;
+  }
+  .widget[data-id="clock"], .widget[data-id="search"], .widget[data-id="dock"] { flex: 0 0 100%; max-width: 620px; }
+  .clock .time { font-size: 92px; }
+  .aquarium canvas { width: 300px; }
+  #settings { left: auto; width: 380px; }
+}
+
+/* ================= Quick app picks under the dock's address box ================= */
+
+.dock-add { flex-wrap: wrap; justify-content: center; gap: 10px; flex-basis: 100%; margin-top: 18px; }
+.quick-apps { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; flex-basis: 100%; }
+.quick-apps:empty { display: none; }
+.quick-app {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 6px;
+  border: 1px solid rgba(255,255,255,0.95);
+  border-radius: 999px;
+  color: #04345c;
+  font-size: 14px;
+  text-shadow: none;
+  cursor: pointer;
+  background: linear-gradient(180deg, #fff 0%, #e4f6ff 50%, #c9ecff 51%, #e8f8ff 100%);
+  box-shadow: 0 2px 6px rgba(0, 60, 130, 0.25);
+}
+.quick-app img { width: 20px; height: 20px; border-radius: 50%; }
+.quick-app:active { transform: scale(0.95); }
+
+/* ================= Battery saver ================= */
+
+#setSaver, #setColour, #setTheme {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 12px;
+  border: 1px solid #9fd8f5;
+  border-radius: 12px;
+  font: inherit;
+  color: #04345c;
+  background: linear-gradient(180deg, #fff, #e6f7ff);
+}
+
+/* Freeze every animation and swap the costly glass blur for plain see-through glass */
+body.saver *, body.saver *::before, body.saver *::after { animation-play-state: paused !important; }
+body.saver #bubbles { display: none; }
+body.saver .glass, body.saver .panel, body.saver .pill, body.saver .clock {
+  backdrop-filter: none;
+  background-color: rgba(60, 150, 220, 0.45);
+}

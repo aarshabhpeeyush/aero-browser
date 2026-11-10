@@ -1,0 +1,18 @@
+/* Neon Gamer for Roblox */
+
+#header, .rbx-header, #navigation-container {
+  background: #07070c !important;
+  border-bottom: 1px solid #ff1f5a !important;
+  box-shadow: 0 2px 16px rgba(255, 31, 90, 0.45);
+}
+
+/* Game tiles glow on hover */
+.game-card-thumb, .game-card-container, .thumbnail-2d-container { border-radius: 8px !important; overflow: hidden; }
+.game-card-container:hover { box-shadow: 0 0 0 2px #ff1f5a, 0 0 18px rgba(255, 31, 90, 0.7); }
+
+/* Neon buttons */
+.btn-primary-md, .btn-primary-lg, .btn-growth-md, .btn-growth-lg {
+  background-color: #ff1f5a !important;
+  border-color: #ff1f5a !important;
+  box-shadow: 0 0 12px rgba(255, 31, 90, 0.7);
+}

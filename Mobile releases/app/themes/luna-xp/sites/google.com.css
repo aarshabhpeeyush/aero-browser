@@ -1,0 +1,21 @@
+/* Luna XP for Google: the cream of the XP toolbar, Tahoma text and XP-style boxes.
+   (theme.json gives google.com a "paper" colour, which repaints Google's own white boxes.) */
+
+html { background: #ece9d8 !important; }
+body { background: transparent !important; font-family: Tahoma, "Segoe UI", sans-serif !important; }
+
+/* The search box looks like an XP text box: white with the classic blue-grey edge */
+body .RNNXgb {
+  background: #fff !important;
+  border: 1px solid #7f9db9 !important;
+  border-radius: 3px !important;
+  box-shadow: none !important;
+}
+
+/* Result titles in XP link blue */
+#search a h3, #rso a h3 { color: #0046d5 !important; }
+
+/* ---- When Google is dark anyway: XP's dark "Royale Noir" look ---- */
+html:has(body[data-dt="1"]) { background: #1f2430 !important; }
+body[data-dt="1"] .RNNXgb { background: #2a3040 !important; border-color: #4a6fa8 !important; }
+body[data-dt="1"] #search a h3, body[data-dt="1"] #rso a h3 { color: #8fb4ff !important; }

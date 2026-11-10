@@ -1,0 +1,108 @@
+/* ===== Frutiger Metro: 2000s vector art =====
+   Sunburst rays, target rings, halftone dots and stars, in lime green, cyan, hot pink and black. */
+
+:root {
+  --frame-a: #19b5e8;          /* cyan */
+  --frame-b: #8cd600;          /* lime */
+  --accent: #ff3fa4;           /* hot pink */
+  --text: #fff;
+  --text-shadow: 0 1px 0 #000, 0 0 6px rgba(0, 0, 0, 0.45);
+  --gloss: 0.5;
+  --tab-radius: 999px;
+}
+
+body, button, input, select { font-family: "Trebuchet MS", "Segoe UI", sans-serif; }
+
+/* Tab bar: a cyan-to-lime sunburst with a halftone fade and a target ring on the right */
+#titlebar {
+  background:
+    radial-gradient(circle at calc(100% - 150px) 50%, #111 0 7px, #fff 7px 11px, #ff3fa4 11px 15px, #fff 15px 18px, #111 18px 20px, transparent 21px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.55) 1.4px, transparent 1.8px) 0 0 / 9px 9px,
+    repeating-conic-gradient(from 0deg at 18% 120%, rgba(255, 255, 255, 0.22) 0 6deg, transparent 6deg 14deg),
+    linear-gradient(90deg, #19b5e8 0%, #3fc7d8 45%, #8cd600 100%) !important;
+  border-bottom: 3px solid #111;
+}
+.side #titlebar {
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.5) 1.4px, transparent 1.8px) 0 0 / 9px 9px,
+    repeating-conic-gradient(from 0deg at -30% 15%, rgba(255, 255, 255, 0.22) 0 6deg, transparent 6deg 14deg),
+    linear-gradient(180deg, #19b5e8, #8cd600) !important;
+  border-right: 3px solid #111;
+}
+
+/* Tabs: black stickers; the open one is a white sticker with a pink outline */
+.tab {
+  color: #fff;
+  border: 2px solid #111;
+  background: rgba(17, 17, 17, 0.72);
+}
+.tab.active {
+  color: #111;
+  text-shadow: none;
+  border-color: #ff3fa4;
+  background: #fff;
+  box-shadow: 0 0 0 2px #111, 3px 3px 0 #111;
+}
+
+/* The round logo becomes a target ring */
+.app-orb {
+  background: radial-gradient(circle, #111 0 18%, #fff 18% 32%, #ff3fa4 32% 52%, #fff 52% 66%, #111 66% 100%) !important;
+  border-color: #111 !important;
+  box-shadow: 2px 2px 0 #111 !important;
+}
+
+/* Toolbar: white with lime stripes and a black line underneath */
+#toolbar {
+  background:
+    repeating-linear-gradient(115deg, transparent 0 22px, rgba(140, 214, 0, 0.13) 22px 30px),
+    #fff !important;
+  border-top-color: #111;
+  border-bottom: 3px solid #111;
+}
+
+/* Round buttons: bold cartoon circles with a black outline and hard shadow */
+.orb {
+  border: 2px solid #111;
+  color: #fff;
+  text-shadow: 0 1px 0 #000;
+  background: radial-gradient(circle at 35% 30%, #b8ff3a 0%, #8cd600 55%, #5c9a00 100%);
+  box-shadow: 2px 2px 0 #111;
+}
+#customizeBtn { background: radial-gradient(circle at 35% 30%, #ff9ad0 0%, #ff3fa4 55%, #c4106f 100%) !important; border-color: #111 !important; }
+
+/* Address bar: a white sticker with a black outline */
+#address {
+  border: 2px solid #111;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 3px 3px 0 #19b5e8;
+}
+#url { color: #111; }
+#url::placeholder { color: #6a7a6a; }
+
+/* Bookmarks: black with pink and cyan dots */
+#bookmarks {
+  background:
+    radial-gradient(circle, rgba(255, 63, 164, 0.45) 1.5px, transparent 2px) 0 0 / 12px 12px,
+    radial-gradient(circle, rgba(25, 181, 232, 0.45) 1.5px, transparent 2px) 6px 6px / 12px 12px,
+    #111 !important;
+  border-bottom-color: #000;
+}
+#bookmarks button { color: #fff; }
+#bookmarks button:hover { background: rgba(140, 214, 0, 0.3); border-color: #8cd600; }
+#bookmarks .empty { color: #b8ff3a; }
+
+.win-simple .winbtns button { color: #fff; }
+
+/* Side panels: white with a halftone corner and a big target ring */
+.panel {
+  background:
+    radial-gradient(circle at 100% 0%, #111 0 14px, #fff 14px 22px, #8cd600 22px 34px, #fff 34px 40px, #19b5e8 40px 50px, transparent 51px),
+    radial-gradient(circle, rgba(255, 63, 164, 0.3) 1.5px, transparent 2px) 0 0 / 10px 10px,
+    #fff !important;
+  background-size: auto, 10px 10px, auto !important;
+  color: #111;
+  border-left: 3px solid #111;
+}
+.panel h3 { color: #ff3fa4 !important; }
+#appsBar { background: linear-gradient(180deg, #19b5e8, #8cd600) !important; border-right: 3px solid #111; }

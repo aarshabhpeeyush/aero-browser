@@ -1,0 +1,32 @@
+/* ===== Bubble Pop — an example Aero Browser theme =====
+   Change anything here, save, and the browser updates straight away. */
+
+/* 1. Colours: these variables paint almost everything. */
+:root {
+  --frame-a: #b83fd6;          /* top of the tab bar */
+  --frame-b: #ff9ed8;          /* bottom of the tab bar */
+  --accent: #ff4fa8;           /* buttons, highlights, the loading bar */
+  --text: #fff;                /* writing on the tab bar */
+  --tab-radius: 16px;          /* how round the tabs are */
+}
+
+/* 2. Decorations: little bubbles floating on the tab bar. */
+#titlebar {
+  background-image:
+    radial-gradient(circle at 12% 30%, rgba(255,255,255,0.55) 0 6px, transparent 7px),
+    radial-gradient(circle at 38% 70%, rgba(255,255,255,0.4) 0 4px, transparent 5px),
+    radial-gradient(circle at 63% 25%, rgba(255,255,255,0.5) 0 8px, transparent 9px),
+    radial-gradient(circle at 85% 65%, rgba(255,255,255,0.35) 0 5px, transparent 6px),
+    linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 51%),
+    linear-gradient(180deg, var(--frame-a), var(--frame-b));
+}
+
+/* 3. Shapes: puffy tabs and a bubbly address bar. */
+.tab { font-weight: 600; }
+.tab.active { box-shadow: 0 -2px 10px rgba(255, 79, 168, 0.5); }
+#address { border-width: 2px; border-color: #ff9ed8; }
+
+/* 4. The toolbar and bookmarks bar */
+#toolbar { background: linear-gradient(180deg, #ffe3f3, #ffc2e6); }
+#bookmarks { background: linear-gradient(180deg, #ffc2e6, #ffd9ef); }
+#bookmarks button { color: #8a1a5c; }

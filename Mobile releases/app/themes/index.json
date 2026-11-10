@@ -1,0 +1,83 @@
+[
+ {
+  "id": "aqua-glass",
+  "name": "Aqua Glass",
+  "description": "Frutiger Aero everywhere: sky-blue glass on YouTube, Google, Roblox, Wikipedia and every site",
+  "frameA": "#1f8fe0",
+  "frameB": "#9fe2ff",
+  "accent": "#19a7e8",
+  "newtabCss": false
+ },
+ {
+  "id": "bubble-pop",
+  "name": "Bubble Pop",
+  "description": "Pink and purple bubbles everywhere, including the New Tab",
+  "frameA": "#b83fd6",
+  "frameB": "#ff9ed8",
+  "accent": "#ff4fa8",
+  "newtabCss": true
+ },
+ {
+  "id": "dark-mode",
+  "name": "Dark Mode",
+  "description": "Turns every website dark (even ones without a dark mode), with a dark glass browser",
+  "frameA": "#0b0f17",
+  "frameB": "#1c2433",
+  "accent": "#4a8cff",
+  "newtabCss": true
+ },
+ {
+  "id": "dorfic",
+  "name": "DORFic",
+  "description": "The white and orange Frutiger Aero: glossy orange orbs, swooshes, rings and fresh oranges, on Google, YouTube, Wikipedia and more",
+  "frameA": "#ff7a1a",
+  "frameB": "#ffb066",
+  "accent": "#ff7a1a",
+  "newtabCss": true
+ },
+ {
+  "id": "frutiger-metro",
+  "name": "Frutiger Metro",
+  "description": "2000s vector art: sunburst rays, target rings, stars and halftone dots in lime, cyan, hot pink and black",
+  "frameA": "#19b5e8",
+  "frameB": "#8cd600",
+  "accent": "#ff3fa4",
+  "newtabCss": true
+ },
+ {
+  "id": "luna-xp",
+  "name": "Luna XP",
+  "description": "Blue title bar, cream toolbar and a green Start-button glow, like Windows XP",
+  "frameA": "#0a55d8",
+  "frameB": "#3d8df5",
+  "accent": "#2b71e0",
+  "newtabCss": true
+ },
+ {
+  "id": "neon-gamer",
+  "name": "Neon Gamer",
+  "description": "Black glass with glowing neon pink-red, like a gaming browser, on YouTube, Roblox, Google and more",
+  "frameA": "#07070c",
+  "frameB": "#15101c",
+  "accent": "#ff1f5a",
+  "newtabCss": true
+ },
+ {
+  "id": "retro-2000",
+  "name": "Retro 2000",
+  "description": "Grey Windows 98 bars, blue underlined links and a starry space background on websites",
+  "frameA": "#000080",
+  "frameB": "#1084d0",
+  "accent": "#000080",
+  "newtabCss": false
+ },
+ {
+  "id": "woodland-hut",
+  "name": "Woodland Hut",
+  "description": "A cozy fantasy cabin in an enchanted forest: carved wood, moss, parchment and lantern light",
+  "frameA": "#4a2e17",
+  "frameB": "#6b4423",
+  "accent": "#5f8f3a",
+  "newtabCss": true
+ }
+]

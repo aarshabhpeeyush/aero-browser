@@ -1,0 +1,17 @@
+/* Bubble Pop on EVERY website.
+   Websites have their own styles, so add !important when yours don't win. */
+
+/* Pink highlight when you select text */
+::selection { background: #ffb3dc !important; color: #6b0f45 !important; }
+
+/* Bubbly pink scrollbars */
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-track { background: #fff0f8; }
+::-webkit-scrollbar-thumb {
+  border: 3px solid #fff0f8;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffc2e6, #ff4fa8);
+}
+
+/* Pink glow on text boxes you click into */
+input:focus, textarea:focus { outline: 2px solid #ff4fa8 !important; outline-offset: 1px; }

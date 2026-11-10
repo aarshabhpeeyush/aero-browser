@@ -1,0 +1,111 @@
+/* ===== DORFic: the white & orange Frutiger Aero =====
+   Glossy white plastic, bright orange glass, swooshing lines and rings, like a 2006 phone ad. */
+
+:root {
+  --frame-a: #ff7a1a;          /* juicy orange */
+  --frame-b: #ffb066;          /* soft tangerine */
+  --accent: #ff7a1a;
+  --text: #fff;
+  --text-shadow: 0 1px 2px rgba(150, 50, 0, 0.55);
+  --gloss: 0.9;
+  --tab-radius: 14px;
+}
+
+body, button, input, select { font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif; }
+
+/* Tab bar: orange glass with white swooshes and rings */
+#titlebar {
+  background:
+    radial-gradient(circle at 88% 160%, transparent 38px, rgba(255, 255, 255, 0.55) 39px 41px, transparent 42px 52px, rgba(255, 255, 255, 0.35) 53px 54px, transparent 55px),
+    radial-gradient(ellipse 60% 140% at 30% -40%, rgba(255, 255, 255, 0.55), transparent 60%),
+    linear-gradient(170deg, transparent 55%, rgba(255, 255, 255, 0.28) 56%, transparent 62%),
+    linear-gradient(180deg, #ff9a3d 0%, #ff7a1a 55%, #f26508 100%) !important;
+  border-bottom: 1px solid #c94f00;
+}
+.side #titlebar {
+  background:
+    radial-gradient(ellipse 140% 50% at -30% 20%, rgba(255, 255, 255, 0.5), transparent 60%),
+    linear-gradient(100deg, transparent 55%, rgba(255, 255, 255, 0.25) 56%, transparent 62%),
+    linear-gradient(90deg, #ff9a3d, #f26508) !important;
+}
+
+/* Tabs: frosted white glass; the open one is glossy white plastic with an orange edge */
+.tab {
+  color: #fff;
+  border-color: rgba(200, 80, 0, 0.45);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.12));
+}
+.tab.active {
+  color: #7a2e00;
+  text-shadow: none;
+  border-color: #ff9a3d;
+  background: linear-gradient(180deg, #ffffff 0%, #fff6ee 55%, #ffe6d0 100%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8) inset, 0 2px 10px rgba(255, 110, 0, 0.4);
+}
+
+/* The round logo becomes a glossy orange (with a little leaf) */
+.app-orb {
+  background:
+    radial-gradient(ellipse 55% 35% at 45% 22%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 70%),
+    radial-gradient(circle at 50% 60%, #ffb347 0%, #ff8a1f 45%, #e05a00 85%) !important;
+  border-color: #b84600 !important;
+  box-shadow: 0 2px 8px rgba(200, 80, 0, 0.5) !important;
+}
+
+/* Toolbar: shiny white plastic with a thin orange line */
+#toolbar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 51%),
+    linear-gradient(180deg, #ffffff, #f4efea) !important;
+  border-top-color: #fff;
+  border-bottom: 2px solid #ff8a2a;
+}
+
+/* Round buttons: orange glass orbs */
+.orb {
+  border-color: #c95200;
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.15) 48%, rgba(255, 255, 255, 0) 52%),
+    radial-gradient(circle at 50% 115%, #ffd27a 0%, #ff8a1f 55%, #d95300 100%);
+}
+#customizeBtn {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.15) 48%, rgba(255, 255, 255, 0) 52%),
+    radial-gradient(circle at 50% 115%, #fff1a8 0%, #ffb11f 55%, #e07000 100%) !important;
+  border-color: #b85a00 !important;
+}
+
+/* Address bar: white glass with an orange glow edge */
+#address {
+  border: 1px solid #ffb27a;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff, #fffaf5);
+  box-shadow: inset 0 1px 2px rgba(200, 90, 0, 0.18), 0 0 0 3px rgba(255, 138, 42, 0.12);
+}
+#url { color: #5a2400; }
+#url::placeholder { color: #c98a5a; }
+
+/* Bookmarks: white with an orange swoosh */
+#bookmarks {
+  background:
+    linear-gradient(176deg, transparent 60%, rgba(255, 138, 42, 0.18) 61%, transparent 75%),
+    linear-gradient(180deg, #fffaf5, #fff1e4) !important;
+  border-bottom-color: #ffc9a0;
+}
+#bookmarks button { color: #7a2e00; }
+#bookmarks button:hover { background: rgba(255, 138, 42, 0.15); border-color: rgba(255, 138, 42, 0.45); }
+#bookmarks .empty { color: #c0703a; }
+
+.win-simple .winbtns button { color: #fff; }
+
+/* Side panels: clean white with orange rings in the corner */
+.panel {
+  background:
+    radial-gradient(circle at 100% 0%, transparent 60px, rgba(255, 138, 42, 0.35) 61px 63px, transparent 64px 78px, rgba(255, 138, 42, 0.22) 79px 80px, transparent 81px),
+    linear-gradient(180deg, #ffffff, #fff4ea) !important;
+  color: #5a2400;
+  border-left: 2px solid #ff8a2a;
+}
+.panel h3 { color: #e8650a !important; }
+#appsBar { background: linear-gradient(90deg, #fff4ea, #ffe3cc) !important; border-right-color: #ffb27a; }

@@ -1,0 +1,14 @@
+/* Woodland Hut for Wikipedia: reading an old spellbook by lantern light */
+
+html, body { background: linear-gradient(180deg, #4a2e17, #2e1b0c) fixed !important; }
+.mw-page-container {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.45), transparent 55%),
+    linear-gradient(180deg, #fbf1d6, #ead7a8) !important;
+  border: 3px solid #8a5a2b;
+  border-radius: 14px;
+  margin-top: 12px;
+  box-shadow: 0 10px 30px rgba(20, 10, 0, 0.6);
+}
+.mw-body, .mw-body-content, .vector-body { font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif !important; color: #2a1a08; }
+.mw-body h1, .mw-body h2, #firstHeading { color: #4f7a2c !important; border-bottom-color: #c9a46a !important; }

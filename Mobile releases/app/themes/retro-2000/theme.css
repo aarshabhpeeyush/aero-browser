@@ -1,0 +1,31 @@
+/* Retro 2000 — the browser itself, Windows 98 style */
+:root {
+  --frame-a: #000080;
+  --frame-b: #1084d0;
+  --accent: #000080;
+  --text: #fff;
+  --text-shadow: none;
+  --gloss: 0;
+  --tab-radius: 0px;
+}
+body, button, input, select { font-family: Tahoma, "MS Sans Serif", sans-serif !important; }
+#titlebar { background: linear-gradient(90deg, #000080, #1084d0) !important; }
+.tab { border-radius: 0; background: #c0c0c0; color: #000; text-shadow: none;
+  border: 2px solid; border-color: #fff #808080 #808080 #fff; }
+.tab.active { background: #c0c0c0; color: #000; font-weight: bold; }
+#toolbar, #bookmarks { background: #c0c0c0 !important; border-color: #fff #808080 #808080 #fff; }
+#bookmarks button { color: #000; border-radius: 0; }
+#address { border-radius: 0; background: #fff; border: 2px solid; border-color: #808080 #fff #fff #808080; box-shadow: none; }
+.orb, .navpair .orb, .avatar {
+  border-radius: 0 !important;
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  text-shadow: none !important;
+  border: 2px solid !important;
+  border-color: #fff #808080 #808080 #fff !important;
+  box-shadow: none !important;
+}
+.navpair { background: none; border: 0; box-shadow: none; }
+.panel { background: #c0c0c0; color: #000; }
+.gel { border-radius: 0 !important; background: #c0c0c0 !important; color: #000 !important; text-shadow: none !important;
+  border: 2px solid !important; border-color: #fff #808080 #808080 #fff !important; box-shadow: none !important; }

@@ -1,0 +1,37 @@
+/* DORFic New Tab: a bright white world with orange swooshes, glowing rings and orange bubbles. */
+
+#scene { filter: hue-rotate(185deg) saturate(1.5) brightness(1.15); }
+/* White light pouring in, with big orange rings */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 85% 80%, transparent 120px, rgba(255, 255, 255, 0.7) 121px 124px, transparent 125px 150px, rgba(255, 255, 255, 0.45) 151px 153px, transparent 154px),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.55), transparent 45%),
+    linear-gradient(200deg, transparent 60%, rgba(255, 255, 255, 0.35) 61%, transparent 66%);
+}
+#bubbles { filter: sepia(1) saturate(5) hue-rotate(-15deg) brightness(1.15); }
+
+/* Widgets: glossy white plastic with an orange rim */
+.glass, .panel, .pill, .clock {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.75) 50%, rgba(255, 240, 225, 0.85) 51%, rgba(255, 248, 240, 0.9) 100%) !important;
+  border: 1px solid #ffb27a !important;
+  box-shadow: 0 8px 24px rgba(220, 90, 0, 0.25), inset 0 1px 0 #fff !important;
+  color: #5a2400;
+}
+.panel header { background: linear-gradient(180deg, #ff9a3d, #f26508); color: #fff; border-bottom-color: #c95200; }
+.panel textarea, .panel input[type=text], .search input {
+  background: #fff !important;
+  color: #5a2400 !important;
+  border-color: #ffb27a !important;
+}
+.clock .time { color: #ff7a1a; text-shadow: 0 2px 0 #fff, 0 0 18px rgba(255, 138, 42, 0.6); }
+.orb {
+  border-color: #c95200 !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.15) 48%, rgba(255, 255, 255, 0) 52%),
+    radial-gradient(circle at 50% 115%, #ffd27a 0%, #ff8a1f 55%, #d95300 100%) !important;
+}

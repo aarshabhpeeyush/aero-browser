@@ -1,0 +1,6 @@
+/* Luna XP for the New Tab page: blue widget headers, cream bodies. */
+
+.panel { background: #ece9d8; border: 1px solid #0846c4; border-radius: 8px 8px 4px 4px; color: #000; text-shadow: none; }
+.panel header { background: linear-gradient(180deg, #3b8cf7, #0846c4); color: #fff; text-shadow: 1px 1px 1px #003; }
+.clock, .pill { background: rgba(236, 233, 216, 0.85); border-color: #0846c4; color: #000; text-shadow: none; }
+.clock { color: #0846c4; }

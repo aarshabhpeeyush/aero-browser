@@ -1,0 +1,20 @@
+/* Bubble Pop for the New Tab page.
+   Tip: in the New Tab, press F12 to see the names of everything you can style. */
+
+/* Turn whichever wallpaper you picked pink and purple */
+#scene { filter: hue-rotate(95deg) saturate(1.3); }
+
+/* Pink glass on every widget */
+.glass, .panel, .pill, .clock {
+  background: linear-gradient(180deg, rgba(255, 220, 240, 0.55) 0%, rgba(255, 160, 210, 0.25) 50%, rgba(255, 120, 190, 0.15) 51%, rgba(255, 200, 230, 0.3) 100%);
+  border-color: rgba(255, 230, 245, 0.9);
+  box-shadow: 0 10px 30px rgba(140, 20, 90, 0.35), inset 0 1px 0 #fff;
+}
+
+/* Pink round buttons */
+.orb {
+  border-color: #a3175f;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.15) 48%, rgba(255,255,255,0) 52%),
+    radial-gradient(circle at 50% 110%, #ffc2e6 0%, #ff4fa8 55%, #a3175f 100%);
+}

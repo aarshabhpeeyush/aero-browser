@@ -1,0 +1,13 @@
+/* Frutiger Metro for YouTube: a sunburst top bar and sticker-style thumbnails */
+
+#masthead-container #background, #masthead-container, #frosted-glass {
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.45) 1.4px, transparent 1.8px) 0 0 / 9px 9px,
+    repeating-conic-gradient(from 0deg at 20% 140%, rgba(255, 255, 255, 0.2) 0 6deg, transparent 6deg 14deg),
+    linear-gradient(90deg, #19b5e8, #8cd600) !important;
+  border-bottom: 3px solid #111;
+}
+.ytp-play-progress, .ytp-swatch-background-color { background: #ff3fa4 !important; }
+
+ytd-thumbnail, ytd-thumbnail img, yt-image img, .yt-core-image { border-radius: 12px !important; }
+ytd-thumbnail { box-shadow: 0 0 0 3px #111, 5px 5px 0 3px #8cd600; border-radius: 12px; }

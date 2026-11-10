@@ -1,0 +1,12 @@
+/* Bubble Pop for Roblox. */
+
+/* Pink top bar */
+#header, .rbx-header, #navigation-container {
+  background: linear-gradient(180deg, #ff9ed8, #ff4fa8) !important;
+}
+
+/* Rounder game tiles */
+.game-card-thumb, .game-card-container, .thumbnail-2d-container { border-radius: 16px !important; overflow: hidden; }
+
+/* Pink buttons */
+.btn-primary-md, .btn-growth-md, .btn-primary-lg { background-color: #ff4fa8 !important; border-color: #d0287f !important; }

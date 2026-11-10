@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Welcome to Aeris</title>
+  <meta name="theme-color" content="#3aa0f0">
+  <link rel="icon" href="../icons/favicon.png">
+  <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+  <!-- The same welcome tour as Aeris on the computer, sized for phones and tablets.
+       data-only="web" steps are for the home-screen web app, data-only="app" for the Android app. -->
+  <div class="scene" id="scene"><img class="hero-logo" src="../icons/icon-192.png" alt=""></div>
+  <main>
+    <div class="stage" id="stage">
+      <section class="step hero" data-label="Welcome">
+        <h1 class="sr">Welcome to Aeris: the future we were promised, as a browser</h1>
+        <button class="gel big next">Let's go →</button>
+      </section>
+
+      <section class="step" data-label="Colours" hidden>
+        <div class="glass">
+          <p class="kicker">Pick your look</p>
+          <h2>Pick your colours</h2>
+          <p data-only="app">Tap one: Aeris changes straight away.</p>
+          <p data-only="web">Tap one: it colours the bar at the top of your screen.</p>
+          <div class="swatches" id="swatches"></div>
+          <h2 class="space">Want even more? Add a custom theme</h2>
+          <p data-only="app">Custom themes restyle everything, including the New Tab and websites like YouTube and Google.</p>
+          <p data-only="web">Custom themes restyle your Aeris start page.</p>
+          <div class="theme-list" id="customs"></div>
+          <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
+        </div>
+      </section>
+
+      <section class="step" data-label="Extras" hidden>
+        <div class="glass">
+          <p class="kicker">Extras</p>
+          <h2>A few good things to switch on</h2>
+          <label class="tick" data-only="app"><input type="checkbox" data-pref="adBlock"> <span><b>Block ads and trackers 🛡️</b><small>The shield in the address bar shows how many it caught.</small></span></label>
+          <label class="tick" data-only="app"><input type="checkbox" data-pref="hideAi"> <span><b>Hide Google's AI Overviews</b><small>Just the normal search results.</small></span></label>
+          <label class="tick" data-only="app"><input type="checkbox" data-pref="aeroStyle"> <span><b>Aero style on websites</b><small>Rounder, glossier buttons and boxes on the sites you visit.</small></span></label>
+          <label class="tick"><input type="checkbox" data-pref="sounds"> <span><b>Bubbly sounds</b><small>Little bloops and pops on your start page.</small></span></label>
+          <label class="tick" data-only="web"><input type="checkbox" data-pref="saver"> <span><b>Battery saver 🔋</b><small>Stops the bubbles and animations so your battery lasts longer.</small></span></label>
+          <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
+        </div>
+      </section>
+
+      <section class="step" data-label="Your stuff" data-only="app" hidden>
+        <div class="glass">
+          <p class="kicker">Your stuff</p>
+          <h2>Bring your bookmarks</h2>
+          <p id="importText">From Aeris, Chrome or Edge on your computer: export your bookmarks there as a bookmarks file (.html), put it on this phone, then tap Import.</p>
+          <div class="buttons"><button class="gel" id="import">Import bookmarks…</button></div>
+          <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
+        </div>
+      </section>
+
+      <section class="step" data-label="Default" data-only="app" hidden>
+        <div class="glass">
+          <p class="kicker">Links</p>
+          <h2>Open links from other apps in Aeris?</h2>
+          <p id="defaultText">Make Aeris your default browser, and links from Discord, emails and other apps open here. Aeris asks only this once, and never nags you about it again.</p>
+          <div class="buttons">
+            <button class="gel" id="makeDefault">Yes, make Aeris my default</button>
+            <button class="gel plain next">Not now</button>
+          </div>
+          <div class="nav"><button class="gel plain back">← Back</button><span></span></div>
+        </div>
+      </section>
+
+      <section class="step" data-label="Home screen" data-only="web" hidden>
+        <div class="glass">
+          <p class="kicker">Home screen</p>
+          <h2>Put Aeris on your home screen</h2>
+          <div id="installed" hidden><p>Aeris is already on your home screen. ✓</p></div>
+          <div id="installIos" hidden>
+            <ol class="tips">
+              <li>Tap the <b>Share</b> button (the square with an arrow pointing up) in Safari.</li>
+              <li>Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.</li>
+              <li>Open Aeris from its globe icon. It opens full-screen, like an app.</li>
+            </ol>
+          </div>
+          <div id="installAndroid" hidden>
+            <ol class="tips">
+              <li>Tap Chrome's <b>⋮</b> menu.</li>
+              <li>Tap <b>Install app</b> (or <b>Add to Home screen</b>).</li>
+              <li>Want the full Aeris browser on Android, with tabs, themes on websites and an ad blocker? Ask for the Aeris app (.apk).</li>
+            </ol>
+          </div>
+          <div class="nav"><button class="gel plain back">← Back</button><button class="gel next">Next →</button></div>
+        </div>
+      </section>
+
+      <section class="step" data-label="Ready" hidden>
+        <div class="glass">
+          <p class="kicker">All set</p>
+          <h2>Aeris is ready ✨</h2>
+          <ul class="tips" data-only="app">
+            <li><b>The ⋮ menu</b> has 📝 Notes, 🗂️ Spaces, ⚡ Quick Commands, ⛶ Focus mode and page filters.</li>
+            <li><b>Notes:</b> press and hold a link → <i>Clip to Aeris Notes</i>, or clip the whole page from the menu.</li>
+            <li><b>Spaces:</b> keep School, Games and Music tabs apart. Switch at the top of the tabs list.</li>
+            <li><b>Split screen:</b> press and hold a link → <i>Open in split screen</i>.</li>
+            <li><b>Something annoying on a website?</b> ⋮ → <i>Hide something on this page</i>, then tap it.</li>
+          </ul>
+          <ul class="tips" data-only="web">
+            <li><b>⚙ Settings</b> on your start page changes the colour, theme, widgets and wallpaper.</li>
+            <li><b>Shortcuts:</b> tap + in the dock for one-tap Discord, Spotify, WhatsApp and more.</li>
+            <li><b>Bubbles</b> pop when you tap them. 🫧</li>
+          </ul>
+          <div class="nav"><button class="gel plain back">← Back</button><button class="gel" id="finish">Start browsing</button></div>
+        </div>
+      </section>
+    </div>
+
+    <nav class="steps-bar" id="thumbs" aria-label="Steps"></nav>
+  </main>
+  <script src="../aeris-colors.js"></script>
+  <script src="welcome.js"></script>
+</body>
+</html>

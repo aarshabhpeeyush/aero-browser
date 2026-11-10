@@ -1,0 +1,15 @@
+/* Dark Mode for YouTube.
+   YouTube shows <html dark> when it's using its own dark look. Then nothing needs flipping.
+   Otherwise the usual Dark Mode flip from websites.css turns it dark, with pictures and videos
+   flipped back to their real colours. */
+
+html[dark],
+html[dark] :is(img, picture, video, canvas, iframe, embed, object, svg image, [style*="background-image"]) {
+  filter: none !important;
+}
+html[dark] { background: #0f0f0f !important; }
+
+/* Flipped YouTube: the red logo and buttons are drawings, so flip them back too */
+html:not([dark]) :is(#logo-icon, ytd-topbar-logo-renderer yt-icon, .ytp-chrome-bottom, ytd-thumbnail-overlay-time-status-renderer) {
+  filter: invert(1) hue-rotate(180deg) !important;
+}

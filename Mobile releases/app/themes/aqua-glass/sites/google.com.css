@@ -1,0 +1,28 @@
+/* Aqua Glass for Google: a pale sky, with Google's boxes in sky-white glass.
+   (theme.json gives google.com a "paper" colour, which repaints Google's own white boxes.) */
+
+html {
+  background:
+    radial-gradient(ellipse at 50% 120%, #c6f36b 0%, #9fe07a 10%, transparent 28%),
+    linear-gradient(180deg, #bfe8ff 0%, #def4ff 45%, #f1faff 100%) fixed !important;
+}
+body { background: transparent !important; }
+
+/* The search box: glossy glass with an aqua edge */
+body .RNNXgb {
+  background: linear-gradient(180deg, #ffffff, #eaf7ff) !important;
+  border: 1px solid #7cc8f0 !important;
+  box-shadow: inset 0 1px 0 #fff, 0 2px 8px rgba(0, 110, 190, 0.18) !important;
+}
+
+/* Result titles in Aero blue */
+#search a h3, #rso a h3 { color: #0a6fc2 !important; }
+
+/* ---- When Google is dark anyway: a night sky, so its white text stays readable ---- */
+html:has(body[data-dt="1"]) {
+  background:
+    radial-gradient(ellipse at 50% 120%, #2f7d3a 0%, #1d5a2c 10%, transparent 28%),
+    linear-gradient(180deg, #021a3a 0%, #063f73 55%, #0a5a8f 100%) fixed !important;
+}
+body[data-dt="1"] .RNNXgb { background: rgba(6, 30, 58, 0.9) !important; border-color: #2c7fc0 !important; }
+body[data-dt="1"] #search a h3, body[data-dt="1"] #rso a h3 { color: #8fd6ff !important; }

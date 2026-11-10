@@ -1,0 +1,22 @@
+/* Aqua Glass for Roblox */
+
+#header, .rbx-header, #navigation-container {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 51%),
+    linear-gradient(180deg, #4fc3ff, #0a86d8) !important;
+}
+
+/* Round, glossy game tiles */
+.game-card-thumb, .game-card-container, .thumbnail-2d-container {
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+.game-card-container:hover { box-shadow: 0 0 0 3px #7fd4ff, 0 6px 16px rgba(0, 90, 160, 0.35); }
+
+/* Aqua gel buttons */
+.btn-primary-md, .btn-primary-lg, .btn-growth-md, .btn-growth-lg {
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 51%) !important;
+  background-color: #19a7e8 !important;
+  border-color: #0a6cb4 !important;
+  border-radius: 999px !important;
+}

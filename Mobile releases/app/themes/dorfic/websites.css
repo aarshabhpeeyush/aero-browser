@@ -1,0 +1,22 @@
+/* DORFic on EVERY website: glossy orange scrollbars, tangerine highlights and an orange glow on text boxes. */
+
+::selection { background: #ffb066 !important; color: #4a1c00 !important; }
+
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-track { background: linear-gradient(90deg, #fff4ea, #fffaf5); }
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  background-image:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.2) 45%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(90deg, #ffb347, #f26508);
+}
+::-webkit-scrollbar-corner { background: #fff4ea; }
+
+input:not([type=checkbox]):not([type=radio]):not([type=range]):focus,
+textarea:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(255, 138, 42, 0.45), 0 0 12px rgba(255, 138, 42, 0.45) !important;
+}
+input[type=checkbox], input[type=radio], input[type=range], progress { accent-color: #ff7a1a; }

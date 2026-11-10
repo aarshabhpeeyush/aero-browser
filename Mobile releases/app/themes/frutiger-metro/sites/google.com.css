@@ -1,0 +1,30 @@
+/* Frutiger Metro for Google: a white page with a faint sunburst, halftone dots and a target ring.
+   (theme.json gives google.com a "paper" colour, which repaints Google's own white boxes.) */
+
+html {
+  background:
+    radial-gradient(circle at calc(100% - 90px) calc(100% - 90px), #111 0 14px, #fff 14px 22px, #8cd600 22px 36px, #fff 36px 42px, #ff3fa4 42px 54px, #fff 54px 60px, #111 60px 64px, transparent 65px),
+    radial-gradient(circle, rgba(25, 181, 232, 0.16) 1.5px, transparent 2px) 0 0 / 12px 12px,
+    repeating-conic-gradient(from 0deg at 0% 100%, rgba(140, 214, 0, 0.08) 0 5deg, transparent 5deg 11deg),
+    #fbfff4 !important;
+  background-attachment: fixed !important;
+}
+body { background: transparent !important; }
+
+/* The search box is a sticker: black outline, hard cyan shadow */
+body .RNNXgb {
+  background: #fff !important;
+  border: 2px solid #111 !important;
+  box-shadow: 4px 4px 0 #19b5e8 !important;
+}
+#search a h3, #rso a h3 { color: #d1127d !important; }
+
+/* ---- When Google is dark anyway: neon vector art on black ---- */
+html:has(body[data-dt="1"]) {
+  background:
+    radial-gradient(circle, rgba(140, 214, 0, 0.2) 1.5px, transparent 2px) 0 0 / 12px 12px,
+    repeating-conic-gradient(from 0deg at 0% 100%, rgba(25, 181, 232, 0.08) 0 5deg, transparent 5deg 11deg),
+    #0c0c0c !important;
+}
+body[data-dt="1"] .RNNXgb { background: #161616 !important; border-color: #8cd600 !important; box-shadow: 4px 4px 0 #ff3fa4 !important; }
+body[data-dt="1"] #search a h3, body[data-dt="1"] #rso a h3 { color: #ff7cc4 !important; }

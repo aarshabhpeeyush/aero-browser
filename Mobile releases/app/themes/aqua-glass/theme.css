@@ -1,0 +1,11 @@
+/* Aqua Glass — the browser itself */
+:root {
+  --frame-a: #1f8fe0;
+  --frame-b: #9fe2ff;
+  --accent: #19a7e8;
+  --text: #fff;
+  --gloss: 0.9;
+  --tab-radius: 14px;
+}
+#toolbar { background: linear-gradient(180deg, #f2fbff 0%, #d4f0ff 50%, #bfe8ff 51%, #dff5ff 100%); }
+#bookmarks { background: linear-gradient(180deg, #dff5ff, #c9ecff); }

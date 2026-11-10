@@ -1,0 +1,22 @@
+/* Neon Gamer on EVERY website: glowing neon scrollbars, highlights and text boxes. */
+
+::selection { background: #ff1f5a !important; color: #fff !important; }
+
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: #0b0b10; }
+::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+  background: linear-gradient(180deg, #ff1f5a, #9b0f37);
+  box-shadow: 0 0 8px #ff1f5a;
+}
+::-webkit-scrollbar-corner { background: #0b0b10; }
+
+input:not([type=checkbox]):not([type=radio]):not([type=range]):focus,
+textarea:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px #ff1f5a, 0 0 16px rgba(255, 31, 90, 0.8) !important;
+}
+input[type=checkbox], input[type=radio], input[type=range], progress { accent-color: #ff1f5a; }
+
+/* Links glow when you hover them */
+a:hover { text-shadow: 0 0 8px rgba(255, 31, 90, 0.6); }

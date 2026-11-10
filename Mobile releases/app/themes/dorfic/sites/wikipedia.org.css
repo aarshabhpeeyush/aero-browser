@@ -1,0 +1,15 @@
+/* DORFic for Wikipedia: a white page floating on orange glass, with orange headings */
+
+html, body {
+  background:
+    radial-gradient(circle at 92% 90%, transparent 160px, rgba(255, 255, 255, 0.4) 161px 164px, transparent 165px),
+    linear-gradient(180deg, #ffb066, #ff7a1a) fixed !important;
+}
+.mw-page-container {
+  background: linear-gradient(180deg, #ffffff, #fffaf5) !important;
+  border: 1px solid #ffb27a;
+  border-radius: 16px;
+  margin-top: 12px;
+  box-shadow: 0 10px 30px rgba(180, 70, 0, 0.35);
+}
+.mw-body h1, .mw-body h2, #firstHeading { color: #e8650a !important; border-bottom-color: #ffc9a0 !important; }

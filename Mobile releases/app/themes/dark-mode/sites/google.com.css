@@ -1,0 +1,10 @@
+
+
+/* Dark Mode for Google.
+   Dark Mode flips every colour. If Google already shows its own dark look, flipping it would make
+   it light again, so leave it as it is. */
+html:has(body[data-dt="1"]),
+html:has(body[data-dt="1"]) :is(img, picture, video, canvas, iframe, embed, object, svg image, [style*="background-image"]) {
+  filter: none !important;
+}
+html:has(body[data-dt="1"]) { background: transparent !important; }

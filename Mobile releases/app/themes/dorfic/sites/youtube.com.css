@@ -1,0 +1,12 @@
+/* DORFic for YouTube: an orange glass top bar and thumbnails with glossy orange frames */
+
+#masthead-container #background, #masthead-container, #frosted-glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 50%),
+    linear-gradient(180deg, #ff9a3d, #f26508) !important;
+}
+#masthead-container yt-icon, #masthead-container #buttons yt-icon { color: #fff; }
+.ytp-play-progress, .ytp-swatch-background-color { background: #ff7a1a !important; }
+
+ytd-thumbnail, ytd-thumbnail img, yt-image img, .yt-core-image { border-radius: 12px !important; }
+ytd-thumbnail { box-shadow: 0 0 0 2px #ffa766, 0 4px 12px rgba(255, 110, 0, 0.3); border-radius: 12px; }
