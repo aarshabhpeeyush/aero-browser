@@ -28,6 +28,8 @@ jobs:
         run: |
           pip install --quiet pillow
           python3 aeris/tools/aquaris_web.py site
+          # The same Pages site also holds the Aeris web app for phones (mobile-web.yml); keep it there
+          cp -r "Mobile releases/app" site/aeris
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

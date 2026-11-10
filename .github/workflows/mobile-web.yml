@@ -1,0 +1,48 @@
+# Puts the Aeris web app (for iPhone, iPad and Android) online with GitHub Pages:
+# https://<user>.github.io/aero-browser/aeris/  → on the phone: Share > Add to Home Screen.
+# Runs by itself when "Mobile releases/app" changes, or start it with: gh workflow run mobile-web.yml
+# GitHub Pages holds one site for this repo, so this also puts Aquaris's web version (aquaris-web.yml)
+# back at /aquaris/ when it has been published, and aquaris-web.yml keeps /aeris/ the same way.
+name: Put the Aeris web app online
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["Mobile releases/app/**"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}aeris/
+    steps:
+      - uses: actions/checkout@v4
+      - name: Put the web app together
+        run: |
+          mkdir -p site
+          cp -r "Mobile releases/app" site/aeris
+          # The bare address opens the Aeris web app
+          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=aeris/"><a href="aeris/">Aeris</a>\n' > site/index.html
+      - name: Keep Aquaris's web version if it's online
+        if: vars.AQUARIS_WEB == 'on'
+        run: |
+          pip install --quiet pillow
+          python3 aeris/tools/aquaris_web.py aquaris-site
+          cp -r aquaris-site/. site/
+          cp -r "Mobile releases/app/." site/aeris/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
