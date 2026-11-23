@@ -335,13 +335,27 @@
         "name": "setPagesStyle",
         "type": "function",
         "async": true,
-        "description": "Restyle Firefox's own pages (Settings, Add-ons\u2026) with this CSS; empty turns it off.",
+        "description": "Restyle Firefox's own pages (Settings, Add-ons…) with this CSS; empty turns it off.",
         "parameters": [
           {
             "name": "css",
             "type": "string"
           }
         ]
+      },
+      {
+        "name": "readPersonalThemes",
+        "type": "function",
+        "async": true,
+        "description": "Your own themes, read from the Themes folder in Aeris's data folder.",
+        "parameters": []
+      },
+      {
+        "name": "openPersonalThemesFolder",
+        "type": "function",
+        "async": true,
+        "description": "Open your Themes folder in the file manager.",
+        "parameters": []
       }
     ],
     "events": [

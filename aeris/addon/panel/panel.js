@@ -42,8 +42,20 @@ function paintPanel() {
     --gloss: ${prefs.gloss / 100};
   }`;
   const theme = customThemes.find(t => t.id === prefs.theme);
+  if (theme?.personal) return paintPersonal(theme);
   const href = theme ? `../themes/${theme.id}/theme.css` : "";
   if ($("#userTheme").getAttribute("href") !== href) $("#userTheme").setAttribute("href", href);
+}
+
+// Your own themes aren't inside Aeris: their theme.css comes from Aeris Core as text
+let personalSheet = { id: null, url: null };
+async function paintPersonal(theme) {
+  if (personalSheet.id !== theme.id) {
+    const css = await browser.runtime.sendMessage({ type: "theme-file", id: theme.id, file: "theme.css" });
+    if (personalSheet.url) URL.revokeObjectURL(personalSheet.url);
+    personalSheet = { id: theme.id, url: URL.createObjectURL(new Blob([css], { type: "text/css" })) };
+  }
+  $("#userTheme").setAttribute("href", personalSheet.url);
 }
 
 // ================= Theme =================
@@ -75,7 +87,7 @@ function drawThemes() {
     row.className = "profile-row theme-row";
     row.dataset.theme = t.id ?? "";
     row.innerHTML = `<span class="pick"></span><span class="who"><b></b><small></small></span>`;
-    row.querySelector("b").textContent = t.name;
+    row.querySelector("b").textContent = t.personal ? `${t.name} ⭐` : t.name;
     row.querySelector("small").textContent = t.description || "";
     row.title = t.description || "";
     row.addEventListener("click", () => change("theme", t.id));
@@ -83,6 +95,14 @@ function drawThemes() {
   }
 }
 
+$("#myThemesFolder").addEventListener("click", () => browser.aeris.openPersonalThemesFolder());
+$("#myThemesReload").addEventListener("click", async () => {
+  await browser.runtime.sendMessage({ type: "reload-personal-themes" });
+  ({ custom: customThemes } = await browser.runtime.sendMessage({ type: "themes" }));
+  personalSheet = { id: null, url: null };
+  drawThemes();
+  drawChoices();
+});
 $("#accent").addEventListener("input", e => change("accent", e.target.value));
 $("#accentReset").addEventListener("click", () => change("accent", null));
 $("#gloss").addEventListener("input", e => change("gloss", +e.target.value));

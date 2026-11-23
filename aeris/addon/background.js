@@ -23,7 +23,7 @@ const LOOK = { colorTheme: "frost", accent: null, gloss: 70, bars: "top", tabSha
 const MODS = { shell: true, floating: true, glass: true, motion: true, hoverClose: false, centerTitles: false, tabNumbers: false, iconBookmarks: false, bigTabs: false, roundWindow: false };
 const DEFAULTS = { theme: null, studio: null, mods: {}, hideAi: true, restyle: true, stacking: true, imported: false, lastVersion: null, update: null, ...LOOK };
 
-let THEMES = []; // the custom themes (from themes/index.json)
+let THEMES = []; // the custom themes (from themes/index.json), then your own (personal: true)
 let registered = []; // website stylesheets for the active theme
 
 const settings = () => browser.storage.local.get(DEFAULTS);
@@ -132,8 +132,8 @@ async function buildChromeCss(s, theme) {
   --accent: ${s.accent || c.accent};
   --gloss: ${s.gloss / 100};
 }`,
-    s.colorTheme === "studio" ? studioCss(s.studio || {}) : theme ? await css(`themes/${theme.id}/chrome.css`) : "",
-    side ? (await css("chrome/side.css")) + (theme ? await css(`themes/${theme.id}/chrome-side.css`) : "") : "",
+    s.colorTheme === "studio" ? studioCss(s.studio || {}) : theme ? await themeFile(theme, "chrome.css") : "",
+    side ? (await css("chrome/side.css")) + (theme ? await themeFile(theme, "chrome-side.css") : "") : "",
     s.tabShape === "pill" ? await css("chrome/shape-pill.css") : s.tabShape === "square" ? await css("chrome/shape-square.css") : "",
     s.winButtons === "glossy" ? await css("chrome/buttons-glossy.css") : "",
     s.size === "compact" ? await css("chrome/size-compact.css") : "",
@@ -235,9 +235,11 @@ async function applyThemeNow() {
   const wanted = [{ matches: all, css: [{ file: "content/site-fixes.css" }], runAt: "document_start" }];
   if (s.restyle && s.colorTheme !== "minimal") wanted.push({ matches: all, css: [{ file: "content/aero-sites.css" }], runAt: "document_start" });
   const custom = plain ? null : theme;
-  if (custom?.websitesCss) wanted.push({ matches: all, css: [{ file: `themes/${custom.id}/websites.css` }], runAt: "document_start" });
+  // (your own themes give their CSS as text, the built-in ones as files)
+  const source = name => custom.personal ? { code: custom.files[name] } : { file: `themes/${custom.id}/${name}` };
+  if (custom?.websitesCss) wanted.push({ matches: all, css: [source("websites.css")], runAt: "document_start" });
   for (const domain of custom?.sites || []) {
-    wanted.push({ matches: [`*://${domain}/*`, `*://*.${domain}/*`], css: [{ file: `themes/${custom.id}/sites/${domain}.css` }], runAt: "document_start" });
+    wanted.push({ matches: [`*://${domain}/*`, `*://*.${domain}/*`], css: [source(`sites/${domain}.css`)], runAt: "document_start" });
   }
   const old = registered;
   registered = await Promise.all(wanted.map(w => browser.contentScripts.register(w)));
@@ -245,6 +247,39 @@ async function applyThemeNow() {
 
   // site.js paints sites' plain white boxes in the theme's paper colour.
   await browser.storage.local.set({ paper: custom?.paper || null });
+}
+
+// ================= Your own themes =================
+// Theme folders in your Themes folder (see readPersonalThemes in api/parent.js). They're converted for
+// Aeris's frame here, the same way the built-in themes are when Aeris is built, and listed after them.
+
+async function themeFile(theme, name) {
+  return theme.personal ? theme.files[name] || "" : css(`themes/${theme.id}/${name}`);
+}
+
+async function loadPersonalThemes() {
+  THEMES = THEMES.filter(t => !t.personal);
+  let mine = [];
+  try { mine = await browser.aeris.readPersonalThemes(); } catch (e) { console.error("Aeris: couldn't read your themes", e); }
+  for (const p of mine) {
+    const [frameCss, sideCss] = translateTheme(p.themeCss);
+    const files = { "chrome.css": frameCss, "chrome-side.css": sideCss, "theme.css": p.themeCss, "newtab.css": p.newtabCss || "", "websites.css": p.websitesCss || "" };
+    for (const [site, text] of Object.entries(p.sites)) files[`sites/${site}.css`] = text;
+    THEMES.push({
+      id: "my-" + p.folder.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      personal: true,
+      name: p.info.name || p.folder,
+      author: p.info.author || "",
+      description: p.info.description || "Your own theme",
+      websites: p.info.websites,
+      paper: p.info.paper,
+      vars: themeVars(p.themeCss),
+      sites: Object.keys(p.sites),
+      websitesCss: !!p.websitesCss,
+      newtabCss: !!p.newtabCss,
+      files
+    });
+  }
 }
 
 // ================= Moving in from Aero =================
@@ -422,13 +457,19 @@ browser.webNavigation.onCommitted.addListener(d => {
 browser.runtime.onMessage.addListener(msg => {
   if (msg?.type === "import-aero") return importFromAero().then(r => (applyTheme(), r));
   if (msg?.type === "check-update") return checkForUpdate();
-  if (msg?.type === "themes") return Promise.resolve({ colors: COLOR_THEMES, custom: THEMES });
+  if (msg?.type === "themes") return Promise.resolve({ colors: COLOR_THEMES, custom: THEMES.map(({ files, ...t }) => t) });
+  if (msg?.type === "theme-file") {
+    const theme = THEMES.find(t => t.id === msg.id);
+    return theme ? themeFile(theme, msg.file) : Promise.resolve("");
+  }
+  if (msg?.type === "reload-personal-themes") return loadPersonalThemes().then(() => applyTheme());
 });
 
 browser.alarms.onAlarm.addListener(a => a.name === "update" && checkForUpdate());
 
 (async function start() {
   THEMES = JSON.parse(await fileText("themes/index.json"));
+  await loadPersonalThemes();
   await browser.aeris.setNewTabPage(browser.runtime.getURL("newtab/index.html"));
 
   const s = await settings();

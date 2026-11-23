@@ -42,6 +42,7 @@
   "background": {
     "scripts": [
       "studio-css.js",
+      "theme-translate.js",
       "background.js",
       "features.js",
       "vivaldi.js",

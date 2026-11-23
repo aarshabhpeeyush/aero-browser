@@ -717,6 +717,37 @@ async function launchAquaris() {
   runSelf(["-profile", profile, AQUARIS_PING]);
 }
 
+// Your own themes: folders in <Aeris's data folder>/Themes (for example %APPDATA%\Mozilla\Aeris\Themes),
+// each like Aero's theme folders: theme.css, and if you like theme.json, newtab.css, websites.css and
+// sites/<website>.css. They stay on your computer and are never part of Aeris itself.
+const personalThemesFolder = () => PathUtils.join(Services.dirsvc.get("UAppData", Ci.nsIFile).path, "Themes");
+
+async function readPersonalThemes() {
+  const dir = personalThemesFolder();
+  await IOUtils.makeDirectory(dir, { ignoreExisting: true });
+  const themes = [];
+  for (const folder of await IOUtils.getChildren(dir)) {
+    if ((await IOUtils.stat(folder)).type !== "directory") continue;
+    const read = async (...parts) => {
+      const file = PathUtils.join(folder, ...parts);
+      return (await IOUtils.exists(file)) ? IOUtils.readUTF8(file) : null;
+    };
+    const themeCss = await read("theme.css");
+    if (!themeCss) continue;
+    let info = {};
+    try { info = JSON.parse((await read("theme.json")) || "{}"); } catch {}
+    const sites = {};
+    const sitesDir = PathUtils.join(folder, "sites");
+    if (await IOUtils.exists(sitesDir)) {
+      for (const file of await IOUtils.getChildren(sitesDir)) {
+        if (file.endsWith(".css")) sites[PathUtils.filename(file).slice(0, -4)] = await IOUtils.readUTF8(file);
+      }
+    }
+    themes.push({ folder: PathUtils.filename(folder), info, themeCss, newtabCss: await read("newtab.css"), websitesCss: await read("websites.css"), sites });
+  }
+  return themes;
+}
+
 this.aeris = class extends ExtensionAPI {
   onShutdown(isAppShutdown) {
     if (!isAppShutdown) {
@@ -913,6 +944,16 @@ this.aeris = class extends ExtensionAPI {
           icon.initWithPath(iconPath);
           const shell = Cc["@mozilla.org/browser/shell-service;1"].getService(Ci.nsIWindowsShellService);
           return shell.createShortcut(exe, ["-profile", profile], "Aquaris", icon, 0, AQUARIS_AUMID, "Desktop", "Aquaris.lnk");
+        },
+
+        readPersonalThemes,
+
+        async openPersonalThemesFolder() {
+          const dir = personalThemesFolder();
+          await IOUtils.makeDirectory(dir, { ignoreExisting: true });
+          const folder = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+          folder.initWithPath(dir);
+          folder.launch();
         },
 
         async setPagesStyle(css) {
