@@ -90,9 +90,12 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     config.processPool = pool
     config.setURLSchemeHandler(files, forURLScheme: "aquaris")
     config.userContentController.add(self, name: "aquarisShell")
-    // Aquaris's settings from last time, ready before Aquaris starts
+    // Aquaris's settings from last time (each account's, and the account list), ready before Aquaris starts
     let saved = UserDefaults.standard.string(forKey: "aquaris") ?? "null"
-    config.userContentController.addUserScript(WKUserScript(source: "window.aquarisSaved = \(saved);", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+    var all = UserDefaults.standard.dictionary(forKey: "aquarisStore") as? [String: String] ?? [:]
+    if all["aquaris"] == nil, saved != "null" { all["aquaris"] = saved }
+    let allJSON = (try? JSONSerialization.data(withJSONObject: all)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+    config.userContentController.addUserScript(WKUserScript(source: "window.aquarisSaved = \(saved); window.aquarisSavedAll = \(allJSON);", injectionTime: .atDocumentStart, forMainFrameOnly: true))
     config.allowsInlineMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
 
@@ -194,7 +197,7 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     guard message.webView === desk, let msg = message.body as? [String: Any], let cmd = msg["cmd"] as? String else { return }
     let id = msg["id"] as? String ?? ""
     switch cmd {
-    case "open": open(id, url: msg["url"] as? String ?? "")
+    case "open": open(id, url: msg["url"] as? String ?? "", store: msg["store"] as? String ?? "")
     case "close": apps[id]?.removeFromSuperview(); apps[id] = nil; watching[id] = nil; send(["type": "media", "id": id, "gone": true])
     case "media":
       let action = (msg["action"] as? String ?? "").replacingOccurrences(of: "'", with: "")
@@ -210,7 +213,21 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     case "forward": apps[id]?.goForward()
     case "layout": layout(msg["views"] as? [[String: Any]] ?? [])
     case "snapshot": snapshot(id)
-    case "save": if let data = msg["data"] as? String { UserDefaults.standard.set(data, forKey: "aquaris") }
+    case "save":
+      if let data = msg["data"] as? String {
+        let key = msg["key"] as? String ?? "aquaris"
+        var all = UserDefaults.standard.dictionary(forKey: "aquarisStore") as? [String: String] ?? [:]
+        all[key] = data
+        UserDefaults.standard.set(all, forKey: "aquarisStore")
+        if key == "aquaris" { UserDefaults.standard.set(data, forKey: "aquaris") }
+      }
+    case "reset":
+      // Switching accounts: close every website before Aquaris starts again
+      for (_, web) in apps { web.removeFromSuperview() }
+      apps.removeAll(); watching.removeAll()
+    case "removeStore":
+      if #available(iOS 17.0, *), let s = msg["store"] as? String, let uuid = UUID(uuidString: s) { WKWebsiteDataStore.remove(forIdentifier: uuid) { _ in } }
+    case "googleWho": googleWho(msg["store"] as? String ?? "")
     default: break
     }
   }
@@ -221,11 +238,17 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
   }
   private func idOf(_ webView: WKWebView) -> String? { apps.first { $0.value === webView }?.key }
 
-  private func open(_ id: String, url: String) {
+  /// Each Aquaris account keeps its website sign-ins in its own storage (iPadOS 17 and newer)
+  private func dataStore(_ store: String) -> WKWebsiteDataStore {
+    if #available(iOS 17.0, *), let uuid = UUID(uuidString: store) { return WKWebsiteDataStore(forIdentifier: uuid) }
+    return .default()
+  }
+
+  private func open(_ id: String, url: String, store: String = "") {
     guard apps[id] == nil, let address = URL(string: url) else { return }
     let config = WKWebViewConfiguration()
     config.processPool = pool
-    config.websiteDataStore = .default()
+    config.websiteDataStore = dataStore(store)
     config.setURLSchemeHandler(files, forURLScheme: "aquaris")   // Aeris's New Tab page
     config.allowsInlineMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
@@ -263,6 +286,20 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
                     web.observe(\.isLoading, changeHandler: changed)]
     web.load(URLRequest(url: address))
   }
+
+  /// Which Google account is signed in, in an account's storage: Google's own account list page,
+  /// read by a hidden web view, goes back to Aquaris (which picks out the name, email and photo)
+  private var whoView: WKWebView?
+  private func googleWho(_ store: String) {
+    let config = WKWebViewConfiguration()
+    config.websiteDataStore = dataStore(store)
+    let web = WKWebView(frame: .zero, configuration: config)
+    whoView = web
+    web.navigationDelegate = whoDelegate
+    whoDelegate.done = { [weak self] text in self?.send(["type": "googleWho", "text": text]); self?.whoView = nil }
+    web.load(URLRequest(url: URL(string: "https://accounts.google.com/ListAccounts?gpsia=1&source=ChromiumBrowser&json=standard")!))
+  }
+  private let whoDelegate = WhoDelegate()
 
   /// A screenshot of everything on screen (or a part of it), saved to the Photos app
   private func capture(_ rect: [String: Any]?) {
@@ -628,4 +665,18 @@ final class PadCursor: NSObject {
       owner.padScroll(at: pos, dx: sx * 1100 * dt, dy: sy * 1100 * dt)
     }
   }
+}
+
+
+/// Reads the text of Google's account list page once it has loaded
+final class WhoDelegate: NSObject, WKNavigationDelegate {
+  var done: ((String) -> Void)?
+  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    webView.evaluateJavaScript("document.body ? document.body.innerText : ''") { [weak self] result, _ in
+      self?.done?(result as? String ?? "")
+      self?.done = nil
+    }
+  }
+  func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { done?(""); done = nil }
+  func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { done?(""); done = nil }
 }

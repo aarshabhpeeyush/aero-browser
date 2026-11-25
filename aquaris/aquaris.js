@@ -37,11 +37,42 @@ if (inShell) document.body.classList.add("shell");
 // ================= Settings storage =================
 // Inside Aeris: aquaris.json in the profile folder. As a plain file: in memory only.
 
+// ================= Accounts =================
+// Aquaris can have several accounts (a desktop each). Each has its own settings and its own website
+// sign-ins: on a computer a Firefox "container" (ctx), in the iPad app its own website storage
+// (store). "main" is the first account: it keeps the settings and sign-ins Aquaris already had.
+// The account screens are in accounts.js.
+const accounts = {
+  list: [{ id: "main", name: "", email: "", photo: "", pin: "", ctx: 0, store: "" }],
+  current: "main",
+  file: inChrome ? PathUtils.join(PathUtils.profileDir, "aquaris-accounts.json") : null,
+  async load() {
+    let saved = null;
+    if (this.file) saved = await IOUtils.readJSON(this.file).catch(() => null);
+    else if (inShell) saved = window.aquarisSavedAll?.aquarisAccounts ? JSON.parse(window.aquarisSavedAll.aquarisAccounts) : null;
+    else try { saved = JSON.parse(localStorage.getItem("aquarisAccounts") || "null"); } catch {}
+    if (saved?.list?.length) { this.list = saved.list; this.current = saved.current || "main"; }
+    if (!this.me()) this.current = this.list[0].id;
+  },
+  me() { return this.list.find(a => a.id === this.current); },
+  key(id = this.current) { return id === "main" ? "aquaris" : "aquaris:" + id; },
+  async save() {
+    const json = JSON.stringify({ list: this.list, current: this.current });
+    if (this.file) return IOUtils.writeUTF8(this.file, json, { tmpPath: this.file + ".tmp" });
+    if (inShell) shell.postMessage({ cmd: "save", key: "aquarisAccounts", data: json });
+    try { localStorage.setItem("aquarisAccounts", json); } catch {}
+  }
+};
+// Where this account's websites keep their sign-ins
+const mySpace = () => ({ ctx: accounts.me()?.ctx || 0, store: accounts.me()?.store || "" });
+
 // live.js (Now Playing, notifications, sync) plugs in here
 let liveReady = () => {}, liveShell = () => {};
 // extras.js (Arcade, snap layouts, Capture) plugs in here
 const ownBuilders = {};
 let extraShell = () => {};
+// accounts.js plugs in here
+let accountsReady = () => {}, accountShell = () => {};
 const storeHooks = [];
 
 const store = {
@@ -49,9 +80,14 @@ const store = {
   file: inChrome ? PathUtils.join(PathUtils.profileDir, "aquaris.json") : null,
   timer: 0,
   async load() {
-    if (this.file) this.data = await IOUtils.readJSON(this.file).catch(() => ({}));
-    else if (inShell && window.aquarisSaved) this.data = window.aquarisSaved;
-    else try { this.data = JSON.parse(localStorage.getItem("aquaris") || "{}"); } catch { this.data = {}; }
+    await accounts.load();
+    const key = accounts.key();
+    if (this.file) {
+      if (accounts.current !== "main") this.file = PathUtils.join(PathUtils.profileDir, `aquaris-${accounts.current}.json`);
+      this.data = await IOUtils.readJSON(this.file).catch(() => ({}));
+    } else if (inShell && (window.aquarisSavedAll?.[key] || (key === "aquaris" && window.aquarisSaved))) {
+      this.data = window.aquarisSavedAll?.[key] ? JSON.parse(window.aquarisSavedAll[key]) : window.aquarisSaved;
+    } else try { this.data = JSON.parse(localStorage.getItem(key) || "{}"); } catch { this.data = {}; }
   },
   async get(defaults) {
     return Object.fromEntries(Object.entries(defaults).map(([k, v]) => [k, k in this.data ? this.data[k] : v]));
@@ -62,8 +98,8 @@ const store = {
     clearTimeout(this.timer);
     if (!this.file) return void (this.timer = setTimeout(() => {
       const json = JSON.stringify(this.data);
-      if (inShell) shell.postMessage({ cmd: "save", data: json });
-      try { localStorage.setItem("aquaris", json); } catch {}
+      if (inShell) shell.postMessage({ cmd: "save", key: accounts.key(), data: json });
+      try { localStorage.setItem(accounts.key(), json); } catch {}
     }, 300));
     this.timer = setTimeout(() => IOUtils.writeJSON(this.file, this.data, { tmpPath: this.file + ".tmp" }).catch(e => console.error("Aquaris save:", e)), 300);
   }
@@ -152,18 +188,21 @@ const SYSTEM = {
 // A real browser view (inside Aeris) or an iframe (as a plain file).
 
 const ALL_PRINCIPAL = () => Services.scriptSecurityManager.getSystemPrincipal();
-function makeView(url) {
+function makeView(url, space = mySpace()) {
   let v;
   if (inShell) {
     v = html("div", "shell-view");
     v.dataset.shell = "v" + ++shellSeq;
     v.className = "view shell-view";
     v.dataset.first = url;
+    if (space.store) v.dataset.store = space.store;
     return v;
   }
   if (inChrome) {
     v = document.createXULElement("browser");
     for (const [k, val] of Object.entries({ type: "content", remote: "true", maychangeremoteness: "true", messagemanagergroup: "browsers", nodefaultsrc: "true" })) v.setAttribute(k, val);
+    // This account's own cookies and sign-ins
+    if (space.ctx) v.setAttribute("usercontextid", String(space.ctx));
   } else {
     v = html("iframe");
     v.setAttribute("allow", "autoplay; clipboard-read; clipboard-write; microphone; camera; fullscreen; encrypted-media");
@@ -176,7 +215,7 @@ function makeView(url) {
 }
 // Call once the view is in the page
 function loadView(v, url) {
-  if (inShell && v.dataset.shell) { shellOpen.add(v.dataset.shell); shell.postMessage({ cmd: "open", id: v.dataset.shell, url }); return shellSync(); }
+  if (inShell && v.dataset.shell) { shellOpen.add(v.dataset.shell); shell.postMessage({ cmd: "open", id: v.dataset.shell, url, store: v.dataset.store || "" }); return shellSync(); }
   if (!inChrome) return void (v.src = url);
   v.fixupAndLoadURIString(url, { triggeringPrincipal: ALL_PRINCIPAL() });
 }
@@ -572,7 +611,7 @@ function cover(win, kind) {
 
 function loadApp(win) {
   win.view?.remove();
-  const v = makeView(win.app.url);
+  const v = makeView(win.app.url, win.app.space || mySpace());
   win.view = v;
   win.napped = false;
   win.loadedOnce = false;
@@ -595,7 +634,7 @@ function wake(win) {
 }
 
 function noteRecent(app) {
-  if (!app?.id || SYSTEM[app.id] || app.id.startsWith("photo:") || app.id.startsWith("page-")) return;
+  if (!app?.id || SYSTEM[app.id] || app.id.startsWith("photo:") || app.id.startsWith("page-") || app.id.startsWith("signin-")) return;
   settings.aquarisRecent = [app.id, ...settings.aquarisRecent.filter(i => i !== app.id)].slice(0, 6);
   store.set({ aquarisRecent: settings.aquarisRecent });
 }
@@ -1349,6 +1388,7 @@ function menuItems(name) {
       null,
       ["Nap All Apps", () => { for (const x of wins.filter(x => x.kind === "app" && !x.app.music)) nap(x); updateRam(); }],
       ["Lock Screen", lockScreen, "Ctrl+Alt+L"],
+      ["Switch Account…", () => lockScreen({ pick: true })],
       null,
       ["Restart Aquaris", () => (inChrome ? Services.startup.quit(Ci.nsIAppStartup.eAttemptQuit | Ci.nsIAppStartup.eRestart) : location.reload())],
       ["Shut Down…", async () => { if (await askYes($("#desktop"), "Shut down Aquaris?")) shutDown(); }]
@@ -1463,7 +1503,8 @@ document.addEventListener("keydown", e => {
 });
 
 // Lock screen: a curtain with the time, until you click or press a key
-function lockScreen() {
+function lockScreen(opts) {
+  if (typeof accountLock === "function") return accountLock(opts);
   const l = $("#lock");
   const draw = () => {
     const now = new Date();
@@ -3363,6 +3404,7 @@ function openSettings() {
       </div>
       <p class="hint">A napping app is unloaded, so it uses no memory. It wakes up when you open it. Music apps keep playing.</p>
     </section>
+    ${accountsSettingsSection()}
     ${syncSettingsSection()}
     <section class="computer-only">
       <h3>Aquaris on your computer</h3>
@@ -3459,6 +3501,7 @@ function openSettings() {
     }
   });
   wireSyncSettings(page);
+  wireAccountsSettings(page);
   sync();
 }
 
@@ -3985,6 +4028,7 @@ function shellEvent(ev) {
   const win = v && wins.find(w => w.view === v);
   liveShell(ev, v && wins.find(w => w.view === v || w.tabs?.includes(v)));
   extraShell(ev);
+  accountShell(ev);
   if (ev.type === "loaded" && win) { cover(win, null); if (ev.url) v.dataset.url = ev.url; }
   if (ev.type === "snap" && v) { v.style.backgroundImage = `url(${ev.data})`; v.style.backgroundSize = "100% 100%"; }
   if (ev.type === "tap" && win) focusWin(win);
@@ -4226,5 +4270,6 @@ function playIntro() {
   drawDock();
   drawTopApp();
   liveReady();
+  accountsReady();
   if (onWeb && "serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 })();
