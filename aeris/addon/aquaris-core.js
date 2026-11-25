@@ -11,6 +11,8 @@ async function openAquaris() {
 }
 
 browser.runtime.onMessage.addListener(msg => {
+  // A Google Account page said who signed in: Aquaris may be waiting for it (Sign in with Google)
+  if (msg?.type === "aquaris-google") return browser.aeris.aquarisGoogle({ name: String(msg.name || ""), email: String(msg.email || ""), photo: String(msg.photo || "") }).catch(() => {});
   if (msg?.type === "open-aquaris") return openAquaris();
 });
 

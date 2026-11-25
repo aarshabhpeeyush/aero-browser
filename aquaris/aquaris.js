@@ -634,7 +634,7 @@ function wake(win) {
 }
 
 function noteRecent(app) {
-  if (!app?.id || SYSTEM[app.id] || app.id.startsWith("photo:") || app.id.startsWith("page-") || app.id.startsWith("signin-")) return;
+  if (!app?.id || SYSTEM[app.id] || app.id.startsWith("photo:") || app.id.startsWith("page-") || app.id.startsWith("signin-") || app.id.startsWith("popup-")) return;
   settings.aquarisRecent = [app.id, ...settings.aquarisRecent.filter(i => i !== app.id)].slice(0, 6);
   store.set({ aquarisRecent: settings.aquarisRecent });
 }
@@ -1052,28 +1052,70 @@ document.addEventListener("keydown", e => {
 function viewWindow(view) {
   return wins.find(w => w.view === view);
 }
-function openFromApp(uri, params, skipLoad) {
-  const win = viewWindow(params?.openerBrowser);
-  if (!win || win.kind !== "app") {
-    if (uri) openInAeris([uri.spec]);
+// ----- Where a link goes -----
+// A link that opens a new window from an app goes:
+//   1. to the same app, if it's the same website (a Canva project from Canva);
+//   2. to another app, if you have its website as an app (a Zoom link from your school's app → Zoom);
+//   3. to a little pop-up window, if the site opened a pop-up (sign-in windows need to stay linked);
+//   4. otherwise to Aeris.
+// Websites that share one address (google.com: Gmail, Docs, YouTube's sign-in…) only match an app
+// with exactly the same address, so a Docs link from Gmail opens Docs.
+const SHARED_SITES = new Set(["google.com", "microsoft.com", "live.com", "office.com", "apple.com", "amazon.com", "yahoo.com", "github.io", "vercel.app", "netlify.app", "web.app", "pages.dev"]);
+const siteOf = host => { const p = host.split("."); const two = p.slice(-2).join("."); return p.length > 2 && /^(co|com|org|net|ac|gov|edu)\.[a-z]{2}$/.test(two) ? p.slice(-3).join(".") : two; };
+const hostOf = url => { try { const u = new URL(url); return /^https?:$/.test(u.protocol) ? u.hostname.replace(/^www\./, "") : ""; } catch { return ""; } };
+function appForUrl(url) {
+  const host = hostOf(url);
+  if (!host) return null;
+  const apps = allApps().filter(a => hostOf(a.url));
+  const exact = apps.find(a => hostOf(a.url) === host);
+  if (exact) return exact;
+  const site = siteOf(host);
+  return SHARED_SITES.has(site) ? null : apps.find(a => siteOf(hostOf(a.url)) === site) || null;
+}
+function sameSite(url, appUrl) {
+  const a = hostOf(url), b = hostOf(appUrl);
+  return !!a && (a === b || (siteOf(a) === siteOf(b) && !SHARED_SITES.has(siteOf(a))));
+}
+// Which window a link from `from` should land in (null = Aeris)
+function linkTarget(from, url, popup) {
+  if (!url || /^about:/.test(url)) return from;                       // a blank window the site fills in itself
+  if (sameSite(url, from.app.url) || hostOf(url) === hostOf(viewUrl(from.view))) return from;
+  const app = appForUrl(url);
+  if (app) return wins.find(w => w.app.id === app.id && w.kind === "app") || openApp(app);
+  if (popup) return openApp({ id: "popup-" + Date.now(), name: hostOf(url) || "Pop-up", url: "about:blank", color: "#6b7a8f", ui: "globe", space: from.app.space, size: [520, 660] });
+  return null;
+}
+function openFromApp(uri, params, skipLoad, where) {
+  const from = viewWindow(params?.openerBrowser);
+  const url = uri?.spec || "";
+  if (!from || from.kind !== "app") {
+    if (url) openInAeris([url]);
     return null;
   }
+  const win = linkTarget(from, url, where === Ci.nsIBrowserDOMWindow.OPEN_NEWWINDOW);
+  if (!win) { openInAeris([url]); return null; }
   const opener = params.openerBrowser;
-  const v = makeView(uri?.spec || "about:blank");
+  const v = makeView(url || "about:blank", win.app.space || mySpace());
   v.setAttribute("remoteType", opener.remoteType || "web");
   if (params.openWindowInfo) v.openWindowInfo = params.openWindowInfo;
   win.view.replaceWith(v);
   win.view = v;
   win.loadedOnce = true;
+  cover(win, null);
   if (!skipLoad && uri) v.loadURI(uri, { triggeringPrincipal: params.triggeringPrincipal || ALL_PRINCIPAL(), referrerInfo: params.referrerInfo });
   restore(win);
+  focusWin(win);
+  // A pop-up that closes itself (sign-in done) takes its window with it
+  if (win.app.id.startsWith("popup-")) {
+    const watch = setInterval(() => { if (!wins.includes(win)) return clearInterval(watch); if (!v.browsingContext || v.browsingContext.closed) { clearInterval(watch); closeWin(win); } }, 1000);
+  }
   return v;
 }
 if (inChrome) {
   window.browserDOMWindow = {
     QueryInterface: ChromeUtils.generateQI(["nsIBrowserDOMWindow"]),
-    createContentWindowInFrame: (uri, params) => openFromApp(uri, params, true),
-    openURIInFrame: (uri, params) => openFromApp(uri, params, false),
+    createContentWindowInFrame: (uri, params, where) => openFromApp(uri, params, true, where),
+    openURIInFrame: (uri, params, where) => openFromApp(uri, params, false, where),
     createContentWindow: () => null,
     openURI(uri) { if (uri) openInAeris([uri.spec]); return null; },
     canClose: () => true,
@@ -4040,6 +4082,16 @@ function shellEvent(ev) {
     if (ev.key === "escape") { finishSwitch(false); closeOverlays(); }
   }
   if (ev.type === "openUrl" && /^https?:/.test(ev.url || "")) openInAerisTab(ev.url);
+  // A website in an app opened a new window: same app, another app, or Aeris (see linkTarget)
+  if (ev.type === "newWindow" && /^https?:/.test(ev.url || "")) {
+    const app = appForUrl(ev.url);
+    if (!win || sameSite(ev.url, win.app.url) || win.app.id === "aeris" || (!app && ev.popup)) shell.postMessage({ cmd: "go", id: ev.id, url: ev.url });
+    else if (app) {
+      const there = wins.find(w => w.app.id === app.id && w.kind === "app");
+      if (there?.view?.dataset.shell) { restore(there); focusWin(there); shell.postMessage({ cmd: "go", id: there.view.dataset.shell, url: ev.url }); }
+      else openApp({ ...app, url: ev.url });
+    } else openInAerisTab(ev.url);
+  }
   if (ev.type === "state" && v) {
     v.dataset.url = ev.url || v.dataset.url || "";
     v.dataset.title = ev.title || "";

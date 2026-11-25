@@ -189,7 +189,7 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     // From a website: a notification, or what it's playing
     if message.name == "aquarisPage", let web = message.webView, let id = idOf(web), var msg = message.body as? [String: Any], let kind = msg["kind"] as? String {
       msg.removeValue(forKey: "kind")
-      msg["type"] = kind == "notify" ? "notify" : "media"
+      msg["type"] = kind == "notify" ? "notify" : kind == "google" ? "googleSignedIn" : "media"
       msg["id"] = id
       send(msg)
       return
@@ -378,6 +378,21 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
       var m = media(); if (!m) return;
       if (a === "play") m.play(); else if (a === "pause") m.pause();
     };
+    if (location.hostname === "myaccount.google.com") {
+      var tries = 0;
+      var look = function () {
+        var els = document.querySelectorAll("[aria-label]");
+        for (var i = 0; i < els.length; i++) {
+          var m = els[i].getAttribute("aria-label").match(/Google[^:\\n]{0,24}:\\s*([\\s\\S]+?)\\s*\\(([^()\\s]+@[^()\\s]+)\\)/);
+          if (!m) continue;
+          var img = els[i].querySelector("img[src*='googleusercontent.com']");
+          post({ kind: "google", name: m[1].replace(/\\s+/g, " ").trim(), email: m[2], photo: img ? img.src : "" });
+          return;
+        }
+        if (++tries < 30) setTimeout(look, 1000);
+      };
+      if (document.readyState === "loading") addEventListener("DOMContentLoaded", look); else look();
+    }
     var last = "", played = false;
     setInterval(function () {
       var m = media(), md = navigator.mediaSession && navigator.mediaSession.metadata;
@@ -495,7 +510,12 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
       if let url = action.request.url, url.scheme == "http" || url.scheme == "https" { send(["type": "openUrl", "url": url.absoluteString]) }
       return nil
     }
-    webView.load(action.request)
+    // Aquaris decides: the same app, another app you have, or Aeris
+    if let id = idOf(webView), let url = action.request.url?.absoluteString, url.hasPrefix("http") {
+      send(["type": "newWindow", "id": id, "url": url, "popup": windowFeatures.width != nil || windowFeatures.height != nil])
+    } else {
+      webView.load(action.request)
+    }
     return nil
   }
 

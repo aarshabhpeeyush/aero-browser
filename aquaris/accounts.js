@@ -3,52 +3,10 @@
 // also signs that person into Gmail, YouTube and Docs in their own account only. Passwords are only
 // ever typed into Google's own page. The lock screen picks the account (with an optional PIN).
 
-// ----- Who's signed in to Google, in an account's own space -----
-// Google's account list page (the one browsers use to show who's signed in) gives the name, email
-// and photo. On a computer Aquaris asks for it with that account's cookies; the iPad app asks for it
-// in that account's storage.
-function parseGoogleAccounts(text) {
-  try {
-    const data = JSON.parse(text);
-    const found = [];
-    const walk = a => {
-      if (!Array.isArray(a)) return;
-      const email = a.find(x => typeof x === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x));
-      if (email && a.length > 4) {
-        const i = a.indexOf(email);
-        found.push({ email, name: typeof a[i - 1] === "string" ? a[i - 1] : email.split("@")[0], photo: typeof a[i + 1] === "string" && a[i + 1].startsWith("http") ? a[i + 1] : "" });
-        return;
-      }
-      a.forEach(walk);
-    };
-    walk(data);
-    return found[0] || null;
-  } catch { return null; }
-}
-const GOOGLE_LIST = "https://accounts.google.com/ListAccounts?gpsia=1&source=ChromiumBrowser&json=standard";
-let googleWhoWait = null;
-async function googleWho(account) {
-  if (inChrome) {
-    const { NetUtil } = ChromeUtils.importESModule("resource://gre/modules/NetUtil.sys.mjs");
-    const uri = Services.io.newURI(GOOGLE_LIST);
-    const principal = Services.scriptSecurityManager.createContentPrincipal(Services.io.newURI("https://accounts.google.com/"), { userContextId: account.ctx || 0 });
-    const channel = NetUtil.newChannel({ uri, loadingPrincipal: principal, securityFlags: Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_SEC_CONTEXT_IS_NULL, contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER });
-    const text = await new Promise(resolve => NetUtil.asyncFetch(channel, (stream, status) => {
-      if (!Components.isSuccessCode(status)) return resolve("");
-      try { resolve(NetUtil.readInputStreamToString(stream, stream.available(), { charset: "UTF-8" })); } catch { resolve(""); }
-    }));
-    return parseGoogleAccounts(text);
-  }
-  if (inShell) {
-    const text = await new Promise(resolve => {
-      googleWhoWait = resolve;
-      shell.postMessage({ cmd: "googleWho", store: account.store || "" });
-      setTimeout(() => { if (googleWhoWait === resolve) { googleWhoWait = null; resolve(""); } }, 10000);
-    });
-    return parseGoogleAccounts(text);
-  }
-  return null;
-}
+// ----- Who signed in to Google -----
+// Once you've signed in, Google lands on your Google Account page; Aeris (on a computer) or the
+// iPad app reads your name, email and photo there and tells Aquaris (googleSignedIn below).
+let pendingGoogle = null;   // { acc, win, done(who) }
 const canUseGoogle = inChrome || inShell;
 
 // ----- Making and removing accounts -----
@@ -102,27 +60,34 @@ async function googleSignIn(acc, { fresh = false } = {}) {
   const space = { ctx: acc.ctx || 0, store: acc.store || "" };
   const app = { id: "signin-" + acc.id, name: "Sign in with Google", url: "https://accounts.google.com/ServiceLogin?continue=" + encodeURIComponent("https://myaccount.google.com/"), color: "#4285f4", ui: "globe", space, size: [520, 680] };
   const win = openApp(app);
-  const started = Date.now();
-  const check = async () => {
-    if (!wins.includes(win)) {
-      // Closed before signing in: a new account that never signed in is taken away again
-      if (fresh && !acc.email) await removeAccount(acc);
-      return drawAccountsAgain();
-    }
-    const who = await googleWho(acc).catch(() => null);
-    if (who?.email) {
+  pendingGoogle = {
+    acc, win,
+    async done(who) {
+      pendingGoogle = null;
       Object.assign(acc, { name: acc.name && acc.name !== "New account" ? acc.name : who.name, email: who.email, photo: who.photo });
       if (!accounts.list.includes(acc)) accounts.list.push(acc);
       await accounts.save();
-      closeWin(win);
+      if (wins.includes(win)) closeWin(win);
       notify({ app: "settings", title: "Signed in with Google", body: `${who.name} (${who.email}) has an Aquaris account now.`, from: "accounts" });
       drawAccountsAgain();
       if (acc.id !== accounts.current && await askYes($("#desktop"), `Switch to ${who.name}'s desktop now?`)) switchAccount(acc.id);
-      return;
     }
-    if (Date.now() - started < 20 * 60000) setTimeout(check, 2500);
   };
-  setTimeout(check, 4000);
+  // Closed before signing in: a new account that never signed in is taken away again
+  const watch = setInterval(async () => {
+    if (pendingGoogle?.win !== win) return clearInterval(watch);
+    if (!wins.includes(win)) {
+      clearInterval(watch);
+      pendingGoogle = null;
+      if (fresh && !acc.email) await removeAccount(acc);
+      drawAccountsAgain();
+    }
+  }, 1500);
+}
+// Aeris or the iPad app tells us who signed in
+function googleSignedIn(who) {
+  if (!pendingGoogle || !who?.email || !/^[^\s@]+@[^\s@]+$/.test(who.email)) return;
+  pendingGoogle.done({ name: who.name || who.email.split("@")[0], email: who.email, photo: /^https:\/\//.test(who.photo || "") ? who.photo : "" });
 }
 // Pages that list accounts (Settings) redraw when an account changes
 let accountRedraws = new Set();
@@ -257,4 +222,5 @@ accountsReady = () => {
   // Show who's signed in at the top of the Aquaris menu
   document.body.dataset.account = me?.id || "main";
 };
-accountShell = ev => { if (ev.type === "googleWho" && googleWhoWait) { const done = googleWhoWait; googleWhoWait = null; done(ev.text || ""); } };
+accountShell = ev => { if (ev.type === "googleSignedIn") googleSignedIn(ev); };
+window.Aquaris.googleSignedIn = who => googleSignedIn(who);

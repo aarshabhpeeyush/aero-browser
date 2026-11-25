@@ -179,3 +179,26 @@ browser.runtime.onMessage.addListener(async msg => {
   el.style.setProperty("display", "none", "important");
   await browser.storage.local.set({ zaps });
 });
+
+// ================= Who signed in to Google (for Aquaris accounts) =================
+// After "Sign in with Google" in Aquaris, Google lands on your Google Account page. The account
+// button there names you ("Google Account: Name (email)") and shows your photo; Aeris passes just
+// that to Aquaris, so it can show your name and photo on your Aquaris account. Nothing else is read.
+if (location.hostname === "myaccount.google.com") {
+  const readWho = () => {
+    for (const el of document.querySelectorAll("[aria-label]")) {
+      const m = el.getAttribute("aria-label").match(/Google[^:\n]{0,24}:\s*([\s\S]+?)\s*\(([^()\s]+@[^()\s]+)\)/);
+      if (!m) continue;
+      const img = el.querySelector("img[src^='https://lh3.googleusercontent.com'], img[src*='googleusercontent.com']");
+      return { name: m[1].replace(/\s+/g, " ").trim(), email: m[2], photo: img?.src || "" };
+    }
+    return null;
+  };
+  let tries = 0;
+  const look = () => {
+    const who = readWho();
+    if (who) return browser.runtime.sendMessage({ type: "aquaris-google", ...who }).catch(() => {});
+    if (++tries < 30) setTimeout(look, 1000);
+  };
+  whenReady(look);
+}

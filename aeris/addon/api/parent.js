@@ -922,6 +922,11 @@ this.aeris = class extends ExtensionAPI {
           watchAquarisLinks();
         },
 
+        async aquarisGoogle(who) {
+          const desk = aquarisWindow();
+          desk?.wrappedJSObject?.Aquaris?.googleSignedIn?.(Cu.cloneInto(who, desk));
+        },
+
         async startAquaris() {
           if (!isAquarisMode()) throw new Error("Aquaris runs as its own app; use launchAquaris.");
           await startAquaris(extension);

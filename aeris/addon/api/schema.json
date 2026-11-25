@@ -18,6 +18,13 @@
         "parameters": []
       },
       {
+        "name": "aquarisGoogle",
+        "type": "function",
+        "async": true,
+        "description": "Tell Aquaris who signed in to Google (name, email, photo), for its accounts.",
+        "parameters": [{ "name": "who", "type": "object", "additionalProperties": { "type": "string" } }]
+      },
+      {
         "name": "startAquaris",
         "type": "function",
         "async": true,
