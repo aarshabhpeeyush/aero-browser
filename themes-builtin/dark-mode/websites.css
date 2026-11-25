@@ -1,15 +1,17 @@
 /* Dark Mode for EVERY website.
    The trick: flip all the colours (white ↔ black), then flip pictures and videos back so
-   they look normal. Works on almost any site, even ones with no dark mode of their own. */
+   they look normal. Works on almost any site, even ones with no dark mode of their own.
+   Sites that are dark already (Discord, school portals with a dark look…) are left alone: Aeris
+   marks them with data-aeris-dark-site (see content/site.js), and flipping them would make them light. */
 
-html {
+html:not([data-aeris-dark-site]) {
   filter: invert(0.92) hue-rotate(180deg) !important;
   background: #fff !important; /* becomes dark after the flip */
 }
 
 /* Flip pictures, videos and drawings back to their real colours */
-img, picture, video, canvas, iframe, embed, object,
-svg image, [style*="background-image"] {
+html:not([data-aeris-dark-site]) :is(img, picture, video, canvas, iframe, embed, object,
+svg image, [style*="background-image"]) {
   filter: invert(1) hue-rotate(180deg) !important;
 }
 

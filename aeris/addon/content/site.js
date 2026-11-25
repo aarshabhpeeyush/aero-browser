@@ -72,6 +72,28 @@ function paintPaper(paper) {
   });
 }
 
+// ================= Sites that are dark already =================
+// Themes that darken every website (Dark Mode) flip all colours; on a site that's dark already that
+// makes it light and inside out. So a dark site is marked, and those themes leave it alone.
+// "Dark" = the page says it uses a dark colour scheme, or its background is dark.
+function markDarkSite() {
+  const html = document.documentElement, body = document.body;
+  if (!html) return;
+  const RGB = /rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/;
+  const bg = el => { const m = el && getComputedStyle(el).backgroundColor.match(RGB); return m && (m[4] === undefined || +m[4] > 0.5) ? [+m[1], +m[2], +m[3]] : null; };
+  const light = c => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
+  // The biggest box in the middle of the page often holds the real background (single-page apps)
+  const middle = document.elementFromPoint?.(innerWidth / 2, innerHeight / 2);
+  let mid = null;
+  for (let el = middle; el && !mid; el = el.parentElement) mid = bg(el);
+  const colour = mid || bg(body) || bg(html);
+  const scheme = getComputedStyle(html).colorScheme;
+  const dark = (colour ? light(colour) < 0.35 : false) || (/^dark$/.test(scheme) && !colour);
+  html.toggleAttribute("data-aeris-dark-site", dark);
+}
+// Check as the page loads and settles (apps like Discord paint their dark look a moment later)
+whenReady(() => { markDarkSite(); for (const t of [600, 1500, 3000, 6000]) setTimeout(markDarkSite, t); });
+
 // ================= Hide Google's AI Overviews =================
 // Finds the "AI Overview" heading on Google search pages and hides the whole box around it.
 // (Switch this off in Aeris settings.)
