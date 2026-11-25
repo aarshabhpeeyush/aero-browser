@@ -181,11 +181,23 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
   // MARK: Messages from Aquaris
 
   func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+    // From a website: a notification, or what it's playing
+    if message.name == "aquarisPage", let web = message.webView, let id = idOf(web), var msg = message.body as? [String: Any], let kind = msg["kind"] as? String {
+      msg.removeValue(forKey: "kind")
+      msg["type"] = kind == "notify" ? "notify" : "media"
+      msg["id"] = id
+      send(msg)
+      return
+    }
     guard message.webView === desk, let msg = message.body as? [String: Any], let cmd = msg["cmd"] as? String else { return }
     let id = msg["id"] as? String ?? ""
     switch cmd {
     case "open": open(id, url: msg["url"] as? String ?? "")
-    case "close": apps[id]?.removeFromSuperview(); apps[id] = nil; watching[id] = nil
+    case "close": apps[id]?.removeFromSuperview(); apps[id] = nil; watching[id] = nil; send(["type": "media", "id": id, "gone": true])
+    case "media":
+      let action = (msg["action"] as? String ?? "").replacingOccurrences(of: "'", with: "")
+      apps[id]?.evaluateJavaScript("window.__aqMediaAction && __aqMediaAction('\(action)')")
+    case "sync": syncRequest(msg)
     case "reload": apps[id]?.reload()
     case "stop": apps[id]?.stopLoading()
     case "zoom": if let z = (msg["value"] as? NSNumber)?.doubleValue { apps[id]?.pageZoom = CGFloat(z) }
@@ -215,6 +227,9 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     config.mediaTypesRequiringUserActionForPlayback = []
     // The full websites (WhatsApp Web, Discord…), not the phone versions
     config.defaultWebpagePreferences.preferredContentMode = .desktop
+    // Websites can send notifications to Aquaris, and tell it what they're playing
+    config.userContentController.add(self, name: "aquarisPage")
+    config.userContentController.addUserScript(WKUserScript(source: Self.pageScript, injectionTime: .atDocumentStart, forMainFrameOnly: true))
     let web = WKWebView(frame: .zero, configuration: config)
     web.isHidden = true
     web.navigationDelegate = self
@@ -244,6 +259,63 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
                     web.observe(\.isLoading, changeHandler: changed)]
     web.load(URLRequest(url: address))
   }
+
+  /// Sync with Aquaris on a computer: one POST to it on the home network, the answer goes back to Aquaris
+  private func syncRequest(_ msg: [String: Any]) {
+    let id = msg["id"] as? String ?? ""
+    guard let address = msg["url"] as? String, let url = URL(string: address) else { return send(["type": "syncReply", "id": id, "ok": false, "error": "That address isn't right."]) }
+    var request = URLRequest(url: url, timeoutInterval: 7)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.setValue(msg["code"] as? String ?? "", forHTTPHeaderField: "X-Aquaris-Code")
+    request.httpBody = (msg["body"] as? String ?? "{}").data(using: .utf8)
+    URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+      DispatchQueue.main.async {
+        if let error = error { return self?.send(["type": "syncReply", "id": id, "ok": false, "error": "Couldn't reach your computer (\(error.localizedDescription))"]) ?? () }
+        self?.send(["type": "syncReply", "id": id, "ok": true, "body": String(data: data ?? Data(), encoding: .utf8) ?? "{}"])
+      }
+    }.resume()
+  }
+
+  /// Put into every website: notifications go to Aquaris (iPadOS has none for web pages in apps), and
+  /// whatever plays music or video is reported for Now Playing, with play / pause / next / back.
+  static let pageScript = """
+  (function () {
+    if (window.__aquaris) return; window.__aquaris = true;
+    var post = function (m) { try { window.webkit.messageHandlers.aquarisPage.postMessage(m); } catch (e) {} };
+    function AqNotification(title, o) {
+      o = o || {};
+      var icon = ""; try { icon = o.icon ? new URL(o.icon, location.href).href : ""; } catch (e) {}
+      post({ kind: "notify", title: String(title || ""), body: String(o.body || ""), icon: icon });
+      var t = new EventTarget(); t.title = title; t.body = o.body || ""; t.close = function () {}; return t;
+    }
+    AqNotification.permission = "granted";
+    AqNotification.requestPermission = function (cb) { if (cb) cb("granted"); return Promise.resolve("granted"); };
+    try { Object.defineProperty(window, "Notification", { value: AqNotification, configurable: true, writable: true }); } catch (e) {}
+    var handlers = {};
+    if (navigator.mediaSession && navigator.mediaSession.setActionHandler) {
+      var set = navigator.mediaSession.setActionHandler.bind(navigator.mediaSession);
+      navigator.mediaSession.setActionHandler = function (a, h) { handlers[a] = h; try { set(a, h); } catch (e) {} };
+    }
+    var media = function () { var all = Array.prototype.slice.call(document.querySelectorAll("video, audio")); return all.filter(function (m) { return !m.paused; })[0] || all[0]; };
+    window.__aqMediaAction = function (a) {
+      var h = handlers[a === "next" ? "nexttrack" : a === "prev" ? "previoustrack" : a];
+      if (h) { try { h({ action: a }); return; } catch (e) {} }
+      var m = media(); if (!m) return;
+      if (a === "play") m.play(); else if (a === "pause") m.pause();
+    };
+    var last = "", played = false;
+    setInterval(function () {
+      var m = media(), md = navigator.mediaSession && navigator.mediaSession.metadata;
+      var playing = !!(m && !m.paused && !m.ended && !m.muted);
+      if (playing) played = true;
+      if (!played) return;
+      var art = md && md.artwork && md.artwork.length ? md.artwork[md.artwork.length - 1].src : "";
+      var s = { kind: "media", title: (md && md.title) || document.title, artist: (md && md.artist) || "", art: art, playing: playing };
+      var k = JSON.stringify(s); if (k !== last) { last = k; post(s); }
+    }, 1000);
+  })();
+  """
 
   private func sendState(_ web: WKWebView) {
     guard let id = idOf(web) else { return }

@@ -1368,3 +1368,71 @@ body.web:not(.has-mouse) .tool { width: 34px; height: 32px; }
 .sw-item:hover { background: var(--hover); }
 .sw-item.on { background: var(--press); box-shadow: inset 0 0 0 2px var(--accent); }
 .sw-title { margin-top: 8px; text-align: center; font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+/* ================= Now Playing ================= */
+.tb-now { gap: 6px; max-width: 360px; padding: 0 4px 0 6px; }
+.tb-now[hidden] { display: none; }
+.now-art { width: 20px; height: 20px; flex: none; border-radius: 5px; overflow: hidden; display: grid; place-items: center; }
+.now-art img { width: 100%; height: 100%; object-fit: cover; }
+.now-text { min-width: 0; max-width: 220px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12.5px; }
+.now-btn { width: 24px; height: 24px; flex: none; display: grid; place-items: center; border-radius: 6px; color: inherit; }
+.now-btn .i { width: 14px; height: 14px; }
+.now-btn:hover { background: var(--hover); }
+#nowCard { right: 120px; width: 280px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+#nowCard[hidden] { display: none; }
+.nc-art { width: 200px; height: 200px; margin-bottom: 8px; border-radius: 12px; overflow: hidden; display: grid; place-items: center; background: var(--hover); box-shadow: var(--shadow-1); }
+.nc-art img { width: 100%; height: 100%; object-fit: cover; }
+.nc-art .tile.big { --size: 96px; }
+.nc-title { font-size: 15px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nc-artist { color: var(--muted); font-size: 13px; }
+.nc-app { color: var(--muted); font-size: 11.5px; }
+.nc-controls { display: flex; align-items: center; gap: 14px; margin: 10px 0; }
+.nc-controls .now-btn { width: 36px; height: 36px; border-radius: 50%; }
+.nc-controls .now-btn .i { width: 18px; height: 18px; }
+.nc-controls .now-btn.big { width: 48px; height: 48px; background: var(--accent); color: var(--accent-ink, #fff); }
+.nc-controls .now-btn.big .i { width: 22px; height: 22px; }
+
+/* ================= Badges, Notification Centre, pop-ups ================= */
+[data-app] { position: relative; }
+.badge { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; display: grid; place-items: center; background: #e5484d; color: #fff; font: 700 10.5px/1 var(--font); box-shadow: 0 0 0 2px var(--surface-2, #fff), 0 1px 3px rgba(0, 0, 0, 0.3); pointer-events: none; z-index: 2; }
+#icons .icon > .badge { top: 2px; right: 14px; }
+.tb-bell { position: relative; }
+.tb-bell.has-new::after { content: ""; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: #e5484d; }
+#notifs { right: 8px; width: 360px; max-height: calc(100vh - 70px); display: flex; flex-direction: column; gap: 8px; }
+#notifs[hidden] { display: none; }
+.nf-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.nf-head b { font: 600 15px var(--font-display); }
+.nf-dnd { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.nf-list { overflow-y: auto; display: flex; flex-direction: column; gap: 4px; min-height: 60px; }
+.nf-empty { text-align: center; padding: 24px 0; }
+.nf-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px; border-radius: 12px; text-align: left; color: var(--text); }
+.nf-row:hover { background: var(--hover); }
+.nf-row.new { background: color-mix(in srgb, var(--accent), transparent 90%); }
+.nf-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.nf-text b { font-size: 13px; }
+.nf-text span { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.nf-text small { color: var(--muted); font-size: 11px; }
+.nf-foot { display: flex; justify-content: flex-end; }
+#toasts { position: fixed; top: calc(var(--top-h) + 10px); right: 10px; z-index: 100005; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast { width: 340px; display: flex; gap: 10px; align-items: flex-start; padding: 10px 10px 10px 12px; border-radius: 14px; background: var(--glass-strong); backdrop-filter: blur(30px) saturate(1.8); box-shadow: var(--rim), var(--shadow-2); color: var(--text); pointer-events: auto; cursor: default; animation: toast-in 0.28s var(--ease); transition: opacity 0.3s, transform 0.3s; }
+.toast.going { opacity: 0; transform: translateX(30px); }
+@keyframes toast-in { from { opacity: 0; transform: translateX(40px); } }
+.toast-icon { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; flex: none; }
+.toast-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.toast-text b { font-size: 13px; }
+.toast-text span { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.toast-x { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px; color: var(--muted); flex: none; }
+.toast-x .i { width: 12px; height: 12px; }
+.toast-x:hover { background: var(--hover); }
+
+/* ================= Sync ================= */
+.sync-codes { display: flex; gap: 12px; margin: 10px 0; }
+.sync-codes > div { flex: 1; padding: 10px 12px; border-radius: 10px; background: var(--hover); display: flex; flex-direction: column; gap: 2px; }
+.sync-codes small { color: var(--muted); font-size: 11.5px; }
+.sync-codes b { font: 600 20px var(--font-display); letter-spacing: 0.04em; user-select: text; }
+.sync-in { width: 170px; height: 30px; padding: 0 10px; border-radius: 8px; border: 0; background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line-strong); font: inherit; }
+.nf-sound { align-self: flex-end; margin-top: -4px; }
+
+/* Website icons on app tiles: the site's own icon on a white tile, a little bigger than a glyph */
+.tile.site img { width: 64%; height: 64%; object-fit: contain; border-radius: 18%; }
+.tile.site.small img, .tile.site.tiny img { width: 76%; height: 76%; }

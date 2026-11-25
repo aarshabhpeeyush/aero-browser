@@ -338,3 +338,8 @@ body[data-skin="w95"] :is(.menu, .mb-menu, .flyout, .sp-box, #quick) { backgroun
 body[data-skin="w95"] :is(.menu button:hover, .mb-menu button:hover, .ln-result.on, .sp-row.on) { background: #000080; color: #fff; }
 body[data-skin="w95"] #launcher .ln-app span { color: #fff; }
 body[data-skin="w95"] #launcher .ln-app:hover { background: rgba(0, 0, 128, 0.6); }
+
+/* Website icons (white tiles by default) dressed for each look */
+body[data-skin="gamer"] .tile.site { background: linear-gradient(180deg, #1b1726, #0c0a12); box-shadow: inset 0 0 0 1px rgba(255, 31, 90, 0.45), 0 0 10px rgba(255, 31, 90, 0.25); border-radius: 0; clip-path: var(--cut); }
+body[data-skin="xp"] .tile.site { border-radius: 8px; background: linear-gradient(180deg, #fff, #e8eef9); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2), 1px 2px 3px rgba(0, 0, 0, 0.35); }
+body[data-skin="w95"] .tile.site { background: #c0c0c0; box-shadow: inset -1px -1px 0 #000, inset 1px 1px 0 #fff; }

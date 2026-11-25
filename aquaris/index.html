@@ -39,10 +39,13 @@
     <button id="tbBattery" class="tb-btn tb-status" hidden title="Battery"><svg class="i"><use href="#i-battery"/></svg><span id="batteryText"></span></button>
     <button id="tbBt" class="tb-btn tb-status" title="Bluetooth"><svg class="i"><use href="#i-bluetooth"/></svg></button>
     <button id="tbWifi" class="tb-btn tb-status" title="Wi-Fi"><svg class="i"><use href="#i-wifi"/></svg></button>
+    <!-- Now Playing: whatever is playing music or video -->
+    <div id="tbNow" class="tb-btn tb-now" hidden role="group" aria-label="Now Playing"><span class="now-art"></span><span class="now-text"></span><button class="now-btn" data-a="prev" title="Previous"><svg class="i"><use href="#i-prev"/></svg></button><button class="now-btn" data-a="play" title="Play"><svg class="i"><use href="#i-play"/></svg></button><button class="now-btn" data-a="next" title="Next"><svg class="i"><use href="#i-next"/></svg></button></div>
     <button id="tbVol" class="tb-btn tb-status" title="Sound"><svg class="i"><use href="#i-speaker"/></svg></button>
     <button id="tbRam" class="tb-btn" title="Memory: open the task manager"><svg class="i"><use href="#i-chip"/></svg><span id="ramText">…</span></button>
     <button id="tbSearch" class="tb-btn" title="Spotlight (Ctrl+Space)"><svg class="i"><use href="#i-search"/></svg></button>
     <button id="tbQuick" class="tb-btn" title="Control Centre"><svg class="i"><use href="#i-sliders"/></svg></button>
+    <button id="tbBell" class="tb-btn tb-bell" title="Notifications"><svg class="i"><use href="#i-bell"/></svg></button>
     <button id="tbClock" class="tb-btn tb-clock" title="Calendar"><span id="clockDate"></span><b id="clockTime"></b></button>
     <span id="tbApp" hidden></span>
   </header>
@@ -81,6 +84,14 @@
 
   <!-- Spotlight: one search box for apps, sums, websites and the web -->
   <!-- Alt+Shift+T: switch between open windows and tabs -->
+  <!-- The Notification Centre, Now Playing's card and the pop-ups -->
+  <div id="notifs" class="flyout" hidden role="dialog" aria-label="Notifications"></div>
+  <div id="nowCard" class="flyout" hidden role="dialog" aria-label="Now Playing">
+    <div class="nc-art"></div><b class="nc-title"></b><span class="nc-artist"></span><small class="nc-app"></small>
+    <div class="nc-controls"><button class="now-btn" data-a="prev" title="Previous"><svg class="i"><use href="#i-prev"/></svg></button><button class="now-btn big" data-a="play" title="Play or pause"><svg class="i"><use href="#i-play"/></svg></button><button class="now-btn" data-a="next" title="Next"><svg class="i"><use href="#i-next"/></svg></button></div>
+    <button class="btn" data-a="show">Show the app</button>
+  </div>
+  <div id="toasts" aria-live="polite"></div>
   <div id="switcher" hidden role="dialog" aria-label="Switch window"><div class="sw-box"><div class="sw-list" id="swList"></div><div class="sw-title" id="swTitle"></div></div></div>
   <div id="spotlight" hidden>
     <div class="sp-box" role="dialog" aria-label="Spotlight">
@@ -257,11 +268,17 @@
       <symbol id="i-more" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/></g></symbol>
       <symbol id="i-pc" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="11.5" rx="1.8"/><path d="M9 20h6M12 16v4"/></g></symbol>
       <symbol id="i-left" viewBox="0 0 24 24"><path d="M14.5 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></symbol>
+      <symbol id="i-next" viewBox="0 0 24 24"><path d="M5.5 6v12l8.5-6zM15.5 6h2.5v12h-2.5z" fill="currentColor"/></symbol>
+      <symbol id="i-prev" viewBox="0 0 24 24"><path d="M18.5 6v12L10 12zM6 6h2.5v12H6z" fill="currentColor"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 3.5a5.5 5.5 0 0 0-5.5 5.5v3.4L5 15.5V17h14v-1.5l-1.5-3.1V9A5.5 5.5 0 0 0 12 3.5zM9.8 18.5a2.3 2.3 0 0 0 4.4 0z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
       <symbol id="i-right" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     </defs>
   </svg>
 
   <script src="apps.js"></script>
   <script src="aquaris.js"></script>
+  <script src="live.js"></script>
 </body>
 </html>

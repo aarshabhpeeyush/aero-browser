@@ -37,6 +37,10 @@ if (inShell) document.body.classList.add("shell");
 // ================= Settings storage =================
 // Inside Aeris: aquaris.json in the profile folder. As a plain file: in memory only.
 
+// live.js (Now Playing, notifications, sync) plugs in here
+let liveReady = () => {}, liveShell = () => {};
+const storeHooks = [];
+
 const store = {
   data: {},
   file: inChrome ? PathUtils.join(PathUtils.profileDir, "aquaris.json") : null,
@@ -50,6 +54,7 @@ const store = {
     return Object.fromEntries(Object.entries(defaults).map(([k, v]) => [k, k in this.data ? this.data[k] : v]));
   },
   async set(changes) {
+    for (const hook of storeHooks) hook(changes);
     Object.assign(this.data, changes);
     clearTimeout(this.timer);
     if (!this.file) return void (this.timer = setTimeout(() => {
@@ -87,6 +92,11 @@ const DEFAULTS = {
   aquarisQuickAccess: null,   // folders pinned in Files' Quick access (null = the usual ones)
   aquarisWeather: null,       // { name, lat, lon } for the Weather app
   aquarisAwake: [],           // apps that should never nap
+  aquarisNotifs: [],          // the Notification Centre (newest first)
+  aquarisDnd: false,          // Do Not Disturb: no pop-ups
+  aquarisNotifSound: true,    // the notification jingle
+  aquarisSync: {},            // computer: { server, code }; iPad: { address, code }
+  aquarisSyncStamps: {},      // when each synced setting last changed
   // Aeris in the iPad app: its Customize options (the same ones as Aeris on a computer)
   aquarisAeris: { theme: "", accent: "", gloss: 50, bars: "top", tabShape: "rounded", size: "comfy", ntZoom: 85,
     mods: { shell: true, floating: false, motion: true, hoverClose: false, centerTitles: false, tabNumbers: false, bigTabs: false } }
@@ -180,6 +190,14 @@ function fixup(text) {
 
 // ================= App icons =================
 
+// A website's icon (what its tab shows), as a crisp 128-pixel picture
+// (first the icon of the app's exact page, so Gmail and Google Docs get their own, then the site's)
+const webIcons = url => {
+  try {
+    return [`https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(url)}&size=128`,
+      `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`];
+  } catch { return []; }
+};
 function tile(app, size = "") {
   const t = html("span", "tile" + (size ? " " + size : ""));
   if (app.id === "aeris" && (!onWeb || inShell)) {
@@ -200,6 +218,23 @@ function tile(app, size = "") {
     img.src = app.image;
     t.append(img);
     return t;
+  }
+  // Web apps wear the website's own icon (the one in its browser tab), in high resolution. If it
+  // can't load (offline), Aquaris's own drawing for the app shows instead.
+  const icons = app.url && !app.own && !SYSTEM[app.id] && app.id !== "aeris" && /^https?:/.test(app.url) ? webIcons(app.url) : [];
+  if (icons.length && !app.symbol && !app.letter) {
+    const img = html("img");
+    img.alt = "";
+    img.decoding = "async";
+    let i = 0;
+    const next = () => { if (++i < icons.length) img.src = icons[i]; };
+    img.addEventListener("load", () => {
+      if (img.naturalWidth < 40) return next();   // too small to look good: try the next, or keep the drawing
+      t.replaceChildren(img);
+      t.classList.add("site");
+    });
+    img.addEventListener("error", next);
+    img.src = icons[0];
   }
   if (app.symbol) setHTML(t, `<svg class="glyph ui"><use href="#i-${app.symbol}"/></svg>`);
   else if (app.letter) t.textContent = app.letter;
@@ -1148,6 +1183,7 @@ function dockItem(app, label) {
 function drawDock() {
   const bar = $("#dockApps");
   if (!bar) return;
+  setTimeout(() => typeof paintBadges === "function" && paintBadges(), 0);
   bar.textContent = "";
   // Aeris first
   const aw = aerisWindows();
@@ -1504,7 +1540,7 @@ function drawCalendar() {
 
 // ================= Overlays: launcher, quick settings, calendar =================
 
-const overlays = ["#launcher", "#spotlight", "#quick", "#calendar", "#menu", "#tasks"];
+const overlays = ["#launcher", "#spotlight", "#quick", "#calendar", "#menu", "#tasks", "#notifs", "#nowCard"];
 function closeOverlays(except) {
   for (const s of overlays) if (s !== except) $(s).hidden = true;
   document.body.classList.toggle("launcher-open", except === "#launcher" && !$("#launcher").hidden);
@@ -2188,6 +2224,7 @@ function gridSize() {
   return { cols: Math.max(1, Math.floor((d.width - CELL.x) / CELL.w)), rows: Math.max(1, Math.floor((d.height - CELL.y - 96) / CELL.h)) };
 }
 function drawIcons() {
+  setTimeout(() => typeof paintBadges === "function" && paintBadges(), 0);
   const box = $("#icons");
   box.textContent = "";
   box.hidden = !settings.aquarisDesktopIcons;
@@ -3320,6 +3357,7 @@ function openSettings() {
       </div>
       <p class="hint">A napping app is unloaded, so it uses no memory. It wakes up when you open it. Music apps keep playing.</p>
     </section>
+    ${syncSettingsSection()}
     <section class="computer-only">
       <h3>Aquaris on your computer</h3>
       <p class="hint">Aquaris is its own app with its own sign-ins, kept apart from your normal Aeris.</p>
@@ -3414,6 +3452,7 @@ function openSettings() {
       msg.textContent = "That didn't work: " + (e.message || e);
     }
   });
+  wireSyncSettings(page);
   sync();
 }
 
@@ -3900,7 +3939,7 @@ function padAction(action, x, y, dx, dy) {
 // it's swapped for a picture of itself until it's uncovered.
 let shellSeq = 0, shellQueued = false, shellUntil = 0;
 const shellOpen = new Set(), shellShown = new Set();
-const SHELL_OVERLAYS = ["#switcher", "#menu", "#mbMenu", "#quick", "#tasks", "#calendar", "#launcher", "#spotlight", "#lock", "#boot", ".ask"];
+const SHELL_OVERLAYS = ["#switcher", "#notifs", "#nowCard", "#menu", "#mbMenu", "#quick", "#tasks", "#calendar", "#launcher", "#spotlight", "#lock", "#boot", ".ask"];
 const isShown = el => !!el && !el.hidden && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
 function shellSync() {
   if (!inShell) return;
@@ -3938,6 +3977,7 @@ function shellLayout() {
 function shellEvent(ev) {
   const v = document.querySelector(`.shell-view[data-shell="${ev.id}"]`);
   const win = v && wins.find(w => w.view === v);
+  liveShell(ev, v && wins.find(w => w.view === v || w.tabs?.includes(v)));
   if (ev.type === "loaded" && win) { cover(win, null); if (ev.url) v.dataset.url = ev.url; }
   if (ev.type === "snap" && v) { v.style.backgroundImage = `url(${ev.data})`; v.style.backgroundSize = "100% 100%"; }
   if (ev.type === "tap" && win) focusWin(win);
@@ -4178,5 +4218,6 @@ function playIntro() {
   dispatchEvent(new Event("resize"));
   drawDock();
   drawTopApp();
+  liveReady();
   if (onWeb && "serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 })();

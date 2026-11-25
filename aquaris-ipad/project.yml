@@ -38,6 +38,10 @@ targets:
         GCSupportsControllerUserInteraction: true
         GCSupportedGameControllers:
           - ProfileName: ExtendedGamepad
+        # Sync with Aquaris on a computer, over the home network (plain http on the local network only)
+        NSLocalNetworkUsageDescription: Aquaris syncs your look, notes and apps with Aquaris on your computer over your home Wi-Fi.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         NSCameraUsageDescription: Apps in Aquaris (like Zoom and Discord) can use the camera when you allow it.
         NSMicrophoneUsageDescription: Apps in Aquaris (like Zoom and Discord) can use the microphone when you allow it.
         NSPhotoLibraryUsageDescription: So you can pick photos to send or edit in Aquaris apps.
