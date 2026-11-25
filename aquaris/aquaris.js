@@ -73,6 +73,9 @@ const ownBuilders = {};
 let extraShell = () => {};
 // accounts.js plugs in here
 let accountsReady = () => {}, accountShell = () => {};
+// wallpapers.js (video wallpapers, the lock screen's own wallpaper) plugs in here
+let wallpapersReady = () => {};
+const lookHooks = [];
 const storeHooks = [];
 
 const store = {
@@ -134,6 +137,7 @@ const DEFAULTS = {
   aquarisNotifs: [],          // the Notification Centre (newest first)
   aquarisDnd: false,          // Do Not Disturb: no pop-ups
   aquarisNotifSound: true,    // the notification jingle
+  aquarisLock: { wall: "same", own: "" },   // the lock screen's own wallpaper
   aquarisSync: {},            // computer: { server, code }; iPad: { address, code }
   aquarisSyncStamps: {},      // when each synced setting last changed
   // Aeris in the iPad app: its Customize options (the same ones as Aeris on a computer)
@@ -3428,6 +3432,7 @@ function openSettings() {
       <div class="walls"></div>
       <input id="wallFile" type="file" accept="image/*" hidden>
     </section>
+    ${wallpaperExtrasSection()}
     <section>
       <h3>Personalise</h3>
       <div class="row between"><span>Window corners</span><div class="qs-slider"><small>Square</small><input id="setRadius" type="range" min="0" max="22"><small>Round</small></div></div>
@@ -3545,6 +3550,7 @@ function openSettings() {
     }
   });
   wireSyncSettings(page);
+  wireWallpaperExtras(page, sync);
   wireAccountsSettings(page);
   sync();
 }
@@ -3859,6 +3865,9 @@ function applyLook() {
   b.style.setProperty("--theme-b", aerisTheme?.b || "#a9c3d9");
   let wall = s.aquarisWall;
   if (wall === "auto" || (wall === "own" && !s.aquarisOwnWall)) wall = theme === "aqua" ? "aqua" : skin || "tide";
+  // A video wallpaper plays over the style's own picture (which shows while the video loads)
+  b.classList.toggle("video-wall", wall === "video");
+  if (wall === "video") wall = theme === "aqua" ? "aqua" : skin || "tide";
   b.dataset.wall = wall;
   b.style.setProperty("--own-wall", s.aquarisOwnWall ? `url("${s.aquarisOwnWall}")` : "none");
   b.style.setProperty("--frost", (s.aquarisGlass / 100).toFixed(2));
@@ -3871,6 +3880,7 @@ function applyLook() {
   applyCursor(L);
   $("#deskText").textContent = L.deskText;
   applyNight();
+  for (const hook of lookHooks) hook();
   try { localStorage.setItem("aquarisLook", JSON.stringify({ theme, mode, intro: s.aquarisLookMore.intro })); } catch {}
 }
 // The pointer: Aquaris's own (a drop-coloured arrow) or a picture you chose, at the size you chose
@@ -4325,5 +4335,6 @@ function playIntro() {
   drawTopApp();
   liveReady();
   accountsReady();
+  wallpapersReady();
   if (onWeb && "serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 })();

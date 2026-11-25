@@ -1508,3 +1508,16 @@ body.web:not(.has-mouse) .tool { width: 34px; height: 32px; }
 .acc-text { flex: 1; min-width: 140px; display: flex; flex-direction: column; }
 .acc-text small { color: var(--muted); }
 .acc-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ================= Video wallpapers, the lock screen's own wallpaper ================= */
+.wall-video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; pointer-events: none; }
+.wall-video[hidden] { display: none; }
+.w-video { background-image: linear-gradient(135deg, #1b2a49, #46629a); position: relative; }
+.w-video::before { content: "▶"; position: absolute; top: 8px; right: 10px; color: #fff; font-size: 12px; opacity: 0.85; }
+.w-lock-same { background-image: linear-gradient(135deg, rgba(120, 140, 170, 0.6), rgba(60, 80, 110, 0.6)); }
+.wall.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+#lock.own-wall { background: center / cover no-repeat var(--lock-wall, #0b1a2e); backdrop-filter: none; }
+#lock.own-wall::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.35)); pointer-events: none; }
+#lock > .lock-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+#lock.own-wall > :not(.lock-video, .lock-hint) { position: relative; z-index: 1; }
+#lock.own-wall > .lock-hint { z-index: 1; }
