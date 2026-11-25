@@ -225,6 +225,8 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
       // Switching accounts: close every website before Aquaris starts again
       for (_, web) in apps { web.removeFromSuperview() }
       apps.removeAll(); watching.removeAll()
+    case "clearDefaultStore":
+      WKWebsiteDataStore.default().removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) {}
     case "removeStore":
       if #available(iOS 17.0, *), let s = msg["store"] as? String, let uuid = UUID(uuidString: s) { WKWebsiteDataStore.remove(forIdentifier: uuid) { _ in } }
     case "googleWho": googleWho(msg["store"] as? String ?? "")

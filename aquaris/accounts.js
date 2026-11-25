@@ -30,18 +30,33 @@ async function removeAccount(acc) {
   await accounts.save();
   if (inChrome) {
     try {
+      // Its website sign-ins (the first account's live in Aquaris's main space)
+      Services.clearData.deleteDataFromOriginAttributesPattern({ userContextId: acc.ctx || 0 });
       if (acc.ctx) {
-        Services.clearData.deleteDataFromOriginAttributesPattern({ userContextId: acc.ctx });
         const { ContextualIdentityService } = containerService();
         ContextualIdentityService.remove(acc.ctx);
       }
-      await IOUtils.remove(PathUtils.join(PathUtils.profileDir, `aquaris-${acc.id}.json`), { ignoreAbsent: true });
+      await IOUtils.remove(PathUtils.join(PathUtils.profileDir, acc.id === "main" ? "aquaris.json" : `aquaris-${acc.id}.json`), { ignoreAbsent: true });
     } catch (e) { console.error("Aquaris account:", e); }
   } else {
-    if (inShell && acc.store) shell.postMessage({ cmd: "removeStore", store: acc.store });
+    if (inShell) shell.postMessage(acc.store ? { cmd: "removeStore", store: acc.store } : { cmd: "clearDefaultStore" });
     if (inShell) shell.postMessage({ cmd: "save", key: accounts.key(acc.id), data: "{}" });
     try { localStorage.removeItem(accounts.key(acc.id)); } catch {}
   }
+}
+// Delete an account. The one you're using is deleted after switching to another account.
+async function deleteAccount(acc, page) {
+  if (accounts.list.length < 2) return alertIn(page, "Aquaris needs at least one account, so the last one can't be deleted.");
+  if (acc.pin) {
+    const pin = await askText(page, `${accName(acc)}'s PIN, to delete the account`, "");
+    if (pin == null) return false;
+    if ((await pinHash(pin, acc.salt)) !== acc.pin) { alertIn(page, "That PIN isn't right."); return false; }
+  }
+  if (!(await askYes(page, `Delete ${accName(acc)}'s account? Its desktop, apps, settings and website sign-ins on this device are deleted. This can't be undone.`))) return false;
+  if (acc.id !== accounts.current) { await removeAccount(acc); return true; }
+  accounts.pendingDelete = acc.id;
+  await switchAccount(accounts.list.find(a => a.id !== acc.id).id);
+  return true;
 }
 async function switchAccount(id) {
   if (id === accounts.current) return;
@@ -192,9 +207,7 @@ function wireAccountsSettings(page) {
       });
       if (acc.pin) button("Remove PIN", async () => { await setPin(acc, ""); draw(); });
       if (acc.id !== accounts.current) button("Switch to it", () => switchAccount(acc.id));
-      if (acc.id !== "main" && acc.id !== accounts.current) button("Remove", async () => {
-        if (await askYes(page, `Remove ${accName(acc)}'s account? Its desktop, settings and website sign-ins on this device are deleted.`)) { await removeAccount(acc); draw(); }
-      });
+      if (accounts.list.length > 1) button("Delete account", async () => { if (await deleteAccount(acc, page)) draw(); });
       row.append(avatar(acc, 40), text, tools);
       list.append(row);
     }
@@ -216,7 +229,14 @@ function wireAccountsSettings(page) {
 }
 
 // Start: with more than one account, or a PIN, Aquaris starts on the lock screen
-accountsReady = () => {
+accountsReady = async () => {
+  // Finish deleting the account that was in use before the switch
+  if (accounts.pendingDelete) {
+    const gone = accounts.list.find(a => a.id === accounts.pendingDelete);
+    delete accounts.pendingDelete;
+    if (gone && gone.id !== accounts.current) { await removeAccount(gone); notify({ app: "settings", title: "Account deleted", body: `${accName(gone)}'s account is gone from this device.`, from: "accounts" }); }
+    else await accounts.save();
+  }
   const me = accounts.me();
   if (accounts.list.length > 1 || me?.pin) setTimeout(() => accountLock(), 2300);
   // Show who's signed in at the top of the Aquaris menu

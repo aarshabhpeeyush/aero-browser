@@ -51,13 +51,13 @@ const accounts = {
     if (this.file) saved = await IOUtils.readJSON(this.file).catch(() => null);
     else if (inShell) saved = window.aquarisSavedAll?.aquarisAccounts ? JSON.parse(window.aquarisSavedAll.aquarisAccounts) : null;
     else try { saved = JSON.parse(localStorage.getItem("aquarisAccounts") || "null"); } catch {}
-    if (saved?.list?.length) { this.list = saved.list; this.current = saved.current || "main"; }
+    if (saved?.list?.length) { this.list = saved.list; this.current = saved.current || "main"; this.pendingDelete = saved.pendingDelete; }
     if (!this.me()) this.current = this.list[0].id;
   },
   me() { return this.list.find(a => a.id === this.current); },
   key(id = this.current) { return id === "main" ? "aquaris" : "aquaris:" + id; },
   async save() {
-    const json = JSON.stringify({ list: this.list, current: this.current });
+    const json = JSON.stringify({ list: this.list, current: this.current, pendingDelete: this.pendingDelete });
     if (this.file) return IOUtils.writeUTF8(this.file, json, { tmpPath: this.file + ".tmp" });
     if (inShell) shell.postMessage({ cmd: "save", key: "aquarisAccounts", data: json });
     try { localStorage.setItem("aquarisAccounts", json); } catch {}
@@ -2897,7 +2897,8 @@ function askText(page, label, value) {
     const done = v => { box.remove(); resolve(v); };
     box.addEventListener("click", e => { const a = e.target.closest("[data-a]")?.dataset.a; if (a) done(a === "yes" ? input.value.trim() : null); });
     input.addEventListener("keydown", e => { if (e.key === "Enter") done(input.value.trim()); if (e.key === "Escape") done(null); });
-    page.append(box);
+    // Over the visible part of the window, even when the page is scrolled down
+    (page.closest?.(".body") || page).append(box);
     setTimeout(() => input.select(), 30);
   });
 }
@@ -2907,7 +2908,8 @@ function askYes(page, text) {
     setHTML(box, `<div class="ask-card"><b class="ask-text"></b><div class="ask-buttons"><button class="btn" data-a="no">Cancel</button><button class="btn primary" data-a="yes">Yes</button></div></div>`);
     box.querySelector(".ask-text").textContent = text;
     box.addEventListener("click", e => { const a = e.target.closest("[data-a]")?.dataset.a; if (a) { box.remove(); resolve(a === "yes"); } });
-    page.append(box);
+    // Over the visible part of the window, even when the page is scrolled down
+    (page.closest?.(".body") || page).append(box);
   });
 }
 function alertIn(page, text) {
@@ -2915,7 +2917,7 @@ function alertIn(page, text) {
   setHTML(box, `<div class="ask-card"><b class="ask-text"></b><div class="ask-buttons"><button class="btn primary">OK</button></div></div>`);
   box.querySelector(".ask-text").textContent = text;
   box.querySelector("button").addEventListener("click", () => box.remove());
-  page.append(box);
+  (page.closest?.(".body") || page).append(box);
 }
 // A simple picture viewer (opened from Files)
 function viewPicture(path) {
