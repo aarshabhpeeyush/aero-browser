@@ -189,7 +189,7 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
     // From a website: a notification, or what it's playing
     if message.name == "aquarisPage", let web = message.webView, let id = idOf(web), var msg = message.body as? [String: Any], let kind = msg["kind"] as? String {
       msg.removeValue(forKey: "kind")
-      msg["type"] = kind == "notify" ? "notify" : kind == "google" ? "googleSignedIn" : "media"
+      msg["type"] = kind == "notify" ? "notify" : kind == "google" ? "googleSignedIn" : kind == "copied" ? "copied" : "media"
       msg["id"] = id
       send(msg)
       return
@@ -203,7 +203,14 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
       let action = (msg["action"] as? String ?? "").replacingOccurrences(of: "'", with: "")
       apps[id]?.evaluateJavaScript("window.__aqMediaAction && __aqMediaAction('\(action)')")
     case "sync": syncRequest(msg)
+    case "css":
+      let css = (msg["css"] as? String ?? "").replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "`", with: "\\`")
+      apps[id]?.evaluateJavaScript("(function(){var s=document.getElementById('aquaris-mini');if(!s){s=document.createElement('style');s.id='aquaris-mini';document.documentElement.appendChild(s);}s.textContent=`\(css)`;})()")
+    case "paste":
+      UIPasteboard.general.string = msg["text"] as? String ?? ""
+      apps[id]?.evaluateJavaScript("document.execCommand('paste')")
     case "capture": capture(msg["rect"] as? [String: Any])
+    case "share": shareFile(msg)
     case "record": record(msg["on"] as? Bool ?? false)
     case "reload": apps[id]?.reload()
     case "stop": apps[id]?.stopLoading()
@@ -337,10 +344,22 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
   }
 
   /// Sync with Aquaris on a computer: one POST to it on the home network, the answer goes back to Aquaris
+  /// AquaDrop: a file from the computer → the share sheet (Save to Files, Photos, or another app)
+  private func shareFile(_ msg: [String: Any]) {
+    let name = (msg["name"] as? String ?? "AquaDrop").replacingOccurrences(of: "/", with: "-")
+    guard let b64 = msg["data"] as? String, let data = Data(base64Encoded: b64) else { return }
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent(name.isEmpty ? "AquaDrop" : name)
+    try? data.write(to: url)
+    let sheet = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+    sheet.popoverPresentationController?.sourceView = view
+    sheet.popoverPresentationController?.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+    present(sheet, animated: true)
+  }
+
   private func syncRequest(_ msg: [String: Any]) {
     let id = msg["id"] as? String ?? ""
     guard let address = msg["url"] as? String, let url = URL(string: address) else { return send(["type": "syncReply", "id": id, "ok": false, "error": "That address isn't right."]) }
-    var request = URLRequest(url: url, timeoutInterval: 7)
+    var request = URLRequest(url: url, timeoutInterval: 60)
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.setValue(msg["code"] as? String ?? "", forHTTPHeaderField: "X-Aquaris-Code")
@@ -395,6 +414,7 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
       };
       if (document.readyState === "loading") addEventListener("DOMContentLoaded", look); else look();
     }
+    document.addEventListener("copy", function () { setTimeout(function () { var t = String(getSelection() || ""); if (t) post({ kind: "copied", text: t.slice(0, 20000) }); }, 0); }, true);
     var last = "", played = false;
     setInterval(function () {
       var m = media(), md = navigator.mediaSession && navigator.mediaSession.metadata;

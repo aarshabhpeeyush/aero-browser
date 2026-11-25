@@ -76,6 +76,11 @@ let accountsReady = () => {}, accountShell = () => {};
 // wallpapers.js (video wallpapers, the lock screen's own wallpaper) plugs in here
 let wallpapersReady = () => {};
 const lookHooks = [];
+// desk.js (widgets, Spaces, Spotlight extras, clipboard history, mini player) plugs in here
+let deskReady = () => {}, deskShell = () => {};
+const windowHooks = [], spotlightHooks = [];
+// share.js adds "Send to iPad" to right-click menus
+const pageMenuHooks = [], appMenuHooks = [];
 const storeHooks = [];
 
 const store = {
@@ -138,6 +143,13 @@ const DEFAULTS = {
   aquarisDnd: false,          // Do Not Disturb: no pop-ups
   aquarisNotifSound: true,    // the notification jingle
   aquarisLock: { wall: "same", own: "" },   // the lock screen's own wallpaper
+  aquarisWidgets: [],         // widgets on the desktop: { id, type, x, y }
+  aquarisWidgetNote: "",      // the quick note widget's text
+  aquarisTodos: [],           // the to-do widget: { id, text, done }
+  aquarisSpaces: [],          // desktops: { id, name } (none = just one)
+  aquarisSpace: "s1",         // the desktop you're on
+  aquarisDrops: [],           // AquaDrop: what was sent and received (no file contents)
+  aquarisMyThemes: [],        // Theme Studio: your own themes
   aquarisSync: {},            // computer: { server, code }; iPad: { address, code }
   aquarisSyncStamps: {},      // when each synced setting last changed
   // Aeris in the iPad app: its Customize options (the same ones as Aeris on a computer)
@@ -174,10 +186,12 @@ const OWN_APPS = [
   { id: "paint", name: "Paint", about: "Draw and paint pictures", color: "#e8487b", ui: "brush", own: true, size: [960, 660] },
   { id: "weather", name: "Weather", about: "Today and the next days, anywhere", color: "#1e9be8", ui: "cloud", own: true, size: [520, 560] },
   { id: "arcade", name: "Arcade", about: "Three games made for Aquaris", color: "#a35cff", ui: "game", own: true, pre: true, size: [760, 640] },
-  { id: "capture", name: "Capture", about: "Screenshots and screen recordings", color: "#e8487b", ui: "camera", own: true, pre: true, size: [620, 560] }
+  { id: "capture", name: "Capture", about: "Screenshots and screen recordings", color: "#e8487b", ui: "camera", own: true, pre: true, size: [620, 560] },
+  { id: "aquadrop", name: "AquaDrop", about: "Send links, text and files to your iPad or computer", color: "#14b8a6", ui: "up", own: true, pre: true, size: [560, 600] },
+  { id: "studio", name: "Theme Studio", about: "Design your own Aquaris look", color: "#a35cff", ui: "sliders", own: true, pre: true, size: [860, 640] }
 ];
 // Installed: the ones that come with Aquaris (unless you removed them) and the ones you got
-const ownInstalled = () => OWN_APPS.filter(a => !(onWeb && a.id === "files") && !(onWeb && !inShell && a.id === "capture")).filter(a => a.id === "aquaapps" || ((a.pre || settings.aquarisGot.includes(a.id)) && !settings.aquarisRemoved.includes(a.id)));
+const ownInstalled = () => OWN_APPS.filter(a => !(onWeb && a.id === "files") && !(onWeb && !inShell && (a.id === "capture" || a.id === "aquadrop"))).filter(a => a.id === "aquaapps" || ((a.pre || settings.aquarisGot.includes(a.id)) && !settings.aquarisRemoved.includes(a.id)));
 const everyApp = () => [AERIS_APP, ...ownInstalled(), ...allApps()];
 // Look up any app, installed or not (for AquaApps)
 const anyApp = id => [AERIS_APP, ...OWN_APPS, ...AQUARIS_APPS, ...settings.aquarisApps].find(a => a.id === id);
@@ -347,6 +361,7 @@ function makeWindow({ app, title, kind, rect, state = "normal" }) {
   wireWindow(win, bar, caption, tools);
   if (state === "max") maximise(win, true);
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove("opening")));
+  for (const hook of windowHooks) hook(win);
   focusWin(win);
   return win;
 }
@@ -380,7 +395,7 @@ function focusWin(win) {
     drawTopApp();
   }
 }
-const activeWin = () => wins.filter(w => !w.state.startsWith("min")).sort((a, b) => b.el.style.zIndex - a.el.style.zIndex)[0] || null;
+const activeWin = () => wins.filter(w => !w.state.startsWith("min") && !w.el.classList.contains("off-space")).sort((a, b) => b.el.style.zIndex - a.el.style.zIndex)[0] || null;
 const isFront = w => w === activeWin() && w.el.classList.contains("active") && !w.state.startsWith("min");
 
 function dockSpot(win) {
@@ -422,6 +437,7 @@ function maximise(win, on = win.state !== "max") {
 
 function closeWin(win) {
   win.stopGame?.();
+  win.onClose?.();
   wins.splice(wins.indexOf(win), 1);
   win.el.classList.add("closing");
   setTimeout(() => win.el.remove(), 200);
@@ -1160,6 +1176,7 @@ function webMenu() {
     items.push(["Copy page address", () => clipboard(viewUrl(view))]);
     if (win?.app.browser && AERIS_PANEL) items.push(null, ["Customize Aeris…", () => toggleCustomize(win)]);
   }
+  for (const hook of pageMenuHooks) hook(items, c, view);
   while (items.length && !items[items.length - 1]) items.pop();
   const x = (c.screenXDevPx / devicePixelRatio) - mozInnerScreenX, y = (c.screenYDevPx / devicePixelRatio) - mozInnerScreenY;
   showMenu({ clientX: x, clientY: y }, items);
@@ -1339,6 +1356,7 @@ function appMenu(e, app, win) {
   if (win && !win.napped) items.push(["Nap now", () => { if (!win.state.startsWith("min")) minimise(win); nap(win); }]);
   if (settings.aquarisApps.some(a => a.id === app.id)) items.push(null, ["Change name or icon", () => openAddApp(settings.aquarisApps.find(a => a.id === app.id))], ["Delete app", () => removeApp(app)]);
   else if (app.id !== "aeris" && app.id !== "aquaapps") items.push(null, ["Delete app", () => uninstall(app)]);
+  for (const hook of appMenuHooks) hook(items, app, win);
   if (win) items.push(null, ["Close", () => closeWin(win)]);
   showMenu(e, items);
 }
@@ -1814,6 +1832,7 @@ function spotlight(text) {
     const web = [];
     if (site) web.push({ app: { id: "web", ui: "globe", color: "#2a86e8" }, title: text.trim(), kind: "Open website", go: () => openInAeris([fixup(text.trim())]) });
     web.push({ app: { id: "find", ui: "search", color: "#6b7a8f" }, title: text.trim(), kind: "Search the web", go: () => openInAeris([webSearchUrl(text.trim())]) });
+    for (const hook of spotlightHooks) { try { groups.push(...hook(q)); } catch (e) { console.warn(e); } }
     groups.push(["Web", web]);
   }
   spItems = groups.flatMap(([, items]) => items);
@@ -3919,7 +3938,7 @@ let layoutTimer = 0;
 function saveLayout() {
   clearTimeout(layoutTimer);
   layoutTimer = setTimeout(() => {
-    const aquarisLayout = wins.filter(w => w.kind === "app" || w.kind === "own").map(w => ({ app: w.app.id, rect: w.rect, state: w.state }));
+    const aquarisLayout = wins.filter(w => (w.kind === "app" || w.kind === "own") && appById(w.app.id)).map(w => ({ app: w.app.id, rect: w.mini?.rect || w.rect, state: w.state, space: w.space }));
     settings.aquarisLayout = aquarisLayout;
     store.set({ aquarisLayout });
   }, 400);
@@ -4083,6 +4102,7 @@ function shellEvent(ev) {
   liveShell(ev, v && wins.find(w => w.view === v || w.tabs?.includes(v)));
   extraShell(ev);
   accountShell(ev);
+  deskShell(ev);
   if (ev.type === "loaded" && win) { cover(win, null); if (ev.url) v.dataset.url = ev.url; }
   if (ev.type === "snap" && v) { v.style.backgroundImage = `url(${ev.data})`; v.style.backgroundSize = "100% 100%"; }
   if (ev.type === "tap" && win) focusWin(win);
@@ -4327,7 +4347,9 @@ function playIntro() {
   }
   for (const l of settings.aquarisLayout) {
     const app = appById(l.app);
-    if (app) openApp(app, { rect: l.rect, state: l.state, napped: l.state.startsWith("min") });
+    if (!app) continue;
+    const w = openApp(app, { rect: l.rect, state: l.state, napped: l.state.startsWith("min") });
+    if (w && l.space) w.space = l.space;
   }
   // Windows from last time might be bigger than this screen (an iPad turned the other way)
   dispatchEvent(new Event("resize"));
@@ -4336,5 +4358,6 @@ function playIntro() {
   liveReady();
   accountsReady();
   wallpapersReady();
+  deskReady();
   if (onWeb && "serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 })();

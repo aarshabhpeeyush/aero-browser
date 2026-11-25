@@ -280,7 +280,10 @@ function shellNotify(ev, win) {
 const SYNC_PORT = 28950;
 const SYNC_KEYS = ["aquarisTheme", "aquarisMode", "aquarisGlass", "aquarisLessMotion", "aquarisWall", "aquarisOwnWall", "aquarisLookMore",
   "aquarisNight", "aquarisPinned", "aquarisApps", "aquarisHidden", "aquarisSpots", "aquarisNotes", "aquarisRemoved", "aquarisGot",
-  "aquarisWeather", "aquarisAeris", "aquarisAwake"];
+  "aquarisWeather", "aquarisAeris", "aquarisAwake", "aquarisMyThemes"];
+// share.js rides along: syncOut adds to what's sent, syncIn reads what came back
+const syncOut = [], syncIn = [];
+let syncTimeout = () => 8000;
 let syncApplying = false;
 // Every change to a synced setting is stamped with the time it was made
 storeHooks.push(changes => {
@@ -296,10 +299,13 @@ storeHooks.push(changes => {
 function syncBundle() {
   const data = {};
   for (const k of SYNC_KEYS) data[k] = settings[k];
-  return { data, stamps: settings.aquarisSyncStamps || {} };
+  const out = { data, stamps: settings.aquarisSyncStamps || {} };
+  for (const f of syncOut) { try { Object.assign(out, f()); } catch (e) { console.error(e); } }
+  return out;
 }
 // Take whatever the other side changed more recently
 function syncMerge(remote) {
+  for (const f of syncIn) { try { f(remote); } catch (e) { console.error(e); } }
   const mine = settings.aquarisSyncStamps || {};
   const changes = {}, stamps = { ...mine };
   for (const k of SYNC_KEYS) {
@@ -333,7 +339,8 @@ function serveSync(transport) {
   const output = transport.openOutputStream(Ci.nsITransport.OPEN_BLOCKING, 0, 0);
   const bin = Cc["@mozilla.org/binaryinputstream;1"].createInstance(Ci.nsIBinaryInputStream);
   const pump = Cc["@mozilla.org/network/input-stream-pump;1"].createInstance(Ci.nsIInputStreamPump);
-  let bytes = [];
+  let chunks = [], total = 0, headEnd = -1, head = "", need = 0, done = false;
+  const joined = () => { if (chunks.length > 1) { const all = new Uint8Array(total); let at = 0; for (const c of chunks) { all.set(c, at); at += c.length; } chunks = [all]; } return chunks[0]; };
   const reply = (status, obj) => {
     const body = new TextEncoder().encode(JSON.stringify(obj));
     const head = new TextEncoder().encode(`HTTP/1.1 ${status}\r\nContent-Type: application/json\r\nContent-Length: ${body.length}\r\nConnection: close\r\n\r\n`);
@@ -348,13 +355,22 @@ function serveSync(transport) {
     onStopRequest() {},
     onDataAvailable(req, stream, offset, count) {
       bin.setInputStream(stream);
-      bytes = bytes.concat(bin.readByteArray(count));
-      const text = new TextDecoder().decode(new Uint8Array(bytes));
-      const split = text.indexOf("\r\n\r\n");
-      if (split < 0) return;
-      const head = text.slice(0, split), length = +(head.match(/content-length:\s*(\d+)/i)?.[1] || 0);
-      const bodyBytes = new TextEncoder().encode(text.slice(split + 4));
-      if (bodyBytes.length < length) return;
+      const buf = new ArrayBuffer(count);
+      bin.readArrayBuffer(count, buf);
+      chunks.push(new Uint8Array(buf));
+      total += count;
+      if (done) return;
+      if (headEnd < 0) {
+        const all = joined();
+        for (let i = 0; i + 3 < all.length; i++) if (all[i] === 13 && all[i + 1] === 10 && all[i + 2] === 13 && all[i + 3] === 10) { headEnd = i; break; }
+        if (headEnd < 0) return;
+        head = new TextDecoder().decode(all.subarray(0, headEnd));
+        need = headEnd + 4 + +(head.match(/content-length:\s*(\d+)/i)?.[1] || 0);
+      }
+      if (need > 24 * 1024 * 1024) { done = true; return reply("413 Too Large", { error: "Too big" }); }
+      if (total < need) return;
+      done = true;
+      const body = new TextDecoder().decode(joined().subarray(headEnd + 4, need));
       if (Date.now() < syncLockedUntil) return reply("429 Too Many Requests", { error: "Too many wrong codes. Wait a minute." });
       const key = head.match(/x-aquaris-code:\s*(\d+)/i)?.[1];
       if (!key || key !== settings.aquarisSync?.code) {
@@ -363,7 +379,7 @@ function serveSync(transport) {
       }
       syncFails = 0;
       let remote = {};
-      try { remote = JSON.parse(text.slice(split + 4)); } catch { return reply("400 Bad Request", { error: "Unreadable" }); }
+      try { remote = JSON.parse(body); } catch { return reply("400 Bad Request", { error: "Unreadable" }); }
       syncMerge(remote);
       syncLastSeen = Date.now();
       $("#syncStatus") && ($("#syncStatus").textContent = `Last synced with ${remote.device || "your iPad"} just now`);
@@ -394,7 +410,7 @@ async function syncNow() {
   const reply = await new Promise(resolve => {
     syncWaits.set(id, resolve);
     shell.postMessage({ cmd: "sync", id, url: `http://${s.address}:${SYNC_PORT}/aquaris-sync`, code: s.code, body });
-    setTimeout(() => { if (syncWaits.delete(id)) resolve({ ok: false, error: "The computer didn't answer" }); }, 8000);
+    setTimeout(() => { if (syncWaits.delete(id)) resolve({ ok: false, error: "The computer didn't answer" }); }, syncTimeout());
   });
   const status = $("#syncStatus");
   if (!reply.ok) { if (status) status.textContent = reply.error || "Couldn't reach your computer"; return; }
