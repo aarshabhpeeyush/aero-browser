@@ -39,6 +39,9 @@ if (inShell) document.body.classList.add("shell");
 
 // live.js (Now Playing, notifications, sync) plugs in here
 let liveReady = () => {}, liveShell = () => {};
+// extras.js (Arcade, snap layouts, Capture) plugs in here
+const ownBuilders = {};
+let extraShell = () => {};
 const storeHooks = [];
 
 const store = {
@@ -129,10 +132,12 @@ const OWN_APPS = [
   { id: "calculator", name: "Calculator", about: "Do sums", color: "#5b6b82", ui: "calc", own: true, pre: true, size: [340, 520] },
   { id: "clock", name: "Clock", about: "Time, stopwatch and timer", color: "#2a86e8", ui: "clock", own: true, pre: true, size: [420, 440] },
   { id: "paint", name: "Paint", about: "Draw and paint pictures", color: "#e8487b", ui: "brush", own: true, size: [960, 660] },
-  { id: "weather", name: "Weather", about: "Today and the next days, anywhere", color: "#1e9be8", ui: "cloud", own: true, size: [520, 560] }
+  { id: "weather", name: "Weather", about: "Today and the next days, anywhere", color: "#1e9be8", ui: "cloud", own: true, size: [520, 560] },
+  { id: "arcade", name: "Arcade", about: "Three games made for Aquaris", color: "#a35cff", ui: "game", own: true, pre: true, size: [760, 640] },
+  { id: "capture", name: "Capture", about: "Screenshots and screen recordings", color: "#e8487b", ui: "camera", own: true, pre: true, size: [620, 560] }
 ];
 // Installed: the ones that come with Aquaris (unless you removed them) and the ones you got
-const ownInstalled = () => OWN_APPS.filter(a => !(onWeb && a.id === "files")).filter(a => a.id === "aquaapps" || ((a.pre || settings.aquarisGot.includes(a.id)) && !settings.aquarisRemoved.includes(a.id)));
+const ownInstalled = () => OWN_APPS.filter(a => !(onWeb && a.id === "files") && !(onWeb && !inShell && a.id === "capture")).filter(a => a.id === "aquaapps" || ((a.pre || settings.aquarisGot.includes(a.id)) && !settings.aquarisRemoved.includes(a.id)));
 const everyApp = () => [AERIS_APP, ...ownInstalled(), ...allApps()];
 // Look up any app, installed or not (for AquaApps)
 const anyApp = id => [AERIS_APP, ...OWN_APPS, ...AQUARIS_APPS, ...settings.aquarisApps].find(a => a.id === id);
@@ -373,6 +378,7 @@ function maximise(win, on = win.state !== "max") {
 }
 
 function closeWin(win) {
+  win.stopGame?.();
   wins.splice(wins.indexOf(win), 1);
   win.el.classList.add("closing");
   setTimeout(() => win.el.remove(), 200);
@@ -2337,7 +2343,7 @@ function openOwnApp(app) {
   const win = makeWindow({ app, title: app.name, kind: "own" });
   const page = html("div", "page own-" + app.id);
   win.body.append(page);
-  ({ notepad: buildNotepad, calculator: buildCalculator, clock: buildClock, aquaapps: buildStore, files: buildFiles, paint: buildPaint, weather: buildWeather })[app.id]?.(page, win);
+  (({ notepad: buildNotepad, calculator: buildCalculator, clock: buildClock, aquaapps: buildStore, files: buildFiles, paint: buildPaint, weather: buildWeather })[app.id] || ownBuilders[app.id])?.(page, win);
   return win;
 }
 
@@ -3978,6 +3984,7 @@ function shellEvent(ev) {
   const v = document.querySelector(`.shell-view[data-shell="${ev.id}"]`);
   const win = v && wins.find(w => w.view === v);
   liveShell(ev, v && wins.find(w => w.view === v || w.tabs?.includes(v)));
+  extraShell(ev);
   if (ev.type === "loaded" && win) { cover(win, null); if (ev.url) v.dataset.url = ev.url; }
   if (ev.type === "snap" && v) { v.style.backgroundImage = `url(${ev.data})`; v.style.backgroundSize = "100% 100%"; }
   if (ev.type === "tap" && win) focusWin(win);

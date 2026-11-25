@@ -13,6 +13,7 @@
 import UIKit
 import WebKit
 import GameController
+import ReplayKit
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -51,7 +52,8 @@ final class AquarisFiles: NSObject, WKURLSchemeHandler {
   func webView(_ webView: WKWebView, stop task: WKURLSchemeTask) {}
 }
 
-final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate, UIGestureRecognizerDelegate {
+final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate, UIGestureRecognizerDelegate, RPPreviewViewControllerDelegate {
+  func previewControllerDidFinish(_ previewController: RPPreviewViewController) { previewController.dismiss(animated: true) }
   private var desk: WKWebView!
   private var apps: [String: WKWebView] = [:]
   private var watching: [String: [NSKeyValueObservation]] = [:]
@@ -198,6 +200,8 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
       let action = (msg["action"] as? String ?? "").replacingOccurrences(of: "'", with: "")
       apps[id]?.evaluateJavaScript("window.__aqMediaAction && __aqMediaAction('\(action)')")
     case "sync": syncRequest(msg)
+    case "capture": capture(msg["rect"] as? [String: Any])
+    case "record": record(msg["on"] as? Bool ?? false)
     case "reload": apps[id]?.reload()
     case "stop": apps[id]?.stopLoading()
     case "zoom": if let z = (msg["value"] as? NSNumber)?.doubleValue { apps[id]?.pageZoom = CGFloat(z) }
@@ -258,6 +262,39 @@ final class DeskController: UIViewController, WKScriptMessageHandler, WKNavigati
                     web.observe(\.canGoBack, changeHandler: changed), web.observe(\.canGoForward, changeHandler: changed),
                     web.observe(\.isLoading, changeHandler: changed)]
     web.load(URLRequest(url: address))
+  }
+
+  /// A screenshot of everything on screen (or a part of it), saved to the Photos app
+  private func capture(_ rect: [String: Any]?) {
+    let size = view.bounds.size
+    let image = UIGraphicsImageRenderer(size: size).image { _ in view.drawHierarchy(in: view.bounds, afterScreenUpdates: true) }
+    var shot = image
+    if let r = rect, let cg = image.cgImage {
+      let num = { (k: String) in CGFloat((r[k] as? NSNumber)?.doubleValue ?? 0) * image.scale }
+      if let part = cg.cropping(to: CGRect(x: num("x"), y: num("y"), width: num("w"), height: num("h"))) { shot = UIImage(cgImage: part, scale: image.scale, orientation: .up) }
+    }
+    UIImageWriteToSavedPhotosAlbum(shot, nil, nil, nil)
+    let thumb = shot.jpegData(compressionQuality: 0.6)?.base64EncodedString() ?? ""
+    send(["type": "captured", "thumb": "data:image/jpeg;base64," + thumb])
+  }
+  /// Screen recording with the iPad's own recorder; at the end it shows Apple's preview to save it
+  private func record(_ on: Bool) {
+    let recorder = RPScreenRecorder.shared()
+    if on {
+      recorder.isMicrophoneEnabled = false
+      recorder.startRecording { [weak self] error in if error != nil { DispatchQueue.main.async { self?.send(["type": "recorded"]) } } }
+    } else {
+      recorder.stopRecording { [weak self] preview, _ in
+        DispatchQueue.main.async {
+          self?.send(["type": "recorded"])
+          if let preview = preview {
+            preview.previewControllerDelegate = self
+            preview.modalPresentationStyle = .fullScreen
+            self?.present(preview, animated: true)
+          }
+        }
+      }
+    }
   }
 
   /// Sync with Aquaris on a computer: one POST to it on the home network, the answer goes back to Aquaris
